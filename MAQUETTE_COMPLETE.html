@@ -4792,13 +4792,24 @@ Suivant
 
         let currentEditingTemplateId = null;
 
-        function handleEditCommTemplate(card) {
-            const id = card.getAttribute('data-id');
-            currentEditingTemplateId = id;
-            const title = card.querySelector('.template-title').textContent.trim();
-            const body = card.querySelector('.template-body-text').textContent.trim().replace(/^"|"$/g, '');
-            const type = card.querySelector('.px-3').textContent.trim();
+        function handleEditCommTemplate(idOrCard) {
+            // Accepte soit un ID string, soit un élément DOM
+            let id, title, body, type;
+            if (typeof idOrCard === 'string') {
+                id = idOrCard;
+                const t = (currentTemplates || []).find(x => x.id === id);
+                if (!t) return;
+                title = t.title;
+                body  = t.body;
+                type  = t.type;
+            } else {
+                id    = idOrCard.getAttribute('data-id');
+                title = idOrCard.querySelector('.template-title').textContent.trim();
+                body  = idOrCard.querySelector('.template-body-text').textContent.trim().replace(/^"|"$/g, '');
+                type  = idOrCard.querySelector('.px-3').textContent.trim();
+            }
 
+            currentEditingTemplateId = id;
             const sidebar = document.getElementById('prospection-comm-sidebar') || document.getElementById('credits-comm-sidebar');
             if (sidebar) {
                 sidebar.querySelector('#edit-template-title').value = title;
