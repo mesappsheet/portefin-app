@@ -1660,11 +1660,21 @@
                     <h3 id="detail-prospect-name" class="text-2xl font-black text-slate-900 dark:text-white truncate">Sélectionnez un prospect</h3>
                     <span id="detail-prospect-status" class="px-4 py-1.5 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase tracking-widest border border-green-200">-</span>
                 </div>
-                <p class="text-slate-500 font-bold flex items-center gap-2 text-sm">
-                    <span id="detail-prospect-type">Prospect Froid</span> 
-                    <span class="text-slate-300">•</span>
-                    <span id="detail-prospect-last-seen" class="text-blue-600 dark:text-blue-400">Dernière interaction -</span>
-                </p>
+                <div class="flex items-center justify-between gap-4">
+                    <p class="text-slate-500 font-bold flex items-center gap-2 text-sm">
+                        <span id="detail-prospect-type">Prospect Froid</span> 
+                        <span class="text-slate-300">•</span>
+                        <span id="detail-prospect-last-seen" class="text-blue-600 dark:text-blue-400">Dernière interaction -</span>
+                    </p>
+                    
+                    <!-- Toggle Exclusion Auto -->
+                    <div id="prospect-automation-toggle" class="flex flex-col items-end gap-1">
+                        <button id="prospect-exclude-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[10px] font-bold uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">notifications_active</span>
+                            Actif
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1753,6 +1763,33 @@
                     <span class="material-symbols-outlined text-lg">add_circle</span>
                     AJOUTER UNE NOTE
                 </button>
+            </div>
+
+            <!-- Card 3: Journal des Communications (NEW) -->
+            <div class="col-span-1 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+                <div class="flex items-center justify-between mb-8 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-lg">history_edu</span>
+                        </div>
+                        <h4 class="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">JOURNAL DES COMMUNICATIONS</h4>
+                    </div>
+                </div>
+                <div class="overflow-x-auto min-h-[150px] custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-widest border-b border-slate-50 dark:border-slate-800/50">
+                                <th class="py-3 px-2">Date & Heure</th>
+                                <th class="py-3 px-2">Catégorie</th>
+                                <th class="py-3 px-2">Message</th>
+                                <th class="py-3 px-2 text-right">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-logs-body" class="divide-y divide-slate-50 dark:divide-slate-800">
+                            <!-- Dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
@@ -2799,6 +2836,7 @@
 <a onclick="loadScreen('credits_progress')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">REMBOURSEMENTS</a>
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
+<a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
 </div>
 </header>
 <div class="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
@@ -2834,9 +2872,20 @@
     </div>
     <span id="detail-credit-health-badge" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-slate-500 border-2 border-white dark:border-slate-800 rounded-full shadow"></span>
   </div>
-  <div class="min-w-0 flex-1">
-    <h2 id="detail-credit-client-name" class="text-lg font-bold text-slate-900 dark:text-white truncate">-</h2>
-    <span class="text-slate-400 text-xs font-medium">Créé le <span id="detail-credit-client-date">-</span></span>
+  <div class="min-w-0 flex-1 flex items-center justify-between gap-4">
+    <div>
+      <h2 id="detail-credit-client-name" class="text-lg font-bold text-slate-900 dark:text-white truncate">-</h2>
+      <span class="text-slate-400 text-xs font-medium">Créé le <span id="detail-credit-client-date">-</span></span>
+    </div>
+    
+    <!-- Toggle Exclusion Auto -->
+    <div id="credit-automation-toggle" class="flex flex-col items-end gap-1">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Messages Auto</span>
+        <button id="credit-exclude-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[10px] font-bold uppercase tracking-wider">
+            <span class="material-symbols-outlined text-sm">notifications_active</span>
+            Actif
+        </button>
+    </div>
   </div>
 </div>
                     <!-- Menu Actions Crédit -->
@@ -2998,6 +3047,33 @@
                     </div>
                 </div>
 
+                <!-- Section Journal des Communications -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mb-12">
+                    <div class="p-6 pb-4 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-lg">history_edu</span>
+                            </div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Journal des Communications</h3>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto min-h-[150px] custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[10px] text-slate-400 font-black uppercase tracking-widest border-b border-slate-50 dark:border-slate-800/50">
+                                    <th class="py-3 px-2">Date & Heure</th>
+                                    <th class="py-3 px-2">Catégorie</th>
+                                    <th class="py-3 px-2">Message</th>
+                                    <th class="py-3 px-2 text-right">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-logs-body-credits" class="divide-y divide-slate-50 dark:divide-slate-800">
+                                <!-- Dynamically loaded -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
 </div>
 </div>
 
@@ -3131,6 +3207,7 @@ Reporter
 <a onclick="loadScreen('credits_progress')" class="pb-4 border-b-2 border-primary text-primary font-bold text-sm tracking-wide cursor-pointer">REMBOURSEMENTS</a>
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
+<a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
 </div>
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-8 max-w-7xl mx-auto w-full">
@@ -3344,6 +3421,7 @@ Reporter
 <a onclick="loadScreen('credits_progress')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">REMBOURSEMENTS</a>
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-primary text-primary font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
+<a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
 </div>
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-6">
@@ -3495,6 +3573,92 @@ Suivant
 </div>
 </div>
 </div>
+</div>
+`,
+            credits_unpaid: `
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 pt-6 flex-shrink-0">
+    <div class="flex items-center gap-4 mb-4">
+        <button onclick="toggleSidebar('main-sidebar')" class="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors mr-1">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h2 class="text-xl font-bold text-red-600">Impayés</h2>
+        <span id="unpaid-count-badge" class="px-2.5 py-0.5 bg-red-100 text-red-700 text-xs font-black rounded-full hidden">0</span>
+    </div>
+    <div class="flex gap-8 overflow-x-auto no-scrollbar">
+        <a onclick="loadScreen('credits_clients')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CLIENTS</a>
+        <a onclick="loadScreen('credits_progress')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">REMBOURSEMENTS</a>
+        <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
+        <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
+        <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-red-500 text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
+    </div>
+</header>
+<div class="flex-1 overflow-y-auto p-8 space-y-6 max-w-7xl mx-auto w-full">
+
+    <!-- KPI Barre -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-red-50 border border-red-100 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                <span class="material-symbols-outlined">person_off</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-red-400 uppercase tracking-widest">Clients en retard</p>
+                <p id="unpaid-kpi-clients" class="text-2xl font-black text-red-700">—</p>
+            </div>
+        </div>
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-primary flex-shrink-0">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-orange-400 uppercase tracking-widest">Total impayé</p>
+                <p id="unpaid-kpi-amount" class="text-2xl font-black text-primary">—</p>
+            </div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 flex-shrink-0">
+                <span class="material-symbols-outlined">calendar_month</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Retard moyen</p>
+                <p id="unpaid-kpi-avg-days" class="text-2xl font-black text-slate-700">—</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres + Recherche -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Liste des échéances impayées</h3>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                <input oninput="filterUnpaidList(this.value)" id="unpaid-search" class="w-64 pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-4 focus:ring-red-500/10 focus:border-red-400 outline-none transition-all shadow-sm" placeholder="Rechercher un client..." type="text"/>
+            </div>
+            <button onclick="fetchUnpaidClients()" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Actualiser">
+                <span class="material-symbols-outlined text-[20px]">sync</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-red-50 dark:bg-red-900/10">
+                    <th class="px-6 py-4 text-[11px] font-black text-red-400 uppercase tracking-widest">Client</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-red-400 uppercase tracking-widest">Montant impayé</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-red-400 uppercase tracking-widest text-center">Date échéance</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-red-400 uppercase tracking-widest text-center">Retard</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-red-400 uppercase tracking-widest text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="unpaid-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">
+                    <div class="animate-pulse">Chargement des impayés...</div>
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p id="unpaid-total-line" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
 </div>
 `,
             credits_comm: `
@@ -4088,6 +4252,7 @@ Suivant
                     { id: 'credits_progress', label: 'Progression remboursements' },
                     { id: 'credits_settled', label: 'Crédits soldés' },
                     { id: 'credits_end_term', label: 'Fin échéance' },
+                    { id: 'credits_unpaid', label: 'Impayés' },
                     { id: 'credits_comm', label: 'Communications crédits' },
                     { id: 'credits_report', label: 'Report échéance', isModal: true },
                     { id: 'credits_new_dossier', label: 'Nouveau dossier client', isModal: true }
@@ -4291,6 +4456,7 @@ Suivant
                     if (screenId === 'credits_progress') fetchProgressCredits();
                     if (screenId === 'credits_settled') fetchSettledCredits();
                     if (screenId === 'credits_end_term') fetchEndTermCredits();
+                    if (screenId === 'credits_unpaid') fetchUnpaidClients();
                     if (screenId === 'prospection_comm' || screenId === 'credits_comm') fetchCommTemplates();
                     if (screenId === 'import_manager') {
                         // Ensure module is identified
@@ -4898,6 +5064,7 @@ Suivant
                     activity,
                     email,
                     address,
+                    exclude_automation,
                     clients (
                         id,
                         full_name,
@@ -4944,7 +5111,10 @@ Suivant
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm uppercase">${initials}</div>
                         <div class="truncate">
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">${clientName}</h3>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                                ${clientName}
+                                ${credit.exclude_automation ? '<span class="material-symbols-outlined text-[14px] text-red-500 align-middle ml-1" title="Automatisations désactivées">notifications_off</span>' : ''}
+                            </h3>
                             <p class="text-xs text-slate-500 font-medium">${parseInt(credit.amount).toLocaleString('fr-FR')} FCFA</p>
                         </div>
                     </div>
@@ -5325,10 +5495,27 @@ Suivant
                 badge.className = `absolute bottom-8 right-2 w-6 h-6 border-4 border-white dark:border-slate-800 rounded-full shadow-lg ${credit.health === 'Sain' ? 'bg-green-500' : 'bg-amber-500'}`;
             }
 
+            // Update automation toggle
+            const automationBtn = document.getElementById('credit-exclude-btn');
+            const isExcluded = credit.exclude_automation || false;
+
+            if (isExcluded) {
+                automationBtn.innerHTML = '<span class="material-symbols-outlined text-sm">notifications_off</span> Exclu';
+                automationBtn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm";
+            } else {
+                automationBtn.innerHTML = '<span class="material-symbols-outlined text-sm">notifications_active</span> Actif';
+                automationBtn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm";
+            }
+
+            automationBtn.onclick = () => toggleAutomationExclusion(credit.id, 'Crédit', isExcluded);
+
             // Fetch specific credit notes & documents
             fetchCreditNotes(credit.id);
             fetchCreditDocuments(credit.id);
             fetchCreditScheduleInDetails(credit.id);
+
+            // Load communication history
+            fetchCommunicationLogs(credit.id, 'Crédit');
         }
 
         async function fetchCreditScheduleInDetails(creditId) {
@@ -6265,6 +6452,147 @@ Suivant
             window.settledSearchTimeout = setTimeout(fetchSettledCredits, 300);
         }
 
+        // ══════════════════════════════════════════════════════════════════
+        //  IMPAYÉS — Échéances passées non payées
+        // ══════════════════════════════════════════════════════════════════
+        let _unpaidData = [];
+
+        async function fetchUnpaidClients() {
+            const tbody = document.getElementById('unpaid-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 animate-pulse">Chargement des impayés...</td></tr>';
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const { data, error } = await _supabase
+                .from('repayments')
+                .select(`
+                    id, scheduled_date, amount, credit_id,
+                    credits!inner(id, client_name, phone, status)
+                `)
+                .lt('scheduled_date', today)
+                .eq('is_paid', false)
+                .not('credits.status', 'ilike', 'Soldé%')
+                .order('scheduled_date', { ascending: true });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold">Erreur : ${error.message}</td></tr>`;
+                return;
+            }
+
+            _unpaidData = data || [];
+            renderUnpaidTable(_unpaidData);
+        }
+
+        function renderUnpaidTable(rows) {
+            const tbody = document.getElementById('unpaid-table-body');
+            const kpiClients = document.getElementById('unpaid-kpi-clients');
+            const kpiAmount  = document.getElementById('unpaid-kpi-amount');
+            const kpiAvg     = document.getElementById('unpaid-kpi-avg-days');
+            const badge      = document.getElementById('unpaid-count-badge');
+            const totalLine  = document.getElementById('unpaid-total-line');
+            if (!tbody) return;
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <span class="material-symbols-outlined text-5xl text-green-400">check_circle</span>
+                        <p class="font-bold text-slate-500">Aucun impayé — Tous les clients sont à jour !</p>
+                    </div>
+                </td></tr>`;
+                if (kpiClients) kpiClients.textContent = '0';
+                if (kpiAmount)  kpiAmount.textContent  = '0 FCFA';
+                if (kpiAvg)     kpiAvg.textContent     = '0 jour';
+                if (badge)      { badge.textContent = '0'; badge.classList.add('hidden'); }
+                if (totalLine)  totalLine.textContent  = '';
+                return;
+            }
+
+            const today = new Date(); today.setHours(0,0,0,0);
+            let totalAmount = 0, totalDays = 0;
+
+            // Dédoublonner par client + cumuler
+            const byCredit = {};
+            rows.forEach(r => {
+                const cid = r.credit_id;
+                const daysLate = Math.floor((today - new Date(r.scheduled_date)) / 86400000);
+                if (!byCredit[cid]) {
+                    byCredit[cid] = {
+                        name: r.credits?.client_name || '—',
+                        phone: r.credits?.phone || '',
+                        credit_id: cid,
+                        amount: 0,
+                        maxDays: 0,
+                        oldestDate: r.scheduled_date,
+                        count: 0
+                    };
+                }
+                byCredit[cid].amount   += parseFloat(r.amount || 0);
+                byCredit[cid].count    += 1;
+                byCredit[cid].maxDays   = Math.max(byCredit[cid].maxDays, daysLate);
+                totalAmount += parseFloat(r.amount || 0);
+                totalDays   += daysLate;
+            });
+
+            const clients = Object.values(byCredit);
+            clients.sort((a, b) => b.maxDays - a.maxDays);
+
+            const avgDays = Math.round(totalDays / rows.length);
+            if (kpiClients) kpiClients.textContent = clients.length;
+            if (kpiAmount)  kpiAmount.textContent  = totalAmount.toLocaleString('fr-FR') + ' FCFA';
+            if (kpiAvg)     kpiAvg.textContent     = avgDays + ' jour' + (avgDays > 1 ? 's' : '');
+            if (badge)      { badge.textContent = clients.length; badge.classList.remove('hidden'); }
+            if (totalLine)  totalLine.textContent  = `${clients.length} client(s) en retard · ${rows.length} échéance(s) impayée(s)`;
+
+            tbody.innerHTML = clients.map(c => {
+                const urgency = c.maxDays >= 30 ? 'text-red-700 bg-red-100' :
+                                c.maxDays >= 7  ? 'text-orange-700 bg-orange-100' :
+                                                  'text-yellow-700 bg-yellow-100';
+                const phoneClean = c.phone.replace(/\s/g,'');
+                return `<tr class="hover:bg-red-50/40 dark:hover:bg-red-900/10 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm flex-shrink-0">${(c.name[0]||'?').toUpperCase()}</div>
+                            <div>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm">${c.name}</p>
+                                <p class="text-xs text-slate-400">${c.count} échéance${c.count>1?'s':''} impayée${c.count>1?'s':''}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-black text-red-600 text-sm">${c.amount.toLocaleString('fr-FR')} FCFA</p>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <p class="text-sm text-slate-600 dark:text-slate-400 font-medium">${c.oldestDate}</p>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black ${urgency}">${c.maxDays} j</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${c.phone ? `
+                            <a href="tel:${phoneClean}" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
+                                <span class="material-symbols-outlined text-sm">call</span>
+                            </a>
+                            <a href="https://wa.me/${phoneClean}" target="_blank" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                                <span class="material-symbols-outlined text-sm">chat</span>
+                            </a>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterUnpaidList(query) {
+            if (!_unpaidData) return;
+            const q = query.toLowerCase().trim();
+            if (!q) { renderUnpaidTable(_unpaidData); return; }
+            const filtered = _unpaidData.filter(r =>
+                (r.credits?.client_name || '').toLowerCase().includes(q)
+            );
+            renderUnpaidTable(filtered);
+        }
+
         async function fetchSettledCredits() {
             const tbody = document.getElementById('credits-settled-body');
             const totalEl = document.getElementById('credits-settled-total');
@@ -7108,6 +7436,83 @@ Suivant
             cards.forEach(card => container.appendChild(card));
         }
 
+        async function toggleAutomationExclusion(id, type, currentValue) {
+            const newValue = !currentValue;
+            const table = type === 'Prospect' ? 'prospects' : 'credits';
+            
+            const { error } = await _supabase
+                .from(table)
+                .update({ exclude_automation: newValue })
+                .eq('id', id);
+
+            if (error) {
+                showNotification("Erreur lors de la mise à jour : " + error.message, "error");
+                return;
+            }
+
+            // Update UI
+            if (type === 'Prospect') {
+                showProspectDetails(id); 
+            } else {
+                if (currentCredit && currentCredit.id === id) {
+                    currentCredit.exclude_automation = newValue;
+                    showCreditDetails(currentCredit);
+                }
+            }
+            
+            showNotification(newValue ? "Automatisations désactivées (Exclu)" : "Automatisations réactivées (Actif)", "info");
+        }
+
+        async function fetchCommunicationLogs(id, type) {
+            const tbodyId = type === 'Prospect' ? 'history-logs-body' : 'history-logs-body-credits';
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400 italic text-xs">Chargement de l\'historique...</td></tr>';
+
+            let query = _supabase
+                .from('communication_logs')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (type === 'Prospect') {
+                query = query.eq('prospect_id', id);
+            } else {
+                query = query.eq('credit_id', id);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-red-500 italic text-xs">Erreur: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400 italic text-xs">Aucun historique trouvé.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(log => {
+                const date = new Date(log.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+                const categoryClass = log.category === 'Welcome' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
+                const statusIcon = log.status === 'success' ? 'check_circle' : 'error';
+                const statusColor = log.status === 'success' ? 'text-emerald-500' : 'text-rose-500';
+
+                return `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td class="py-3 px-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">${date}</td>
+                    <td class="py-3 px-2">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${categoryClass}">${log.category}</span>
+                    </td>
+                    <td class="py-3 px-2 text-[11px] text-slate-600 dark:text-slate-300 max-w-[200px] truncate" title="${log.message}">${log.message}</td>
+                    <td class="py-3 px-2 text-right">
+                        <span class="material-symbols-outlined text-sm ${statusColor}">${statusIcon}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
         window.addEventListener('load', () => {
             try {
                 // Initial load
@@ -7172,8 +7577,25 @@ Suivant
                      'bg-slate-100 text-slate-500 border-slate-200');
             }
             
+            // Exclusion automation toggle
+            const automationBtn = document.getElementById('prospect-exclude-btn');
+            const isExcluded = data.exclude_automation || false;
+            
+            if (isExcluded) {
+                automationBtn.innerHTML = '<span class="material-symbols-outlined text-sm">notifications_off</span> Exclu';
+                automationBtn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm";
+            } else {
+                automationBtn.innerHTML = '<span class="material-symbols-outlined text-sm">notifications_active</span> Actif';
+                automationBtn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm";
+            }
+            
+            automationBtn.onclick = () => toggleAutomationExclusion(id, 'Prospect', isExcluded);
+
             // Load notes
             if (typeof fetchNotes === 'function') fetchNotes(id);
+
+            // Load communication history
+            fetchCommunicationLogs(id, 'Prospect');
         }
 
         function toggleSidebar(id) {
@@ -7199,7 +7621,7 @@ Suivant
             const tbody = document.getElementById('prospect-list-body');
             if (!tbody) return;
             
-            let query = _supabase.from('prospects').select('*');
+            let query = _supabase.from('prospects').select('*, exclude_automation');
             
             if (search) {
                 query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,phone2.ilike.%${search}%,activity.ilike.%${search}%`);
@@ -7237,7 +7659,10 @@ Suivant
                 <tr id="prospect-row-${p.id}" class="${rowClass}" onclick="showProspectDetails('${p.id}')">
                     <td class="px-4 py-3 w-8"><input type="checkbox" data-id="${p.id}" onchange="toggleProspectSelection('${p.id}', this)" onclick="event.stopPropagation()" class="w-4 h-4 accent-primary cursor-pointer rounded"></td>
                     <td class="px-4 py-3">
-                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px]">${p.full_name}</p>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px]">
+                            ${p.full_name}
+                            ${p.exclude_automation ? '<span class="material-symbols-outlined text-[12px] text-red-500 align-middle ml-1" title="Automatisations désactivées">notifications_off</span>' : ''}
+                        </p>
                         <p class="text-[10px] text-slate-400 font-medium">${date}</p>
                     </td>
                     <td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400 font-bold">${p.phone || '-'}</td>
