@@ -2,7 +2,7 @@
 <html class="dark" lang="fr">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
     <title>PorteFin - Gestion de Portefeuille</title>
 
     <!-- PWA Meta -->
@@ -176,7 +176,7 @@
         }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden flex flex-col" style="height:100dvh;height:100vh">
 
     <!-- Mobile Top Bar (visible < lg) -->
     <header id="mobile-topbar" class="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 z-30 relative flex-shrink-0">
@@ -250,7 +250,7 @@
         </div>
     </aside>
 
-    <div id="app-root" class="flex flex-col lg:flex-row h-screen w-full">
+    <div id="app-root" class="flex flex-col lg:flex-row flex-1 w-full min-h-0">
         <!-- Sidebar (desktop only) -->
         <aside class="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark hidden lg:flex flex-col">
             <div class="p-6 flex items-center gap-3">
@@ -340,6 +340,19 @@
                 <!-- Contenu de la modale injecté ici -->
             </div>
         </div>
+    </div>
+
+    <!-- PWA Install Banner (mobile) -->
+    <div id="pwa-install-banner" class="hidden fixed bottom-16 left-4 right-4 z-40 bg-primary text-white rounded-xl shadow-2xl p-4 flex items-center gap-3 lg:bottom-4" style="padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0px))">
+        <span class="material-symbols-outlined text-3xl">install_mobile</span>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold">Installer PorteFin</p>
+            <p class="text-xs opacity-80">Accès rapide depuis l'écran d'accueil</p>
+        </div>
+        <button id="pwa-install-btn" class="px-4 py-2 bg-white text-primary font-bold text-xs rounded-lg flex-shrink-0">Installer</button>
+        <button id="pwa-install-dismiss" class="p-1 opacity-60 hover:opacity-100 flex-shrink-0">
+            <span class="material-symbols-outlined text-lg">close</span>
+        </button>
     </div>
 
     <!-- Scripts -->

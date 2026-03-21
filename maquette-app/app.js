@@ -12,6 +12,50 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ═══════════════════════════════════════════
+   PWA INSTALL PROMPT
+   ═══════════════════════════════════════════ */
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const banner = document.getElementById("pwa-install-banner");
+    if (banner && !localStorage.getItem("pwa-install-dismissed")) {
+        banner.classList.remove("hidden");
+        banner.classList.add("flex");
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const installBtn = document.getElementById("pwa-install-btn");
+    const dismissBtn = document.getElementById("pwa-install-dismiss");
+    const banner = document.getElementById("pwa-install-banner");
+
+    if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+        });
+    }
+    if (dismissBtn && banner) {
+        dismissBtn.addEventListener("click", () => {
+            banner.classList.add("hidden");
+            banner.classList.remove("flex");
+            localStorage.setItem("pwa-install-dismissed", "1");
+        });
+    }
+});
+
+window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    const banner = document.getElementById("pwa-install-banner");
+    if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+});
+
+/* ═══════════════════════════════════════════
    AUTHENTICATION
    ═══════════════════════════════════════════ */
 async function initAuth() {
