@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Credits Communications - Gestion Portefeuille</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        /* RESIZABLE SIDEBARS */
+        .resizer-v {
+            width: 4px;
+            cursor: col-resize;
+            flex-shrink: 0;
+            transition: background 0.2s;
+            background: transparent;
+            z-index: 40;
+            position: relative;
+        }
+        .resizer-v::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.05);
+        }
+        .dark .resizer-v::after { background: rgba(255,255,255,0.05); }
+        .resizer-v:hover, .resizer-v.resizing {
+            background: rgba(19, 91, 236, 0.4);
+        }
+        body.resizing {
+            cursor: col-resize !important;
+            user-select: none !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside id="main-sidebar" class="w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-75">
+<div class="p-6">
+<h1 class="text-primary text-xs font-bold uppercase tracking-widest">Gestion Portefeuille</h1>
+<p class="text-slate-500 text-[10px] font-medium uppercase tracking-tight">Édition Professionnelle</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+<span class="text-sm font-medium">Portefeuille</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] fill-current">payments</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Crédits</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">bar_chart</span>
+<span class="text-sm font-medium">Rapports</span>
+</a>
+<div class="pt-4 mt-4 border-t border-slate-100">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm font-medium">Paramètres</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-100">
+<div class="flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 bg-cover" data-alt="Avatar of the user profile" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBLbJH0izyN0lJqLzPqwu1pdd2z4gLL2FlK17ewFvEa1fKKTgDYbroPvvD5DwpDpW4NpP5j60l1RtRkhcSN8UJtKE5NG2dZKPaMlH9vSl8quVNyOZWYKARaXR5lw8Zk304t6-th7bs9qASWwi2xvEvxoNjSdW5ne-ulBqCF_dN5BPxPFAnP4F8whRlSVUhUPxs2o4uRmkeuxkTalkilnH-0jURXG3oYE61n4YBQO2dVBf-lvZELBnOdQK0BD-zind-mVuli-hWqK0I')"></div>
+<div class="overflow-hidden">
+<p class="text-xs font-semibold truncate">Jean Dupont</p>
+<p class="text-[10px] text-slate-500 truncate">Administrateur</p>
+</div>
+</div>
+</div>
+</aside>
+<div id="main-resizer" class="resizer-v" data-target="main-sidebar" data-side="left"></div>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-hidden relative">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 z-10">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[28px]">payments</span>
+<h2 class="text-lg font-bold tracking-tight">Module Crédits</h2>
+</div>
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400" placeholder="Rechercher un modèle..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:text-slate-700">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Nouveau Modèle
+                </button>
+</div>
+</header>
+<!-- Sub-Navigation -->
+<div class="bg-white border-b border-slate-200 px-8">
+<div class="flex gap-8">
+<a class="py-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">Vue d'ensemble</a>
+<a class="py-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">Échéances</a>
+<a class="py-4 text-sm font-bold text-primary border-b-2 border-primary" href="#">Communications Clients</a>
+<a class="py-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">Historique</a>
+</div>
+</div>
+<!-- Dashboard Content -->
+<div class="flex-1 overflow-y-auto bg-background-light p-8">
+<div class="max-w-6xl mx-auto">
+      <div class="mb-6 flex justify-between items-end">
+        <div>
+          <h3 class="text-2xl font-bold text-slate-900">Modèles de communication</h3>
+          <p class="text-slate-500 text-sm">Gérez vos messages de relance et rappels automatisés.</p>
+        </div>
+        <div class="flex gap-2">
+            <!-- Search Bar -->
+            <div class="relative w-48 mr-2">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">search</span>
+                <input oninput="window.handleSearchTemplates(this.value)" class="w-full pl-9 pr-3 py-1.5 bg-slate-100 border-none rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary/20" placeholder="Rechercher..." type="text"/>
+            </div>
+
+            <!-- Filter Dropdown -->
+            <div class="relative">
+                <button onclick="window.toggleDropdown('filter-dropdown-credits', event)" class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-1.5 hover:bg-slate-50 h-full">
+                    <span class="material-symbols-outlined text-[16px]">filter_list</span> Filtrer
+                </button>
+                <div id="filter-dropdown-credits" class="dropdown-menu absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 hidden border border-slate-100 overflow-hidden">
+                    <div class="p-1">
+                        <button onclick="window.handleFilterTemplates('all')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-primary/5 hover:text-primary rounded-lg transition-colors">Tous les canaux</button>
+                        <button onclick="window.handleFilterTemplates('WhatsApp')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-primary/5 hover:text-primary rounded-lg transition-colors flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span> WhatsApp
+                        </button>
+                        <button onclick="window.handleFilterTemplates('SMS')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-primary/5 hover:text-primary rounded-lg transition-colors flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full"></span> SMS
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="relative">
+                <button onclick="window.toggleDropdown('sort-dropdown-credits', event)" class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-1.5 hover:bg-slate-50 h-full">
+                    <span class="material-symbols-outlined text-[16px]">sort</span> Trier
+                </button>
+                <div id="sort-dropdown-credits" class="dropdown-menu absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 hidden border border-slate-100 overflow-hidden">
+                    <div class="p-1">
+                        <button onclick="window.handleSortTemplates('name')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-primary/5 hover:text-primary rounded-lg transition-colors">Nom (A-Z)</button>
+                        <button onclick="window.handleSortTemplates('active')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-600 hover:bg-primary/5 hover:text-primary rounded-lg transition-colors">Statut (Actifs en premier)</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="window.handleNewCommTemplate()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-[18px]">add</span> Nouveau Modèle
+            </button>
+        </div>
+      </div>
+      <!-- Template Grid -->
+      <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Will be populated by JS -->
+      </div>
+</div>
+</div>
+</div>
+      <!-- Slide-over Panel (Overlay) -->
+      <div id="comm-sidebar-resizer" class="resizer-v" data-target="slide-over" data-side="right"></div>
+      <div id="slide-over" class="fixed inset-y-0 right-0 w-[450px] bg-white border-l border-slate-200 shadow-2xl flex flex-col z-20 translate-x-full transition-transform duration-300">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 id="panel-title" class="text-lg font-bold text-slate-900">Modifier Modèle</h3>
+            <p class="text-xs text-slate-500">Personnalisez votre message automatique</p>
+          </div>
+          <button id="close-slide-over" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <input type="hidden" id="edit-template-id" />
+          <!-- Field: Title -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Titre du modèle</label>
+            <input id="edit-title" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" type="text" />
+          </div>
+          <!-- Field: Type -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Type de communication</label>
+            <select id="edit-type" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option value="SMS">SMS</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Email">Email</option>
+            </select>
+          </div>
+          <!-- Field: Tags Helper -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Tags dynamiques (cliquer pour insérer)</label>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="insertTag('{{Nom du Client}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{Nom du Client}}</button>
+              <button onclick="insertTag('{{Montant}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{Montant}}</button>
+              <button onclick="insertTag('{{Date_Echeance}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{Date_Echeance}}</button>
+              <button onclick="insertTag('{{Secteur}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{Secteur}}</button>
+              <button onclick="insertTag('{{Type_Credit}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{Type_Credit}}</button>
+              <button onclick="insertTag('{{ID}}')" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 hover:bg-primary/20 transition-colors">{{ID}}</button>
+            </div>
+          </div>
+          <!-- Field: Message Body -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Corps du message</label>
+            <textarea id="edit-body" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm leading-relaxed focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" rows="8"></textarea>
+            <p id="char-count" class="text-[10px] text-slate-400 mt-2 text-right italic">Caractères: 0</p>
+          </div>
+          <!-- Field: Active -->
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-slate-900">Activer le modèle</span>
+              <span class="text-[10px] text-slate-500 uppercase font-medium">Automation active</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="edit-active" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+        </div>
+        <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
+          <button id="cancel-edit" class="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+            Annuler
+          </button>
+          <button id="save-edit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+            Enregistrer
+          </button>
+        </div>
+      </div>
+
+<script>
+    function setupResizer(resizerId, sidebarId, edge) {
+        const resizer = document.getElementById(resizerId);
+        const sidebar = document.getElementById(sidebarId);
+        if (!resizer || !sidebar) return;
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            document.body.classList.add('resizing');
+            resizer.classList.add('resizing');
+            
+            const startX = e.clientX;
+            const startWidth = sidebar.offsetWidth;
+            
+            const onMouseMove = (e) => {
+                let newWidth;
+                if (edge === 'right' || edge === 'left' && resizerId.includes('main')) {
+                    newWidth = startWidth + (e.clientX - startX);
+                } else {
+                    newWidth = startWidth - (e.clientX - startX);
+                }
+                
+                const minWidth = 100;
+                const maxWidth = 900;
+                
+                if (newWidth < minWidth) newWidth = minWidth;
+                if (newWidth > maxWidth) newWidth = maxWidth;
+                
+                sidebar.style.width = newWidth + 'px';
+                sidebar.style.maxWidth = 'none'; // Ensure no tailwind max-width interferes
+            };
+            
+            const onMouseUp = () => {
+                document.body.classList.remove('resizing');
+                resizer.classList.remove('resizing');
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            };
+            
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    function refreshResizers() {
+        setupResizer('main-resizer', 'main-sidebar', 'right');
+        setupResizer('comm-sidebar-resizer', 'slide-over', 'left');
+    }
+
+    window.addEventListener('load', refreshResizers);
+
+(function() {
+    // --- STATE ---
+    let templates = [];
+    let filteredTemplates = [];
+    let currentCategory = 'all';
+    let editingId = null;
+
+    // --- DOM SELECTORS ---
+    const grid = document.getElementById('template-grid');
+    const slideOver = document.getElementById('slide-over');
+    const panelTitle = document.getElementById('panel-title');
+    const filterBtns = {
+        all: document.getElementById('filter-all'),
+        sms: document.getElementById('filter-sms'),
+        whatsapp: document.getElementById('filter-whatsapp')
+    };
+    const form = {
+        id: document.getElementById('edit-template-id'),
+        title: document.getElementById('edit-title'),
+        type: document.getElementById('edit-type'),
+        body: document.getElementById('edit-body'),
+        active: document.getElementById('edit-active'),
+        charCount: document.getElementById('char-count')
+    };
+
+    // --- INIT ---
+    async function init() {
+        console.log("Initializing dynamic Communications...");
+        setupEventListeners();
+        await loadTemplates();
+    }
+
+    async function loadTemplates() {
+        grid.innerHTML = `<div class="col-span-3 text-center py-20 text-slate-400 italic">Chargement des modèles...</div>`;
+        try {
+            const { data, error } = await window.supabase
+                .from('communication_models')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            templates = data || [];
+            applyCategoryFilter('all');
+        } catch (err) {
+            console.error("Error loading templates:", err);
+            grid.innerHTML = `<div class="col-span-3 text-center py-20 text-red-500 font-bold">Erreur : ${err.message}</div>`;
+        }
+    }
+
+    function applyCategoryFilter(cat) {
+        currentCategory = cat;
+        
+        // Update Classes
+        Object.keys(filterBtns).forEach(k => {
+            const btn = filterBtns[k];
+            if (!btn) return;
+            if (k === cat) {
+                btn.className = "px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2";
+            } else {
+                btn.className = "px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2";
+            }
+        });
+
+        if (cat === 'all') {
+            filteredTemplates = templates;
+        } else {
+            filteredTemplates = templates.filter(t => t.type.toLowerCase() === cat.toLowerCase());
+        }
+        render();
+    }
+
+    function render() {
+        if (filteredTemplates.length === 0) {
+            grid.innerHTML = `<div class="col-span-3 text-center py-20 text-slate-400 italic">Aucun modèle ${currentCategory === 'all' ? '' : currentCategory} trouvé.</div>`;
+            return;
+        }
+
+        grid.innerHTML = filteredTemplates.map(t => `
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative">
+                ${!t.active ? '<div class="absolute inset-x-0 bottom-0 h-1 bg-slate-200"></div>' : ''}
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-2 ${t.type === 'SMS' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'} rounded-lg">
+                        <span class="material-symbols-outlined">${t.type === 'SMS' ? 'sms' : 'chat'}</span>
+                    </div>
+                    <span class="px-2 py-0.5 ${t.type === 'SMS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'} text-[10px] font-bold rounded uppercase">${t.type} ${t.category || ''}</span>
+                </div>
+                <h4 class="font-bold text-slate-900 mb-2">${t.title}</h4>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4 h-24 overflow-hidden relative">
+                    <p class="text-xs text-slate-600 leading-relaxed italic">
+                        "${t.body}"
+                    </p>
+                    <div class="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 to-transparent"></div>
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full ${t.active ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}"></span>
+                        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">${t.active ? 'Actif' : 'Désactivé'}</p>
+                    </div>
+                    <button onclick="openEditor('${t.id}')" class="text-primary text-xs font-bold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">edit</span> Éditer
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function setupEventListeners() {
+        document.getElementById('close-slide-over')?.addEventListener('click', closeEditor);
+        document.getElementById('cancel-edit')?.addEventListener('click', closeEditor);
+        document.getElementById('save-edit')?.addEventListener('click', saveTemplate);
+        document.getElementById('edit-body')?.addEventListener('input', updateCharCount);
+        
+        filterBtns.all?.addEventListener('click', () => applyCategoryFilter('all'));
+        filterBtns.sms?.addEventListener('click', () => applyCategoryFilter('sms'));
+        filterBtns.whatsapp?.addEventListener('click', () => applyCategoryFilter('whatsapp'));
+
+        // Add "New Model" button logic
+        const newBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Nouveau Modèle'));
+        newBtn?.addEventListener('click', () => openEditor(null));
+    }
+
+    window.openEditor = function(id) {
+        editingId = id;
+        if (id) {
+            const t = templates.find(t => t.id === id);
+            if (!t) return;
+            panelTitle.innerText = "Modifier Modèle";
+            form.title.value = t.title;
+            form.type.value = t.type;
+            form.body.value = t.body;
+            form.active.checked = t.active;
+        } else {
+            panelTitle.innerText = "Nouveau Modèle";
+            form.title.value = "";
+            form.type.value = "SMS";
+            form.body.value = "";
+            form.active.checked = true;
+        }
+        updateCharCount();
+        slideOver.classList.remove('translate-x-full');
+    }
+
+    function closeEditor() {
+        slideOver.classList.add('translate-x-full');
+    }
+
+    async function saveTemplate() {
+        const payload = {
+            title: form.title.value,
+            type: form.type.value,
+            body: form.body.value,
+            active: form.active.checked
+        };
+
+        if (!payload.title || !payload.body) {
+            alert("Veuillez remplir le titre et le contenu du message.");
+            return;
+        }
+
+        try {
+            let result;
+            if (editingId) {
+                result = await window.supabase
+                    .from('communication_models')
+                    .update(payload)
+                    .eq('id', editingId);
+            } else {
+                result = await window.supabase
+                    .from('communication_models')
+                    .insert([payload]);
+            }
+
+            if (result.error) throw result.error;
+            
+            closeEditor();
+            await loadTemplates();
+        } catch (err) {
+            console.error("Error saving template:", err);
+            alert("Erreur lors de la sauvegarde : " + err.message);
+        }
+    }
+
+    function updateCharCount() {
+        if (form.charCount) {
+            form.charCount.innerText = `Caractères: ${form.body.value.length} / ${form.type.value === 'SMS' ? '160' : 'Illimité'}`;
+        }
+    }
+
+    window.insertTag = function(tag) {
+        const start = form.body.selectionStart;
+        const end = form.body.selectionEnd;
+        const text = form.body.value;
+        form.body.value = text.substring(0, start) + tag + text.substring(end);
+        form.body.focus();
+        form.body.setSelectionRange(start + tag.length, start + tag.length);
+        updateCharCount();
+    }
+
+    window.handleNewCommTemplate = function() {
+        editingId = null;
+        panelTitle.innerText = "Nouveau Modèle";
+        form.title.value = "";
+        form.type.value = "SMS";
+        form.body.value = "";
+        form.active.checked = true;
+        updateCharCount();
+        slideOver.classList.remove('translate-x-full');
+    }
+
+    window.toggleDropdown = function(id, event) {
+        if (event) event.stopPropagation();
+        const el = document.getElementById(id);
+        if (el) {
+            const isHidden = el.classList.contains('hidden');
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+            if (isHidden) el.classList.remove('hidden');
+        }
+    }
+
+    window.handleFilterTemplates = async function(type) {
+        // We'll reload with filter
+        const { data, error } = await window.supabase
+                .from('communication_models')
+                .select('*');
+        if (error) return;
+        
+        let filtered = data;
+        if (type !== 'all') {
+            filtered = data.filter(m => m.type.toLowerCase().includes(type.toLowerCase()));
+        }
+        filteredTemplates = filtered;
+        render();
+    }
+
+    window.handleSortTemplates = async function(criteria) {
+        const { data, error } = await window.supabase
+                .from('communication_models')
+                .select('*');
+        if (error) return;
+        
+        data.sort((a,b) => {
+            if (criteria === 'name') return a.title.localeCompare(b.title);
+            if (criteria === 'active') return (b.active ? 1:0) - (a.active ? 1:0);
+            return 0;
+        });
+        filteredTemplates = data;
+        render();
+    }
+
+    window.handleSearchTemplates = function(val) {
+        const cards = document.querySelectorAll('.template-card');
+        cards.forEach(card => {
+            const title = card.querySelector('h4')?.textContent.toLowerCase() || '';
+            const body = card.querySelector('p')?.textContent.toLowerCase() || '';
+            if (title.includes(val.toLowerCase()) || body.includes(val.toLowerCase())) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+    });
+
+    if (window.supabase) init();
+    else document.addEventListener('supabase-ready', init);
+
+})();
+</script>
+</div>
+</main>
+</div>
+</body></html>

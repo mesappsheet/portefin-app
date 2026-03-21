@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portfolio Clients - Enhanced Master-Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<aside class="w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h1 class="text-primary text-lg font-bold tracking-tight uppercase">Gestion du Portefeuille</h1>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Portfolio Management App</p>
+</div>
+<nav class="flex-1 p-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold tracking-wide">TABLEAU DE BORD</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20" href="#">
+<span class="material-symbols-outlined leading-none" style="font-variation-settings: 'FILL' 1">account_balance_wallet</span>
+<span class="text-sm font-semibold tracking-wide">PORTEFEUILLE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-sm font-semibold tracking-wide">COMMUNICATION</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-semibold tracking-wide">PARAMÈTRES</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2">
+<div class="w-10 h-10 rounded-full bg-slate-200"></div>
+<div>
+<p class="text-sm font-bold">Admin User</p>
+<p class="text-xs text-slate-500 font-medium">Directeur Agence</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 pt-6">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold">Portefeuille Clients</h2>
+<div class="flex gap-3">
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-lg">add</span>
+                        Nouveau Client
+                    </button>
+</div>
+</div>
+<div class="flex gap-8 overflow-x-auto no-scrollbar">
+<a class="pb-4 border-b-2 border-primary text-primary font-bold text-sm tracking-wide" href="#">CLIENTS</a>
+<a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">REMBOURSEMENTS</a>
+<a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">FIN ÉCHÉANCE</a>
+<a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">CRÉDITS SOLDÉS</a>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
+<section class="w-[500px] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-transparent rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Rechercher un client..." type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-[1fr_100px_100px] px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client / Montant</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Santé</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Statut</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<div class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 bg-primary/5 border-l-4 border-primary cursor-pointer hover:bg-primary/[0.08] transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm uppercase">JD</div>
+<div class="truncate">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">Jean Dupont</h3>
+<p class="text-xs text-slate-500 font-medium">1.250.000 FCFA</p>
+</div>
+</div>
+<div class="flex justify-center">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase tracking-wider">Sain</span>
+</div>
+<div class="flex justify-end">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider">En cours</span>
+</div>
+</div>
+<div class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 flex-shrink-0 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm uppercase">MC</div>
+<div class="truncate">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">Marie Claire</h3>
+<p class="text-xs text-slate-500 font-medium">2.200.000 FCFA</p>
+</div>
+</div>
+<div class="flex justify-center">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 uppercase tracking-wider">Souffrance</span>
+</div>
+<div class="flex justify-end">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider">En cours</span>
+</div>
+</div>
+<div class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm uppercase">LM</div>
+<div class="truncate">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">Lucas Martin</h3>
+<p class="text-xs text-slate-500 font-medium">900.000 FCFA</p>
+</div>
+</div>
+<div class="flex justify-center">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase tracking-wider">Sain</span>
+</div>
+<div class="flex justify-end">
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 uppercase tracking-wider">Soldé</span>
+</div>
+</div>
+</div>
+</section>
+<section class="flex-1 overflow-y-auto custom-scrollbar p-8">
+<div class="max-w-4xl mx-auto space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-2xl p-10 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center shadow-sm">
+<div class="relative">
+<div class="w-32 h-32 rounded-full bg-primary/10 border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden mb-6">
+<img alt="Jean Dupont" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAhyiH28Hs6bqHJCQ5vagzZ1GqtyKXnHONbxpL3CBPxXNb1JIAEUn4ENcXw0DLQkUTvtSUG6kASWKP_arr8IdtZwuzHm4cM2nP_GIHPvn6XjjTSQcI833DQWt_0AbHabYUDJXZkW6bkL4Kybw23zD57o-YPOqAfQGXtKZbNfV86ef2mGqobbPipBsf_zIqS6IoeIWTzdEwjmWdBSvj1yKwUu9O6QfRXa5xFfg3AZbF8s9YCOI8nGivDt9kuxPnc7eGtqU968pgEIA"/>
+</div>
+<span class="absolute bottom-8 right-2 w-6 h-6 bg-green-500 border-4 border-white dark:border-slate-800 rounded-full shadow-lg"></span>
+</div>
+<h2 class="text-3xl font-bold text-slate-900 dark:text-white">Jean Dupont</h2>
+<div class="flex items-center gap-2 mt-2">
+<span class="text-slate-500 text-sm font-medium">Client ID: #12345</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span class="text-slate-500 text-sm font-medium">Depuis Janvier 2023</span>
+</div>
+</div>
+<div class="grid grid-cols-6 gap-4">
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined text-primary text-xl">call</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Appeler</span>
+</button>
+<button id="btn-whatsapp" onclick="sendWhatsAppMessage()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-green-500/50 hover:bg-green-50 transition-all">
+<span class="material-symbols-outlined text-green-600 text-xl">chat</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">WhatsApp</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50 transition-all">
+<span class="material-symbols-outlined text-blue-600 text-xl">content_copy</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Copier</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-red-500/50 hover:bg-red-50 group transition-all">
+<span class="material-symbols-outlined text-red-500 text-xl">delete</span>
+<span class="text-[10px] font-bold uppercase tracking-widest group-hover:text-red-600">Supprimer</span>
+</button>
+<button id="btn-open-modifier" onclick="openModifierModal()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all group">
+<span class="material-symbols-outlined text-amber-500 text-xl group-hover:scale-110 transition-transform">edit</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Modifier</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-xl">payments</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Payer</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 pb-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg leading-none">account_balance</span>
+</div>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">DÉTAILS DU CRÉDIT</h3>
+</div>
+</div>
+<div class="px-6 py-2">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">MONTANT DU CRÉDIT</p>
+<div class="flex items-baseline gap-1.5">
+<span class="text-4xl font-bold text-primary tracking-tight">983 935</span>
+<span class="text-sm font-bold text-primary opacity-60">FCFA</span>
+</div>
+</div>
+<div class="mx-6 my-4 h-px bg-slate-100 dark:bg-slate-800"></div>
+<div class="px-6 pb-6 grid grid-cols-2 gap-4">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DATE DE DÉBUT</p>
+<p id="display-date-debut" class="text-sm font-semibold text-slate-800 dark:text-slate-200">15 Mars 2026</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">FIN ÉCHÉANCE</p>
+<p id="display-date-fin" class="text-sm font-semibold text-slate-800 dark:text-slate-200">15 Juin 2026</p>
+</div>
+</div>
+<div class="mx-6 mb-2 h-px bg-slate-100 dark:bg-slate-800"></div>
+<div class="px-6 pb-4">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">NOMBRE DE MENSUALITÉS</p>
+<p id="display-nb-mensualites" class="text-sm font-semibold text-slate-800 dark:text-slate-200">3 mois</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 pb-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg leading-none">person</span>
+</div>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">INFORMATIONS GÉNÉRALES</h3>
+</div>
+<div class="px-6 py-2 grid grid-cols-2 gap-4">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">TÉLÉPHONE 1</p>
+<p id="display-phone-1" class="text-sm font-semibold text-slate-800 dark:text-slate-200">-- -- -- -- --</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">TÉLÉPHONE 2</p>
+<p id="display-phone-2" class="text-sm font-semibold text-slate-800 dark:text-slate-200">-- -- -- -- --</p>
+</div>
+</div>
+<div class="px-6 py-4 space-y-4">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SECTEUR D'ACTIVITÉ</p>
+<p class="text-sm font-semibold text-slate-800 dark:text-slate-200">Commerce</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ADRESSE</p>
+<p class="text-sm font-semibold text-slate-800 dark:text-slate-200">Cocody, Abidjan</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Mini Échéancier dynamique -->
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 pb-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-lg leading-none">payments</span>
+</div>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">ÉCHÉANCIER DE REMBOURSEMENT</h3>
+</div>
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest cursor-pointer hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">visibility</span> Voir tout
+</span>
+</div>
+<div class="px-6 pb-2">
+<div class="grid grid-cols-3 px-2 py-2 bg-slate-50 dark:bg-slate-800/40 rounded-lg mb-2">
+<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">N°</span>
+<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Date Échéance</span>
+<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-right">Statut</span>
+</div>
+<div id="mini-echeancier-body" class="space-y-1 pb-4">
+<!-- Rempli dynamiquement par JS -->
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<!-- ═══════════ MODAL MODIFIER CRÉDIT ═══════════ -->
+<div id="modal-modifier-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+<div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<!-- Header -->
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-amber-500 text-sm">edit_note</span>
+<span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Modification du Crédit</span>
+</div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Modifier les données du crédit</h3>
+<p class="text-sm text-slate-500 mt-0.5">Jean Dupont — #12345</p>
+</div>
+<button onclick="closeModifierModal()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Form -->
+<form onsubmit="demanderConfirmationModification(event)" class="p-6 space-y-5">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date de Début <span class="text-amber-500">*</span></label>
+<div class="relative">
+<input id="input-date-debut" type="date" required
+class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"/>
+<span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-[20px]">calendar_today</span>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Montant du Crédit <span class="text-amber-500">*</span></label>
+<div class="relative">
+<input id="input-montant-credit" type="number" min="1000" required
+class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+placeholder="Ex: 1500000"/>
+<span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-[20px]">payments</span>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre de Mensualités <span class="text-amber-500">*</span></label>
+<div class="relative">
+<input id="input-nb-mensualites" type="number" min="1" max="60" required
+class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+placeholder="Ex: 6"/>
+<span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-[20px]">event_repeat</span>
+</div>
+<p class="text-xs text-slate-400 mt-1">Les dates de l'échéancier seront recalculées automatiquement.</p>
+</div>
+<!-- Aperçu en temps réel -->
+<div id="preview-echeancier" class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">preview</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aperçu de l'échéancier</span>
+</div>
+<div id="preview-list" class="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+<p class="italic text-slate-400">Remplissez les champs pour voir un aperçu...</p>
+</div>
+</div>
+<!-- Footer -->
+<div class="flex items-center justify-end gap-3 pt-2">
+<button type="button" onclick="closeModifierModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Annuler</button>
+<button type="submit" id="btn-submit-modifier" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-amber-500/20 transition-all">
+<span class="material-symbols-outlined text-lg">save</span>
+Enregistrer &amp; Recalculer
+</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ═══════════ MODAL CONFIRMATION MODIFICATION ═══════════ -->
+<div id="confirm-modif-overlay" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+<div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div class="h-1.5 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+    <div class="p-6">
+        <div class="flex items-start gap-4 mb-5">
+            <div class="w-12 h-12 flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-500 text-2xl">warning</span>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Confirmer la modification</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Cette action réinitialisera l'échéancier</p>
+            </div>
+        </div>
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800 mb-5">
+            <p class="text-sm text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
+                ⚠️ <strong>Attention :</strong> En modifiant les dates ou le nombre de mensualités, <strong>toutes les données liées à ce client seront supprimées et recalculées</strong> :
+            </p>
+            <ul class="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-400 font-medium list-disc list-inside">
+                <li>L'échéancier complet sera recréé</li>
+                <li>Les statuts Payé / Reporté seront réinitialisés</li>
+                <li>Les nouvelles dates seront recalculées automatiquement</li>
+            </ul>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-400">Cliquez <strong>Confirmer</strong> pour appliquer, ou <strong>Annuler</strong> pour revenir au formulaire.</p>
+    </div>
+    <div class="px-6 pb-6 flex items-center justify-end gap-3">
+        <button onclick="fermerConfirmModif()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">Annuler</button>
+        <button onclick="confirmerEtSauvegarder()" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-amber-500/20 transition-all">
+            <span class="material-symbols-outlined text-lg">check_circle</span>
+            Confirmer
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- ═══════════ SCRIPT LOGIQUE ÉCHÉANCIER ═══════════ -->
+<script>
+(function() {
+    // --- STATE ---
+    let allClients = [];
+    let selectedClientId = null;
+    let selectedCredit = null;
+
+    // --- DOM SELECTORS ---
+    const els = {
+        searchInput: document.querySelector('input[placeholder*="Rechercher"]'),
+        clientListCont: document.querySelector('div.flex-1.overflow-y-auto'),
+        detailSection: document.querySelector('section.flex-1.p-8'),
+        // Detail fields
+        clientName: document.querySelector('h2.text-3xl.font-bold'),
+        clientId: document.querySelector('span.text-slate-500.text-sm'),
+        clientAvatar: document.querySelector('img[alt="Jean Dupont"]'),
+        creditAmount: document.querySelector('span.text-4xl.font-bold.text-primary'),
+        dateDebut: document.getElementById('display-date-debut'),
+        dateFin: document.getElementById('display-date-fin'),
+        nbMensualites: document.getElementById('display-nb-mensualites'),
+        phone1: document.getElementById('display-phone-1'),
+        phone2: document.getElementById('display-phone-2'),
+        echeancierBody: document.getElementById('mini-echeancier-body')
+    };
+
+    // --- INIT ---
+    async function init() {
+        console.log("Initializing Portfolio Clients...");
+        setupSearch();
+        await loadClients();
+        if (allClients.length > 0) {
+            selectClient(allClients[0].id);
+        }
+    }
+
+    async function loadClients() {
+        els.clientListCont.innerHTML = `<div class="p-8 text-center text-slate-500 italic">Chargement...</div>`;
+        try {
+            // Fetch credits with client names
+            const { data, error } = await window.supabase
+                .from('credits')
+                .select('*')
+                .order('client_name', { ascending: true });
+
+            if (error) throw error;
+            allClients = data || [];
+            renderClientList(allClients);
+        } catch (err) {
+            console.error("Error loading clients:", err);
+            els.clientListCont.innerHTML = `<div class="p-8 text-center text-red-500">Erreur: ${err.message}</div>`;
+        }
+    }
+
+    function renderClientList(list) {
+        if (list.length === 0) {
+            els.clientListCont.innerHTML = `<div class="p-8 text-center text-slate-500">Aucun client trouvé.</div>`;
+            return;
+        }
+
+        els.clientListCont.innerHTML = list.map(c => {
+            const initials = c.client_name ? c.client_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+            const amount = new Intl.NumberFormat('fr-FR').format(c.amount);
+            const isSelected = c.id === selectedClientId;
+            
+            return `
+                <div onclick="window.selectClient('${c.id}')" class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm uppercase">${initials}</div>
+                        <div class="truncate">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">${c.client_name || 'Inconnu'}</h3>
+                            <p class="text-xs text-slate-500 font-medium">${amount} GNF</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${c.health === 'SAIN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} uppercase tracking-wider">${c.health || 'SAIN'}</span>
+                    </div>
+                    <div class="flex justify-end">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${c.status === 'SOLDÉ' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'} uppercase tracking-wider">${c.status || 'EN COURS'}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.selectClient = async function(id) {
+        selectedClientId = id;
+        selectedCredit = allClients.find(c => c.id === id);
+        renderClientList(allClients); // Update highlights
+        
+        if (!selectedCredit) return;
+
+        // Update UI Details
+        if(els.clientName) els.clientName.innerText = selectedCredit.client_name;
+        if(els.clientId) els.clientId.innerText = `Client ID: #${selectedCredit.id.substring(0,8)}`;
+        if(els.creditAmount) els.creditAmount.innerText = new Intl.NumberFormat('fr-FR').format(selectedCredit.amount);
+        
+        const dateDeb = new Date(selectedCredit.start_date);
+        const dateFi = new Date(selectedCredit.end_date);
+        if(els.dateDebut) els.dateDebut.innerText = dateDeb.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        if(els.dateFin) els.dateFin.innerText = dateFi.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // Fetch Client Phone Numbers
+        if (selectedCredit.client_id) {
+            try {
+                const { data: client, error: cErr } = await window.supabase
+                    .from('clients')
+                    .select('phone1, phone2')
+                    .eq('id', selectedCredit.client_id)
+                    .maybeSingle();
+                if (!cErr && client) {
+                    if (els.phone1) els.phone1.innerText = client.phone1 || 'Non renseigné';
+                    if (els.phone2) els.phone2.innerText = client.phone2 || 'Non renseigné';
+                    selectedCredit.phone1 = client.phone1; // Cache for WhatsApp
+                }
+            } catch (e) { console.error("Error fetching client phones:", e); }
+        }
+
+        // Fetch Repayments
+        await loadRepayments(id);
+    };
+
+    window.sendWhatsAppMessage = async function() {
+        if (!selectedCredit || !selectedCredit.phone1) {
+            alert("Sélectionnez un client avec un numéro de téléphone valide.");
+            return;
+        }
+
+        const phone = selectedCredit.phone1.replace(/\s+/g, '');
+        const data = {
+            name: selectedCredit.client_name,
+            amount: selectedCredit.amount,
+            date: new Date(selectedCredit.end_date).toLocaleDateString('fr-FR'),
+            id: selectedCredit.id.substring(0,8)
+        };
+        
+        try {
+            // Fetch active WhatsApp template
+            const { data: template, error } = await window.supabase
+                .from('communication_models')
+                .select('body')
+                .eq('type', 'WhatsApp')
+                .eq('active', true)
+                .limit(1)
+                .maybeSingle();
+
+            let message = "";
+            if (template && template.body) {
+                message = template.body;
+                // Replacement Logic
+                message = message
+                    .replace(/{{Nom du Client}}|{{Nom du Prospect}}|{{Nom}}/g, data.name || '')
+                    .replace(/{{Montant}}/g, data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) + ' FCFA' : '')
+                    .replace(/{{Date_Echeance}}|{{Date}}/g, data.date || '')
+                    .replace(/{{ID}}|{{Id_Dossier}}/g, data.id || '');
+            } else {
+                 message = `Bonjour ${data.name || ''}, votre dossier de ${data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) + ' FCFA' : ''} est en cours d'échéance le ${data.date || ''}.`;
+            }
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phone}${message ? '?text=' + encodedMessage : ''}`;
+            window.open(whatsappUrl, '_blank');
+        } catch (err) {
+            console.error("Messaging Error:", err);
+            window.open(`https://wa.me/${phone}`, '_blank');
+        }
+    };
+
+    async function loadRepayments(creditId) {
+        if (!els.echeancierBody) return;
+        els.echeancierBody.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-3">Chargement...</p>';
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('repayments')
+                .select('*')
+                .eq('credit_id', creditId)
+                .order('installment_number', { ascending: true });
+
+            if (error) throw error;
+            
+            if(els.nbMensualites) els.nbMensualites.innerText = `${data.length} mois`;
+            
+            if (data.length === 0) {
+                els.echeancierBody.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-3">Aucune échéance.</p>';
+                return;
+            }
+
+            els.echeancierBody.innerHTML = data.slice(0, 5).map(r => {
+                const date = new Date(r.scheduled_date);
+                const isPaid = r.is_paid;
+                return `
+                    <div class="grid grid-cols-3 items-center px-2 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                        <span class="text-xs font-bold text-slate-400">${String(r.installment_number).padStart(2,'0')}</span>
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                        <div class="flex justify-end">
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'} uppercase tracking-tighter">${isPaid ? 'PAYÉ' : 'ATTENTE'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (data.length > 5) {
+                els.echeancierBody.innerHTML += `
+                    <p class="text-[10px] text-center text-primary font-semibold pt-1 cursor-pointer hover:underline">+ ${data.length - 5} autres échéances</p>
+                `;
+            }
+
+        } catch (err) {
+            console.error("Error loading repayments:", err);
+            els.echeancierBody.innerHTML = '<p class="text-xs text-red-400 italic text-center py-3">Erreur.</p>';
+        }
+    }
+
+    function setupSearch() {
+        els.searchInput?.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allClients.filter(c => 
+                c.client_name.toLowerCase().includes(val) || 
+                c.id.toLowerCase().includes(val)
+            );
+            renderClientList(filtered);
+        });
+    }
+
+    // Export functions for Modal logic (existing)
+    window.refreshPortfolioUI = loadClients;
+
+    // Start
+    if (window.supabase) init();
+    else document.addEventListener('supabase-ready', init);
+
+})();
+</script>
+<script>
+(function() {
+    // ══════════════════════════════════════════════════════════
+    //  CONFIG SUPABASE
+    // ══════════════════════════════════════════════════════════
+    const SUPABASE_URL  = 'https://lkuwgggwdtbzjgplwylr.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
+
+    const STORAGE_KEY  = 'credit_echeancier_actif';
+    const STORAGE_ID   = 'credit_id_actif';
+
+    // Valeurs par défaut si aucune donnée en base
+    const defaults = { dateDebut: '2026-03-15', nbMensualites: 3, creditId: null };
+
+    // ══════════════════════════════════════════════════════════
+    //  HELPERS SUPABASE (fetch natif, pas de SDK)
+    // ══════════════════════════════════════════════════════════
+    const headers = {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+
+    async function sbGet(table, query = '') {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+
+    async function sbPatch(table, query, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+            method: 'PATCH', headers, body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+
+    async function sbDelete(table, query) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+            method: 'DELETE', headers
+        });
+        if (!r.ok) throw new Error(await r.text());
+    }
+
+    async function sbPost(table, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+            method: 'POST', headers, body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CALCUL DES DATES D'ÉCHÉANCE
+    //  Règle : +30 jours par échéance, décalage si week-end
+    // ══════════════════════════════════════════════════════════
+    function ajouterJoursOuvrables(date, jours) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + jours);
+        // Décalage si samedi (6) ou dimanche (0) → lundi suivant
+        const jour = d.getDay();
+        if (jour === 6) d.setDate(d.getDate() + 2);
+        if (jour === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+
+    function calculerEcheancier(dateDebutStr, nbMensualites) {
+        const dateDebut = new Date(dateDebutStr + 'T00:00:00');
+        const echeances = [];
+        for (let i = 1; i <= nbMensualites; i++) {
+            echeances.push(ajouterJoursOuvrables(dateDebut, 30 * i));
+        }
+        return echeances;
+    }
+
+    function toISODate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  FORMATAGE DATES EN FRANÇAIS
+    // ══════════════════════════════════════════════════════════
+    function formatDateFR(date) {
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    function formatDateShortFR(date) {
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  LOCALSTORAGE — cache local
+    // ══════════════════════════════════════════════════════════
+    function loadLocalData() {
+        try {
+            const s = localStorage.getItem(STORAGE_KEY);
+            return s ? JSON.parse(s) : { ...defaults };
+        } catch { return { ...defaults }; }
+    }
+
+    function saveLocalData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        if (data.creditId) localStorage.setItem(STORAGE_ID, data.creditId);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CHARGEMENT DEPUIS SUPABASE au démarrage
+    //  ⚠️ NE PAS écraser dateDebut/nbMensualites si l'utilisateur
+    //     les a modifiés (lastLocalEdit présent)
+    // ══════════════════════════════════════════════════════════
+    async function chargerDepuisSupabase() {
+        try {
+            const local = loadLocalData();
+
+            // Prend le premier crédit EN COURS
+            const credits = await sbGet('credits', 'status=eq.EN%20COURS&limit=1&select=id,start_date,end_date,amount,client_name');
+            if (credits && credits.length > 0) {
+                const credit = credits[0];
+
+                // Charger les repayments pour les statuts (pas pour les dates)
+                const repayments = await sbGet('repayments',
+                    `credit_id=eq.${credit.id}&select=id,installment_number,scheduled_date,status,is_paid,is_reported&order=installment_number.asc`
+                );
+
+                // ⚠️ RÈGLE CRITIQUE :
+                //  – Si l'utilisateur a fait une modif locale → garder SES dates
+                //  – Sinon (premier chargement) → utiliser les dates Supabase
+                const hasLocalEdit = !!local.lastLocalEdit;
+
+                const dateDebut     = hasLocalEdit ? local.dateDebut     : credit.start_date;
+                const nbMensualites = hasLocalEdit ? local.nbMensualites : (repayments?.length || defaults.nbMensualites);
+
+                // Ne sauvegarder que creditId + montant (pas les dates si edit local)
+                const merged = {
+                    ...local,
+                    creditId:      credit.id,
+                    amount:        credit.amount,
+                    clientName:    credit.client_name || 'Jean Dupont',
+                    dateDebut,
+                    nbMensualites
+                };
+                saveLocalData(merged);
+
+                // Affichage : dates locales + statuts Supabase
+                const echeancesCalc = calculerEcheancier(dateDebut, nbMensualites);
+                const echeancesAffichage = echeancesCalc.map((d, i) => {
+                    const sb = (repayments || []).find(r => r.installment_number === (i + 1));
+                    return {
+                        id:                 sb?.id,
+                        installment_number: i + 1,
+                        scheduled_date:     toISODate(d),   // ← DATE LOCALE (toujours à jour)
+                        status:             sb?.status   || 'En attente',
+                        is_paid:            sb?.is_paid  || false
+                    };
+                });
+                refreshUI(merged, echeancesAffichage);
+                return;
+            }
+        } catch (err) {
+            console.warn('[Supabase] Chargement échoué, utilisation du cache local :', err.message);
+        }
+
+        // Fallback localStorage pur
+        const local = loadLocalData();
+        const echeances = calculerEcheancier(local.dateDebut, local.nbMensualites);
+        refreshUI(local, echeances.map((d, i) => ({
+            installment_number: i + 1, scheduled_date: toISODate(d),
+            status: 'En attente', is_paid: false
+        })));
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MISE À JOUR UI (panneau détails + mini-échéancier)
+    // ══════════════════════════════════════════════════════════
+    function refreshUI(data, repayments) {
+        updateDetailsPanel(data);
+        updateMiniEcheancier(repayments || []);
+    }
+
+    function updateDetailsPanel(data) {
+        const dateDebut = new Date(data.dateDebut + 'T00:00:00');
+        const echeances = calculerEcheancier(data.dateDebut, data.nbMensualites);
+        const dateFin = echeances[echeances.length - 1];
+
+        const el = (id) => document.getElementById(id);
+        if (el('display-date-debut'))     el('display-date-debut').textContent     = formatDateFR(dateDebut);
+        if (el('display-date-fin'))       el('display-date-fin').textContent       = formatDateFR(dateFin);
+        if (el('display-nb-mensualites')) el('display-nb-mensualites').textContent = data.nbMensualites + ' mois';
+    }
+
+    function updateMiniEcheancier(repayments) {
+        const container = document.getElementById('mini-echeancier-body');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!repayments.length) {
+            container.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-3">Aucune échéance trouvée</p>';
+            return;
+        }
+
+        repayments.slice(0, 5).forEach(r => { // Affiche max 5 lignes dans le mini-tableau
+            const num = String(r.installment_number).padStart(2, '0');
+            const date = new Date(r.scheduled_date + 'T00:00:00');
+            const isPaid = r.is_paid;
+            const statut = isPaid ? 'Payé' : (r.status || 'En attente');
+            const badgeClass = isPaid
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-3 items-center px-2 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors';
+            row.innerHTML = `
+                <span class="text-xs font-bold text-slate-400">${num}</span>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${formatDateShortFR(date)}</span>
+                <div class="flex justify-end">
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${badgeClass} uppercase tracking-tighter">${statut}</span>
+                </div>`;
+            container.appendChild(row);
+        });
+
+        if (repayments.length > 5) {
+            const more = document.createElement('p');
+            more.className = 'text-[10px] text-center text-primary font-semibold pt-1 cursor-pointer hover:underline';
+            more.textContent = `+ ${repayments.length - 5} autres échéances — Voir tout`;
+            container.appendChild(more);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  APERÇU TEMPS RÉEL DANS LE MODAL
+    // ══════════════════════════════════════════════════════════
+    function updatePreview() {
+        const dateVal = document.getElementById('input-date-debut')?.value;
+        const nbVal   = parseInt(document.getElementById('input-nb-mensualites')?.value);
+        const previewList = document.getElementById('preview-list');
+        if (!previewList) return;
+
+        if (!dateVal || !nbVal || nbVal < 1) {
+            previewList.innerHTML = '<p class="italic text-slate-400">Remplissez les champs pour voir un aperçu...</p>';
+            return;
+        }
+        const echeances = calculerEcheancier(dateVal, nbVal);
+        previewList.innerHTML = echeances.map((d, i) => {
+            const num = String(i + 1).padStart(2, '0');
+            const isWE = d.getDay() === 1 && new Date(dateVal + 'T00:00:00').getDay() !== 1;
+            return `<div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                <span class="font-bold text-slate-400">Échéance ${num}</span>
+                <div class="flex items-center gap-1.5">
+                    ${isWE ? '<span class="text-[9px] text-amber-500 font-bold">WE→LUN</span>' : ''}
+                    <span class="font-semibold text-primary">${formatDateShortFR(d)}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MODAL — OUVRIR / FERMER
+    // ══════════════════════════════════════════════════════════
+    window.openModifierModal = function() {
+        const data = loadLocalData();
+        const inputDebut   = document.getElementById('input-date-debut');
+        const inputNb      = document.getElementById('input-nb-mensualites');
+        const inputMontant = document.getElementById('input-montant-credit');
+        if (inputDebut)   inputDebut.value   = data.dateDebut;
+        if (inputNb)      inputNb.value      = data.nbMensualites;
+        if (inputMontant) inputMontant.value = data.amount || '';
+
+        inputDebut?.addEventListener('input', updatePreview);
+        inputNb?.addEventListener('input', updatePreview);
+        updatePreview();
+
+        const overlay = document.getElementById('modal-modifier-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+    };
+
+    window.closeModifierModal = function() {
+        const overlay = document.getElementById('modal-modifier-overlay');
+        if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
+    };
+
+    document.addEventListener('click', function(e) {
+        if (e.target === document.getElementById('modal-modifier-overlay')) closeModifierModal();
+        if (e.target === document.getElementById('confirm-modif-overlay')) fermerConfirmModif();
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  ÉTAPE 1 : Interception du submit → afficher la confirmation
+    // ══════════════════════════════════════════════════════════
+    let _pendingModifData = null;
+
+    window.demanderConfirmationModification = function(e) {
+        e.preventDefault();
+        const dateVal = document.getElementById('input-date-debut')?.value;
+        const nbVal   = parseInt(document.getElementById('input-nb-mensualites')?.value);
+        if (!dateVal || !nbVal || nbVal < 1) return;
+
+        // Stocker les données du formulaire
+        _pendingModifData = { dateVal, nbVal };
+
+        // Afficher le modal de confirmation
+        const overlay = document.getElementById('confirm-modif-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+    };
+
+    window.fermerConfirmModif = function() {
+        const overlay = document.getElementById('confirm-modif-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+        _pendingModifData = null;
+    };
+
+    // ══════════════════════════════════════════════════════════
+    //  ÉTAPE 2 : Confirmation → Sauvegarde Supabase + localStorage
+    //  ① Supprimer TOUT dans Supabase (repayments + mise à jour credit)
+    //  ② Insérer les nouvelles échéances
+    //  ③ Mettre à jour le localStorage
+    //  ④ Rafraîchir l'UI immédiatement
+    // ══════════════════════════════════════════════════════════
+    window.confirmerEtSauvegarder = async function() {
+        if (!_pendingModifData) return;
+        const { dateVal, nbVal } = _pendingModifData;
+        fermerConfirmModif();
+        closeModifierModal();
+
+        const echeances = calculerEcheancier(dateVal, nbVal);
+        const dateFin   = toISODate(echeances[echeances.length - 1]);
+        const local     = loadLocalData();
+        const creditId  = local.creditId;
+
+        // ① Mise à jour localStorage IMMÉDIATE (sans lastLocalEdit — Supabase va tout gérer)
+        const newLocal = {
+            ...local,
+            dateDebut:     dateVal,
+            nbMensualites: nbVal,
+            lastLocalEdit: new Date().toISOString()  // signal pour écran 02
+        };
+        saveLocalData(newLocal);
+
+        // ② Mise à jour UI immédiate — tout En attente
+        const repaymentsMock = echeances.map((d, i) => ({
+            installment_number: i + 1, scheduled_date: toISODate(d),
+            status: 'En attente', is_paid: false
+        }));
+        refreshUI(newLocal, repaymentsMock);
+
+        // 🔔 Notifier l'écran 02 si actif dans le même onglet
+        window.dispatchEvent(new CustomEvent('echeancier-updated', { detail: newLocal }));
+
+        showToast('⏳ Suppression et recalcul en cours...', 'info');
+
+        // ③ Synchronisation Supabase en arrière-plan
+        try {
+            if (!creditId) throw new Error('Aucun credit_id — données sauvegardées localement.');
+
+            // SUPPRIMER toutes les anciennes échéances
+            await sbDelete('repayments', `credit_id=eq.${creditId}`);
+
+            // METTRE À JOUR le crédit
+            await sbPatch('credits', `id=eq.${creditId}`, {
+                start_date: dateVal, end_date: dateFin
+            });
+
+            // INSÉRER les nouvelles échéances fraîches
+            const nouvellesEcheances = echeances.map((d, i) => ({
+                credit_id:          creditId,
+                installment_number: i + 1,
+                scheduled_date:     toISODate(d),
+                status:             'En attente',
+                is_paid:            false,
+                is_reported:        false
+            }));
+            await sbPost('repayments', nouvellesEcheances);
+
+            // Retirer le flag lastLocalEdit maintenant que Supabase est synchro
+            const updatedLocal = { ...newLocal };
+            delete updatedLocal.lastLocalEdit;
+            saveLocalData(updatedLocal);
+
+            showToast('✅ Crédit modifié — Échéancier recalculé dans Supabase !', 'success');
+
+        } catch (err) {
+            console.error('[Supabase] Erreur sauvegarde :', err.message);
+            showToast('💾 Sauvegardé localement. Erreur Supabase : ' + err.message, 'warning');
+        }
+    };
+
+    // ══════════════════════════════════════════════════════════
+    //  TOASTS
+    // ══════════════════════════════════════════════════════════
+    function showToast(msg, type = 'success') {
+        const colors = {
+            success: 'bg-emerald-600 shadow-emerald-900/20',
+            info:    'bg-blue-600 shadow-blue-900/20',
+            warning: 'bg-amber-500 shadow-amber-900/20'
+        };
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-[999] flex items-center gap-3 ${colors[type] || colors.success} text-white px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold transform translate-y-4 opacity-0 transition-all duration-300`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; }, 10);
+        setTimeout(() => {
+            toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 400);
+        }, type === 'success' ? 4000 : 2500);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  INITIALISATION
+    // ══════════════════════════════════════════════════════════
+    function init() {
+        // ① Affichage instantané depuis localStorage (cache)
+        const local = loadLocalData();
+        const echeancesMock = calculerEcheancier(local.dateDebut, local.nbMensualites).map((d, i) => ({
+            installment_number: i + 1, scheduled_date: toISODate(d),
+            status: 'En attente', is_paid: false
+        }));
+        refreshUI(local, echeancesMock);
+
+        // ② Chargement réel depuis Supabase (asynchrone)
+        chargerDepuisSupabase();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+</div>
+</main>
+</div>
+
+</body></html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-background-dark/50 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="bg-primary p-2 rounded-lg text-white">
+<span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+</div>
+<div>
+<h1 class="text-sm font-bold leading-tight uppercase tracking-wider">Gestion du Portefeuille</h1>
+<p class="text-xs text-slate-500 font-medium">Administration</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Tableau de Bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Portefeuille</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Communication</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-primary fill-1">settings</span>
+<span class="text-sm font-bold uppercase tracking-wide">Paramètres</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-slate-500">person</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold">Admin User</p>
+<p class="text-xs text-slate-500">Premium Account</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">logout</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-background-dark">
+<!-- Top Header & Tabs -->
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8">
+<div class="flex items-center justify-between py-4">
+<h2 class="text-xl font-bold">Paramètres de l'application</h2>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<div class="flex gap-8">
+<a class="pb-3 text-sm font-bold text-primary border-b-2 border-primary" href="#">GÉNÉRAL</a>
+<a class="pb-3 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors border-b-2 border-transparent" href="#">AFFICHAGE DES VUES</a>
+<a class="pb-3 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors border-b-2 border-transparent" href="#">CHAMPS &amp; BADGES</a>
+</div>
+</header>
+<div class="p-8 max-w-5xl mx-auto space-y-8">
+<!-- Section 1: Visual Theme -->
+<section>
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        Thème visuel
+                    </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Light Theme Block -->
+<div class="relative cursor-pointer group rounded-xl border-2 border-primary bg-white p-4 shadow-sm">
+<div class="aspect-video w-full rounded-lg mb-4 bg-slate-100 border border-slate-200 overflow-hidden" data-alt="Interface preview of light mode UI">
+<div class="p-2 flex gap-2">
+<div class="w-1/4 h-32 bg-white rounded border border-slate-200 shadow-sm"></div>
+<div class="flex-1 space-y-2">
+<div class="h-4 w-full bg-white rounded border border-slate-200"></div>
+<div class="h-16 w-full bg-white rounded border border-slate-200"></div>
+<div class="h-8 w-1/2 bg-primary/20 rounded"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-bold text-slate-900">Mode Clair</span>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+</div>
+<!-- Dark Theme Block -->
+<div class="relative cursor-pointer group rounded-xl border-2 border-transparent bg-slate-800 p-4 shadow-sm hover:border-slate-400 transition-all">
+<div class="aspect-video w-full rounded-lg mb-4 bg-background-dark border border-slate-700 overflow-hidden" data-alt="Interface preview of dark mode UI">
+<div class="p-2 flex gap-2 opacity-60">
+<div class="w-1/4 h-32 bg-slate-900 rounded border border-slate-700"></div>
+<div class="flex-1 space-y-2">
+<div class="h-4 w-full bg-slate-900 rounded border border-slate-700"></div>
+<div class="h-16 w-full bg-slate-900 rounded border border-slate-700"></div>
+<div class="h-8 w-1/2 bg-primary/40 rounded"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-bold text-white">Mode Sombre</span>
+<span class="material-symbols-outlined text-slate-500">radio_button_unchecked</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Region and Language -->
+<section class="bg-white dark:bg-slate-900/50 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+<h3 class="text-primary font-bold uppercase text-xs tracking-widest mb-6">Région et Langue</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Fuseau Horaire</label>
+<div class="relative">
+<select class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+<option>(GMT+01:00) Paris, Berlin, Rome</option>
+<option>(GMT+00:00) London, Lisbon</option>
+<option>(GMT-05:00) New York, Toronto</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Format de date</label>
+<div class="relative">
+<select class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+<option>JJ / MM / AAAA</option>
+<option>MM / JJ / AAAA</option>
+<option>AAAA - MM - JJ</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: System Preferences -->
+<section class="bg-white dark:bg-slate-900/50 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+<h3 class="text-primary font-bold uppercase text-xs tracking-widest mb-6">Système</h3>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold">Mode Silencieux</p>
+<p class="text-xs text-slate-500">Désactiver toutes les notifications sonores et pop-ups système.</p>
+</div>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors focus:outline-none">
+<span class="inline-block h-4 w-4 translate-x-6 rounded-full bg-white transition-transform"></span>
+</button>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold">Sauvegarde Automatique</p>
+<p class="text-xs text-slate-500">Enregistrer les modifications en temps réel sur le cloud.</p>
+</div>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 dark:bg-slate-700 transition-colors focus:outline-none">
+<span class="inline-block h-4 w-4 translate-x-1 rounded-full bg-white transition-transform"></span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section 4: Affichage des Vues (Detailed View Customization) -->
+<div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+<h2 class="text-xl font-bold mb-6">Affichage des Vues</h2>
+<div class="grid grid-cols-1 gap-8">
+<!-- Client View Config -->
+<div class="bg-white dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+<h3 class="text-primary font-bold">Configuration de la vue CLIENTS</h3>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">drag_indicator</span>
+</button>
+</div>
+<div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
+<div>
+<p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Colonnes de la liste</p>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Nom du Client</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Montant du Portefeuille</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Santé du compte</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Statut Actif</span>
+</label>
+</div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Détails du panneau</p>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Numéros de téléphone</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Secteur d'activité</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="size-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium group-hover:text-primary transition-colors">Adresse de facturation</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Refund View Config -->
+<div class="bg-white dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden opacity-80">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+<h3 class="text-primary font-bold">Configuration de la vue REMBOURSEMENTS</h3>
+<button class="text-slate-400">
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-end gap-4 pb-12">
+<button class="px-6 py-2.5 rounded-lg font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Annuler
+                    </button>
+<button class="px-8 py-2.5 bg-primary text-white rounded-lg font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                        Enregistrer les modifications
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

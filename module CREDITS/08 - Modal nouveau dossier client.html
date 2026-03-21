@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modal Light - New Client Dossier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-app": "#f8fafc",
+                        "surface-modal": "#ffffff",
+                        "accent-orange": "#f97316",
+                        "navy-text": "#0f172a",
+                        "slate-muted": "#64748b"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            position: absolute;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .modal-shadow {
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.08);
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.92) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .confirm-modal-enter {
+            animation: fadeInScale 0.22s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-background-app font-display text-navy-text antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden pointer-events-none select-none opacity-30 grayscale-[0.2]">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between border-b border-slate-200 px-10 py-3 bg-white">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
+<h2 class="text-lg font-bold tracking-tight">GESTION DU PORTEFEUILLE CLIENTS</h2>
+</div>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<div class="flex items-center gap-9 text-sm font-medium">
+<span>Tableau de bord</span>
+<span>Clients</span>
+<span class="text-primary border-b-2 border-primary">Portefeuille</span>
+</div>
+<div class="size-10 rounded-full bg-slate-200"></div>
+</div>
+</header>
+<main class="p-10">
+<div class="grid grid-cols-3 gap-6">
+<div class="h-32 bg-white rounded-xl border border-slate-100"></div>
+<div class="h-32 bg-white rounded-xl border border-slate-100"></div>
+<div class="h-32 bg-white rounded-xl border border-slate-100"></div>
+</div>
+<div class="mt-8 h-96 bg-white rounded-xl border border-dashed border-slate-200"></div>
+</main>
+</div>
+</div>
+
+<!-- ═══════════ MODAL PRINCIPAL : NOUVEAU DOSSIER ═══════════ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/10 backdrop-blur-md p-4">
+<div class="relative w-full max-w-3xl max-h-full bg-surface-modal rounded-2xl modal-shadow overflow-hidden flex flex-col border border-white">
+<button id="btn-close-dossier" class="absolute top-6 right-6 text-slate-400 hover:text-navy-text transition-colors z-10">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+<div class="p-10 pb-6">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary">person_add</span>
+<span class="text-primary font-bold text-xs uppercase tracking-[0.2em]">Nouveau Dossier</span>
+</div>
+<h1 class="text-3xl font-bold tracking-tight text-navy-text">Ouverture de Dossier Client</h1>
+<p class="text-slate-muted mt-2">Veuillez renseigner les informations pour l'ouverture du compte et l'analyse du dossier de crédit.</p>
+</div>
+<form id="form-nouveau-dossier" class="px-10 pb-10 space-y-8 overflow-y-auto">
+<section class="space-y-5">
+<div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+<span class="material-symbols-outlined text-slate-400 text-sm">info</span>
+<h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Section 1: Informations Générales</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Nom complet <span class="text-accent-orange">*</span></span>
+<input id="dossier-nom" class="w-full bg-slate-50 border-slate-200 rounded-lg text-navy-text placeholder:text-slate-400 focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all" placeholder="Ex: Jean Dupont" required="" type="text"/>
+</label>
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Adresse Email <span class="text-slate-400 font-normal italic">(facultatif)</span></span>
+<input id="dossier-email" class="w-full bg-slate-50 border-slate-200 rounded-lg text-navy-text placeholder:text-slate-400 focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all" placeholder="nom@entreprise.com" type="email"/>
+</label>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Numéro de téléphone 1 <span class="text-accent-orange">*</span></span>
+<input id="dossier-tel1" class="w-full bg-slate-50 border-slate-200 rounded-lg text-navy-text placeholder:text-slate-400 focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all" placeholder="+225 07 00 00 00 00" required="" type="tel"/>
+</label>
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Numéro de téléphone 2 <span class="text-slate-400 font-normal italic">(facultatif)</span></span>
+<input id="dossier-tel2" class="w-full bg-slate-50 border-slate-200 rounded-lg text-navy-text placeholder:text-slate-400 focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all" placeholder="+225 07 00 00 00 00" type="tel"/>
+</label>
+</div>
+</section>
+<section class="space-y-5 p-8 bg-slate-50/80 rounded-2xl border border-slate-100">
+<div class="flex items-center gap-2 pb-2 border-b border-slate-200">
+<span class="material-symbols-outlined text-slate-400 text-sm">payments</span>
+<h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Section 2: Analyse Financière</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Montant souhaité <span class="text-accent-orange">*</span></span>
+<input id="dossier-montant" class="w-full bg-white border-slate-200 rounded-lg text-navy-text placeholder:text-slate-400 focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all" placeholder="1 000 000" required="" type="number" min="1"/>
+</label>
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Type de dossier <span class="text-accent-orange">*</span></span>
+<div class="flex items-center gap-2">
+<select id="dossier-type" class="flex-1 bg-white border-slate-200 rounded-lg text-navy-text focus:ring-primary/20 focus:border-primary py-3 px-4 transition-all">
+<option>Crédit Scolaire</option>
+<option>Crédit Immobilier</option>
+<option>Crédit Professionnel</option>
+<option>Crédit Consommation</option>
+<option>Rachat de crédit</option>
+</select>
+<button type="button" class="text-primary text-xs font-bold hover:underline whitespace-nowrap">Gérer les types</button>
+</div>
+</label>
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Date Début <span class="text-accent-orange">*</span></span>
+<div class="relative">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-xl pointer-events-none">calendar_today</span>
+<input id="dossier-date-debut" class="w-full bg-white border-slate-200 rounded-lg text-navy-text focus:ring-primary/20 focus:border-primary py-3 pl-4 pr-12 appearance-none transition-all" required="" type="date"/>
+</div>
+</label>
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-navy-text">Fin Échéance <span class="text-accent-orange">*</span></span>
+<div class="relative">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-xl pointer-events-none">event</span>
+<input id="dossier-date-fin" class="w-full bg-white border-slate-200 rounded-lg text-navy-text focus:ring-primary/20 focus:border-primary py-3 pl-4 pr-12 appearance-none transition-all" required="" type="date"/>
+</div>
+</label>
+</div>
+<!-- Aperçu mensualités -->
+<div id="apercu-mensualites" class="hidden p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">event_repeat</span>
+<p id="apercu-texte" class="text-sm font-semibold text-primary"></p>
+</div>
+</section>
+<div class="flex items-center justify-end gap-4 pt-4">
+<button id="btn-annuler-dossier" class="px-6 py-3 rounded-lg font-bold text-slate-500 hover:text-navy-text hover:bg-slate-100 transition-all" type="button">
+Annuler
+</button>
+<button id="btn-enregistrer-dossier" class="px-8 py-3 bg-accent-orange hover:bg-orange-600 text-white rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-300/40" type="submit">
+<span class="material-symbols-outlined text-xl">save</span>
+Enregistrer le dossier
+</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ═══════════ MODAL DE CONFIRMATION SUPPRESSION ═══════════ -->
+<div id="confirm-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+<div id="confirm-box" class="confirm-modal-enter bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+    <!-- Bande d'alerte orange en haut -->
+    <div class="h-1.5 bg-gradient-to-r from-orange-400 to-red-500"></div>
+    <div class="p-6">
+        <!-- Icône + titre -->
+        <div class="flex items-start gap-4 mb-5">
+            <div class="w-12 h-12 flex-shrink-0 rounded-full bg-orange-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-orange-500 text-2xl">warning</span>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-slate-900">Confirmation de modification</h3>
+                <p class="text-sm text-slate-500 mt-0.5">Cette action est irréversible</p>
+            </div>
+        </div>
+        <!-- Message d'avertissement -->
+        <div class="p-4 bg-orange-50 rounded-xl border border-orange-200 mb-5">
+            <p class="text-sm text-orange-800 font-medium leading-relaxed">
+                ⚠️ <strong>Attention :</strong> Toutes les données liées à ce client seront
+                <strong>supprimées et recréées</strong> avec les nouvelles informations :
+            </p>
+            <ul class="mt-2 space-y-1 text-sm text-orange-700 font-medium list-disc list-inside">
+                <li>L'échéancier complet (toutes les échéances)</li>
+                <li>Les statuts de paiement (Payé, Reporté…)</li>
+                <li>Les données du crédit en cours</li>
+            </ul>
+        </div>
+        <!-- Client concerné -->
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 mb-5 flex items-center gap-3">
+            <span class="material-symbols-outlined text-slate-400 text-lg">person</span>
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client concerné</p>
+                <p id="confirm-client-name" class="text-sm font-bold text-slate-800">—</p>
+            </div>
+        </div>
+        <p class="text-sm text-slate-600">Cliquez <strong>OK</strong> pour confirmer et enregistrer les nouvelles données, ou <strong>Annuler</strong> pour revenir au formulaire.</p>
+    </div>
+    <!-- Boutons -->
+    <div class="px-6 pb-6 flex items-center justify-end gap-3">
+        <button id="confirm-cancel-btn" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all border border-slate-200">
+            Annuler
+        </button>
+        <button id="confirm-ok-btn" class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-orange-500/20 transition-all">
+            <span class="material-symbols-outlined text-lg">check_circle</span>
+            OK — Confirmer
+        </button>
+    </div>
+</div>
+</div>
+
+<div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-40 z-[60]"></div>
+
+<script>
+(function() {
+    // ══════════════════════════════════════════════════════════
+    //  CONFIG SUPABASE
+    // ══════════════════════════════════════════════════════════
+    const SUPABASE_URL  = 'https://lkuwgggwdtbzjgplwylr.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
+    const STORAGE_KEY   = 'credit_echeancier_actif';
+
+    const hdrs = {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+
+    // ── Helpers Supabase ──────────────────────────────────────
+    async function sbGet(table, q = '') {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { headers: hdrs });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+    async function sbPost(table, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+            method: 'POST', headers: hdrs, body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+    async function sbDelete(table, q) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, {
+            method: 'DELETE', headers: hdrs
+        });
+        if (!r.ok) throw new Error(await r.text());
+    }
+    async function sbPatch(table, q, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, {
+            method: 'PATCH', headers: hdrs, body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+
+    // ── Calcul mensualités ────────────────────────────────────
+    function calcNbMensualites(dateDebutStr, dateFinStr) {
+        const debut = new Date(dateDebutStr + 'T00:00:00');
+        const fin   = new Date(dateFinStr   + 'T00:00:00');
+        const diffJ = (fin - debut) / (1000 * 60 * 60 * 24);
+        return Math.max(1, Math.round(diffJ / 30));
+    }
+
+    // ── Calcul dates d'échéance (30j + décalage week-end) ────
+    function nextWorkday(date, days) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+    function buildSchedule(startStr, nb) {
+        const start = new Date(startStr + 'T00:00:00');
+        return Array.from({ length: nb }, (_, i) => nextWorkday(start, 30 * (i + 1)));
+    }
+    function toISO(d) { return d.toISOString().split('T')[0]; }
+
+    // ── LocalStorage ─────────────────────────────────────────
+    function getLocal() {
+        try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : {}; }
+        catch { return {}; }
+    }
+
+    // ── Aperçu mensualités en temps réel ─────────────────────
+    function mettreAJourApercu() {
+        const debut = document.getElementById('dossier-date-debut')?.value;
+        const fin   = document.getElementById('dossier-date-fin')?.value;
+        const apercu = document.getElementById('apercu-mensualites');
+        const texte  = document.getElementById('apercu-texte');
+        if (!apercu || !texte) return;
+
+        if (debut && fin && new Date(fin) > new Date(debut)) {
+            const nb = calcNbMensualites(debut, fin);
+            texte.textContent = `→ ${nb} mensualité${nb > 1 ? 's' : ''} calculée${nb > 1 ? 's' : ''} (échéances tous les 30 jours)`;
+            apercu.classList.remove('hidden');
+            apercu.classList.add('flex');
+        } else {
+            apercu.classList.add('hidden');
+            apercu.classList.remove('flex');
+        }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const colors = {
+            success: 'bg-emerald-600 shadow-emerald-900/20',
+            info:    'bg-blue-600 shadow-blue-900/20',
+            warning: 'bg-amber-500 shadow-amber-900/20',
+            error:   'bg-red-600 shadow-red-900/20'
+        };
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-[999] flex items-center gap-3 ${colors[type] || colors.success} text-white px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold transform translate-y-4 opacity-0 transition-all duration-300`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; }, 10);
+        setTimeout(() => {
+            toast.style.transform = 'translateY(16px)'; toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 400);
+        }, type === 'success' ? 4000 : 3000);
+    }
+
+    // ── Variables de données du formulaire ───────────────────
+    let _pendingData = null;
+
+    // ══════════════════════════════════════════════════════════
+    //  AFFICHER LE MODAL DE CONFIRMATION
+    // ══════════════════════════════════════════════════════════
+    function afficherConfirmation(data) {
+        _pendingData = data;
+
+        const overlay = document.getElementById('confirm-overlay');
+        const nameEl  = document.getElementById('confirm-client-name');
+        if (nameEl) nameEl.textContent = data.nom || 'Client';
+
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+    }
+
+    function fermerConfirmation() {
+        const overlay = document.getElementById('confirm-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+        _pendingData = null;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SAUVEGARDE COMPLÈTE (SUPABASE + LOCALSTORAGE)
+    //  ① Supprimer tout ce qui concerne le client dans Supabase
+    //  ② Insérer les nouvelles données
+    //  ③ Mise à jour localStorage
+    //  ④ Navigation vers écran échéancier
+    // ══════════════════════════════════════════════════════════
+    async function sauvegarderDossier(data) {
+        const btn = document.getElementById('btn-enregistrer-dossier');
+
+        // Feedback bouton
+        if (btn) {
+            btn.innerHTML = '<span class="material-symbols-outlined text-xl" style="animation:spin 1s linear infinite">sync</span> Enregistrement...';
+            btn.disabled = true;
+        }
+
+        const { dateDebut, dateFin, montant, nbMensualites, nom, typeDossier } = data;
+        const echeances = buildSchedule(dateDebut, nbMensualites);
+        const dateFinCalculee = toISO(echeances[echeances.length - 1]);
+
+        // ① Lire le credit_id existant depuis localStorage
+        const local = getLocal();
+        const ancienCreditId = local.creditId || null;
+
+        showToast('🗑️ Suppression des anciennes données...', 'info');
+
+        try {
+            // ── ÉTAPE 1 : Supprimer les anciennes données Supabase ─────
+            if (ancienCreditId) {
+                // Supprimer toutes les échéances liées
+                await sbDelete('repayments', `credit_id=eq.${ancienCreditId}`);
+                // Supprimer le crédit lui-même
+                await sbDelete('credits', `id=eq.${ancienCreditId}`);
+                console.log(`[Dossier] ✅ Supprimé : credit ${ancienCreditId} + tous ses repayments`);
+            } else {
+                // Pas d'ID connu → chercher par nom de client si possible
+                try {
+                    const creditsExistants = await sbGet('credits',
+                        `client_name=eq.${encodeURIComponent(nom)}&status=eq.EN%20COURS&select=id`
+                    );
+                    if (creditsExistants && creditsExistants.length > 0) {
+                        for (const c of creditsExistants) {
+                            await sbDelete('repayments', `credit_id=eq.${c.id}`);
+                            await sbDelete('credits', `id=eq.${c.id}`);
+                            console.log(`[Dossier] ✅ Supprimé crédit existant par nom : ${c.id}`);
+                        }
+                    }
+                } catch (searchErr) {
+                    console.warn('[Dossier] Recherche par nom échouée (non critique) :', searchErr.message);
+                }
+            }
+
+            showToast('📝 Enregistrement du nouveau dossier...', 'info');
+
+            // ── ÉTAPE 2 : Insérer le nouveau crédit ───────────────────
+            const nouveauCredit = await sbPost('credits', [{
+                client_name: nom,
+                amount:      montant,
+                start_date:  dateDebut,
+                end_date:    dateFinCalculee,
+                status:      'EN COURS',
+                credit_type: typeDossier
+            }]);
+
+            const newCreditId = Array.isArray(nouveauCredit) ? nouveauCredit[0]?.id : nouveauCredit?.id;
+
+            // ── ÉTAPE 3 : Insérer les nouvelles échéances ──────────────
+            if (newCreditId) {
+                const nouvellesEcheances = echeances.map((d, i) => ({
+                    credit_id:          newCreditId,
+                    installment_number: i + 1,
+                    scheduled_date:     toISO(d),
+                    status:             'En attente',
+                    is_paid:            false,
+                    is_reported:        false
+                }));
+                await sbPost('repayments', nouvellesEcheances);
+                console.log(`[Dossier] ✅ Inséré : ${nouvellesEcheances.length} échéances pour credit ${newCreditId}`);
+            }
+
+            // ── ÉTAPE 4 : Mise à jour localStorage ────────────────────
+            const newLocal = {
+                dateDebut,
+                dateFin:       dateFinCalculee,
+                nbMensualites,
+                amount:        montant,
+                creditId:      newCreditId || null,
+                clientName:    nom,
+                // PAS de lastLocalEdit ici → l'échéancier va charger depuis Supabase normalement
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocal));
+            console.log('[Dossier] ✅ localStorage mis à jour :', newLocal);
+
+            showToast('✅ Dossier enregistré avec succès !', 'success');
+
+            // ── ÉTAPE 5 : Naviguer vers l'échéancier ──────────────────
+            if (btn) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-xl">check_circle</span> Dossier enregistré !';
+            }
+            setTimeout(() => {
+                allerVersEcheancier();
+            }, 600);
+
+        } catch (err) {
+            console.error('[Dossier] Erreur Supabase :', err.message);
+            showToast('⚠️ Erreur Supabase : ' + err.message + ' — Sauvegarde locale effectuée.', 'warning');
+
+            // Fallback : au moins sauvegarder localement avec lastLocalEdit
+            const fallbackLocal = {
+                dateDebut,
+                dateFin:       dateFinCalculee,
+                nbMensualites,
+                amount:        montant,
+                creditId:      ancienCreditId,
+                clientName:    nom,
+                lastLocalEdit: new Date().toISOString()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackLocal));
+
+            if (btn) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Enregistrer le dossier';
+                btn.disabled = false;
+            }
+        }
+    }
+
+    // ── Navigation vers échéancier ────────────────────────────
+    function allerVersEcheancier() {
+        if (typeof naviguerVers === 'function') {
+            naviguerVers('credits', '02');
+            return;
+        }
+        // Mode standalone : redirection directe
+        console.log('[Dossier] Navigation standalone → 02 - Echeancier credit.html');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  ÉCOUTE DES ÉVÉNEMENTS
+    // ══════════════════════════════════════════════════════════
+
+    // Aperçu en temps réel
+    document.getElementById('dossier-date-debut')?.addEventListener('input', mettreAJourApercu);
+    document.getElementById('dossier-date-fin')?.addEventListener('input', mettreAJourApercu);
+
+    // Fermer le modal principal
+    document.getElementById('btn-close-dossier')?.addEventListener('click', () => {
+        if (typeof closeModal === 'function') closeModal();
+    });
+    document.getElementById('btn-annuler-dossier')?.addEventListener('click', () => {
+        if (typeof closeModal === 'function') closeModal();
+    });
+
+    // Fermer la confirmation avec Annuler
+    document.getElementById('confirm-cancel-btn')?.addEventListener('click', () => {
+        fermerConfirmation();
+        // Ré-activer le bouton submit
+        const btn = document.getElementById('btn-enregistrer-dossier');
+        if (btn) {
+            btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Enregistrer le dossier';
+            btn.disabled = false;
+        }
+    });
+
+    // Confirmer → lancer la sauvegarde réelle
+    document.getElementById('confirm-ok-btn')?.addEventListener('click', async () => {
+        if (!_pendingData) return;
+        const data = { ..._pendingData };
+        fermerConfirmation();
+        await sauvegarderDossier(data);
+    });
+
+    // Clic hors du modal de confirmation → fermer
+    document.getElementById('confirm-overlay')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            fermerConfirmation();
+            const btn = document.getElementById('btn-enregistrer-dossier');
+            if (btn) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Enregistrer le dossier';
+                btn.disabled = false;
+            }
+        }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  SOUMISSION DU FORMULAIRE → AFFICHER LA CONFIRMATION
+    // ══════════════════════════════════════════════════════════
+    const form = document.getElementById('form-nouveau-dossier');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const dateDebut = document.getElementById('dossier-date-debut')?.value;
+            const dateFin   = document.getElementById('dossier-date-fin')?.value;
+            const montant   = parseFloat(document.getElementById('dossier-montant')?.value) || 0;
+            const nom       = document.getElementById('dossier-nom')?.value?.trim() || 'Client';
+            const typeDossier = document.getElementById('dossier-type')?.value || '';
+
+            // Validations
+            if (!dateDebut || !dateFin) {
+                showToast('⚠️ Veuillez renseigner les dates de début et de fin.', 'warning');
+                return;
+            }
+            if (new Date(dateFin) <= new Date(dateDebut)) {
+                showToast('⚠️ La date de fin doit être après la date de début.', 'warning');
+                return;
+            }
+            if (montant <= 0) {
+                showToast('⚠️ Veuillez saisir un montant valide.', 'warning');
+                return;
+            }
+
+            const nbMensualites = calcNbMensualites(dateDebut, dateFin);
+
+            // Stocker les données en attente et afficher la confirmation
+            afficherConfirmation({ dateDebut, dateFin, montant, nbMensualites, nom, typeDossier });
+        });
+    }
+
+    // Init : définir la date du jour par défaut
+    (function setDefaultDate() {
+        const today = new Date().toISOString().split('T')[0];
+        const debutInput = document.getElementById('dossier-date-debut');
+        if (debutInput && !debutInput.value) debutInput.value = today;
+    })();
+
+})();
+</script>
+</div>
+</div>
+
+</body></html>

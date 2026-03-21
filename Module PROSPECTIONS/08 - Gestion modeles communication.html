@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Communication - Templates Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* RESIZABLE SIDEBARS */
+        .resizer-v {
+            width: 4px;
+            cursor: col-resize;
+            flex-shrink: 0;
+            transition: background 0.2s;
+            background: transparent;
+            z-index: 40;
+            position: relative;
+        }
+        .resizer-v::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.05);
+        }
+        .dark .resizer-v::after { background: rgba(255,255,255,0.05); }
+        .resizer-v:hover, .resizer-v.resizing {
+            background: rgba(19, 91, 236, 0.4);
+        }
+        body.resizing {
+            cursor: col-resize !important;
+            user-select: none !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 h-screen overflow-hidden">
+<div class="flex h-full">
+<!-- Sidebar -->
+<aside id="main-sidebar" class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-75">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Gestion du</h1>
+<p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Portefeuille</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+                        TABLEAU DE BORD
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">work</span>
+                        PORTEFEUILLE
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1">chat</span>
+                        COMMUNICATION
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+                        PARAMÈTRES
+                    </a>
+</nav>
+</div>
+<div class="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-200 overflow-hidden">
+<img alt="Profil Utilisateur" data-alt="Corporate headshot of a business manager profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFlSnXH_IlRgKyX4-Bji_x8iS28fvPIFg6Z6mB0IigG1TpeH8uEgb7NSMtuzbh8AOGwGeC0GbyICduBZuJBL6wi7MtsCeEZt4jcFmk6FaPTy-VkVRkoQodqM9vTX0FHlJKyy7Lj70wkntLqI0__CeuOdi3r-SmfpXdBahymze1cTG3oyOg-i8-CasRfiCJuHfM2_LFlRnOdx8PdTy84YXYMRA35GBT9hT-s-UIuzCYSVj3yvHgM8dVBldDdCgBgyoRlKz_4spSwR4"/>
+</div>
+<div>
+<p class="text-xs font-bold">Jean Dupont</p>
+<p class="text-[10px] text-slate-500">Administrateur</p>
+</div>
+</div>
+</div>
+</aside>
+<div id="main-resizer" class="resizer-v" data-target="main-sidebar" data-side="left"></div>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Topbar -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 flex items-center justify-between">
+<div class="flex-1 max-w-2xl">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50" placeholder="Rechercher un modèle..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-8">
+<button class="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg font-bold">add</span>
+                        Nouveau Modèle
+                    </button>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<!-- Master Section -->
+<section class="flex-1 overflow-y-auto p-8 no-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
+<div class="mb-8">
+<h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Modèles de communication</h2>
+<p class="text-slate-500 dark:text-slate-400">Gérez vos messages automatisés SMS et WhatsApp pour vos interactions clients.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Template Card 1 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow relative">
+<div class="absolute top-4 right-4">
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded uppercase">SMS Prioritaire</span>
+</div>
+<div class="size-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined">sms</span>
+</div>
+<h3 class="text-lg font-bold mb-2">Rappel de RDV</h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+                                Bonjour <span class="text-primary font-medium">{{Nom du Client}}</span>, votre rendez-vous est prévu le {{Date}} à {{Heure}}. À bientôt !
+                            </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<span class="text-xs text-slate-400">Modifié il y a 2h</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Template Card 2 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border-2 border-primary shadow-sm relative ring-4 ring-primary/5">
+<div class="absolute top-4 right-4">
+<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded uppercase">WhatsApp</span>
+</div>
+<div class="size-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 mb-4">
+<span class="material-symbols-outlined">chat</span>
+</div>
+<h3 class="text-lg font-bold mb-2 text-primary">Confirmation de Paiement</h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+                                Merci <span class="text-primary font-medium">{{Nom du Client}}</span> pour votre règlement de <span class="text-primary font-medium">{{Montant}}</span>. Votre facture est disponible ici : {{Lien_Facture}}.
+                            </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<span class="text-xs text-slate-400 font-medium">Actif</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Template Card 3 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow relative">
+<div class="absolute top-4 right-4">
+<span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded uppercase">SMS Standard</span>
+</div>
+<div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 mb-4">
+<span class="material-symbols-outlined">sms</span>
+</div>
+<h3 class="text-lg font-bold mb-2">Offre Spéciale</h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+                                Exclusivement pour vous <span class="text-primary font-medium">{{Nom du Client}}</span>, profitez de 20% sur votre prochaine commande avec le code : {{Code_Promo}} !
+                            </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<span class="text-xs text-slate-400">Désactivé</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Template Card 4 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow relative">
+<div class="absolute top-4 right-4">
+<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded uppercase">WhatsApp</span>
+</div>
+<div class="size-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 mb-4">
+<span class="material-symbols-outlined">chat</span>
+</div>
+<h3 class="text-lg font-bold mb-2">Suivi Client</h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+                                Bonjour <span class="text-primary font-medium">{{Nom du Client}}</span>, comment s'est passée votre expérience avec {{Nom_Agent}} ? Donnez-nous votre avis !
+                            </p>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<span class="text-xs text-slate-400 font-medium">Actif</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Detail Side Panel (Modifier Modèle) -->
+<div id="comm-sidebar-resizer" class="resizer-v" data-target="detail-sidebar" data-side="right"></div>
+<aside id="detail-sidebar" class="w-[450px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shadow-2xl z-20 transition-all duration-75">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit</span>
+                            Modifier Modèle
+                        </h2>
+<button class="size-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+<!-- Model Title -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Titre du modèle</label>
+<input class="w-full border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded-lg focus:ring-primary focus:border-primary" type="text" value="Confirmation de Paiement"/>
+</div>
+<!-- Communication Type -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type de communication</label>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center gap-2 p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+<span class="material-symbols-outlined text-3xl">sms</span>
+<span class="text-sm font-semibold">SMS</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 border-2 border-primary bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1">chat</span>
+<span class="text-sm font-bold text-primary">WhatsApp</span>
+</button>
+</div>
+</div>
+<!-- Dynamic Tags -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tags Dynamiques</label>
+<div class="flex flex-wrap gap-2">
+<button onclick="insertTag('{{Nom du Prospect}}')" class="px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer">{{Nom du Prospect}}</button>
+<button onclick="insertTag('{{Téléphone}}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors cursor-pointer text-left">{{Téléphone}}</button>
+<button onclick="insertTag('{{Activité}}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors cursor-pointer text-left">{{Activité}}</button>
+<button onclick="insertTag('{{Adresse}}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors cursor-pointer text-left">{{Adresse}}</button>
+<button onclick="insertTag('{{Statut}}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors cursor-pointer text-left">{{Statut}}</button>
+<button onclick="insertTag('{{Email}}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors cursor-pointer text-left">{{Email}}</button>
+</div>
+</div>
+<!-- Message Body -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Corps du message</label>
+<textarea id="edit-message-body" class="w-full border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded-lg focus:ring-primary focus:border-primary text-sm leading-relaxed" placeholder="Écrivez votre message ici..." rows="6">Merci {{Nom du Client}} pour votre règlement de {{Montant}}. Votre facture est disponible ici : {{Lien_Facture}}.</textarea>
+<div class="flex justify-between items-center text-[10px] text-slate-400 px-1">
+<span>142 caractères</span>
+<span>1 Segment SMS</span>
+</div>
+</div>
+<!-- Active Toggle -->
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+<div>
+<p class="text-sm font-bold">Activer le modèle</p>
+<p class="text-xs text-slate-500">Le modèle sera prêt pour les automations.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Footer Buttons -->
+<div class="p-6 border-t border-slate-200 dark:border-slate-800 flex gap-4 bg-white dark:bg-slate-900">
+<button class="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">Annuler</button>
+<button class="flex-1 py-3 px-4 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all text-sm shadow-lg shadow-primary/20">Enregistrer</button>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<script>
+    function setupResizer(resizerId, sidebarId, edge) {
+        const resizer = document.getElementById(resizerId);
+        const sidebar = document.getElementById(sidebarId);
+        if (!resizer || !sidebar) return;
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            document.body.classList.add('resizing');
+            resizer.classList.add('resizing');
+            
+            const startX = e.clientX;
+            const startWidth = sidebar.offsetWidth;
+            
+            const onMouseMove = (e) => {
+                let newWidth;
+                if (edge === 'right' || edge === 'left' && resizerId.includes('main')) {
+                    newWidth = startWidth + (e.clientX - startX);
+                } else {
+                    newWidth = startWidth - (e.clientX - startX);
+                }
+                
+                const minWidth = 100;
+                const maxWidth = 900;
+                
+                if (newWidth < minWidth) newWidth = minWidth;
+                if (newWidth > maxWidth) newWidth = maxWidth;
+                
+                sidebar.style.width = newWidth + 'px';
+            };
+            
+            const onMouseUp = () => {
+                document.body.classList.remove('resizing');
+                resizer.classList.remove('resizing');
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            };
+            
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    window.addEventListener('load', () => {
+        setupResizer('main-resizer', 'main-sidebar', 'right');
+        setupResizer('comm-sidebar-resizer', 'detail-sidebar', 'left');
+    });
+
+    function insertTag(tag) {
+        const input = document.getElementById('edit-message-body');
+        if (!input) return;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.substring(0, start) + tag + text.substring(end);
+        input.focus();
+        input.setSelectionRange(start + tag.length, start + tag.length);
+    }
+</script>
+</body>
+</html>
+```

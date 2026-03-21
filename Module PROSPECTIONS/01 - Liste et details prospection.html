@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prospection - Liste et Détails</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1763cf",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-size: 20px; }
+        
+        /* RESIZABLE SIDEBARS */
+        .resizer-v {
+            width: 4px;
+            cursor: col-resize;
+            flex-shrink: 0;
+            transition: background 0.2s;
+            background: transparent;
+            z-index: 40;
+            position: relative;
+        }
+        .resizer-v::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.05);
+        }
+        .dark .resizer-v::after { background: rgba(255,255,255,0.05); }
+        .resizer-v:hover, .resizer-v.resizing {
+            background: rgba(23, 99, 207, 0.4);
+        }
+        body.resizing {
+            cursor: col-resize !important;
+            user-select: none !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside id="main-sidebar" class="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-75">
+<div class="p-6">
+<h1 class="text-primary text-xs font-bold uppercase tracking-widest">Gestion du Portefeuille</h1>
+<p class="text-slate-500 text-[10px] uppercase tracking-tighter">Client Management System</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium uppercase tracking-tight">Tableau de Bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="text-sm font-medium uppercase tracking-tight">Portefeuille</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">target</span>
+<span class="text-sm font-bold uppercase tracking-tight">Prospection</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-sm font-medium uppercase tracking-tight">Communication</span>
+</a>
+<div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium uppercase tracking-tight">Paramètres</span>
+</a>
+</div>
+</nav>
+<div class="p-4 mt-auto">
+<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">JD</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Jean Dupont</p>
+<p class="text-[10px] text-slate-500 truncate">Administrateur</p>
+</div>
+</div>
+</div>
+</aside>
+<div id="main-resizer" class="resizer-v" data-target="main-sidebar" data-side="left"></div>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Header / Tabs -->
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 pt-4 px-6">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-xl font-bold">Prospection</h2>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-lg">person_add</span>
+Nouveau Prospect
+</button>
+</div>
+<div class="flex gap-8">
+<a class="pb-3 border-b-2 border-primary text-primary text-xs font-bold tracking-wider uppercase" href="#">Liste et Détails</a>
+<a class="pb-3 border-b-2 border-transparent text-slate-400 text-xs font-bold tracking-wider uppercase hover:text-slate-600" href="#">Communications</a>
+</div>
+</header>
+<!-- Master-Detail Layout -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left: List Section -->
+<section id="list-sidebar" class="w-[450px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col overflow-hidden transition-all duration-75">
+<div class="p-4 space-y-4">
+<div class="flex gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" placeholder="Rechercher un prospect..." type="text"/>
+</div>
+<button class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-slate-50 dark:bg-slate-800 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+<tr>
+<th class="px-4 py-3">Prospect / Date</th>
+<th class="px-4 py-3">Contact</th>
+<th class="px-4 py-3">Secteur</th>
+<th class="px-4 py-3">Statut</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Row 1 Active -->
+<tr class="bg-primary/5 cursor-pointer border-l-4 border-primary transition-colors">
+<td class="px-4 py-3">
+<p class="text-sm font-bold">Cabinet Médical Nord</p>
+<p class="text-[10px] text-slate-400">12 Oct. 2023</p>
+</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">+225 07 45 88...</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">Santé / Plateau</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded-full uppercase">Qualifié</span>
+</td>
+</tr>
+<!-- Other Rows -->
+<tr class="hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+<td class="px-4 py-3">
+<p class="text-sm font-medium">Boulangerie Patiss</p>
+<p class="text-[10px] text-slate-400">11 Oct. 2023</p>
+</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">+225 01 22 33...</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">Alim / Cocody</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded-full uppercase">Nouveau</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+<td class="px-4 py-3">
+<p class="text-sm font-medium">TechStart SARL</p>
+<p class="text-[10px] text-slate-400">10 Oct. 2023</p>
+</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">+225 05 99 12...</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">Tech / Marcory</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-[9px] font-bold rounded-full uppercase">En cours</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+<td class="px-4 py-3">
+<p class="text-sm font-medium">Auto-Ecole Zen</p>
+<p class="text-[10px] text-slate-400">08 Oct. 2023</p>
+</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">+225 07 11 44...</td>
+<td class="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400">Service / Angré</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded-full uppercase">Nouveau</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<div id="list-resizer" class="resizer-v" data-target="list-sidebar" data-side="left"></div>
+<!-- Right: Details Section -->
+<section class="flex-1 bg-background-light dark:bg-background-dark p-6 overflow-y-auto space-y-6">
+<!-- Block 1: Profile Header -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-8 flex items-center gap-8 shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-200">
+<img class="w-full h-full object-cover" data-alt="Modern office building exterior for professional business representation" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgoE3gz8tCO4OVO0aMXQzy5VETWIoTZLnEnTE2hc2q8udQTNu5jFwwBBWOPWCMTsQEFzvzpAHdUYKpPaXD137GjdpZK25CcLnQoPlWc4OUctKdjYs4JTdUZ3Q2ZKMiTH4IkDSDk43YFh9v9g_rlKfUkmvV06Q2PLTudx0w7BJ2pl_ALC4lc7dC79qThrmZa8wxkxNOnp1pwrgM-BOPFDETTz3fC5CGypl3L5nl2ZA0xdBgRfXjGzGznIZwmifImkQXjgencjHX_0o"/>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-4 mb-1">
+<h3 class="text-2xl font-bold tracking-tight">Cabinet Médical Nord</h3>
+<span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider">Qualifié</span>
+</div>
+<p class="text-slate-500 font-medium">Prospect Froid • <span class="text-primary">Dernière interaction il y a 2 jours</span></p>
+</div>
+</div>
+<!-- Block 2: Quick Actions -->
+<div class="flex flex-wrap gap-3">
+<button class="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary">call</span>
+                            APPELER
+                        </button>
+<button class="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-all shadow-sm">
+<span class="material-symbols-outlined text-green-500">chat</span>
+                            WHATSAPP
+                        </button>
+<button class="px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-all shadow-sm">
+<span class="material-symbols-outlined text-amber-500">sticky_note_2</span>
+                            AJOUTER NOTE
+                        </button>
+<button class="px-8 py-2.5 bg-primary text-white rounded-full flex items-center gap-2 text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all ml-auto">
+<span class="material-symbols-outlined">how_to_reg</span>
+                            CONVERTIR EN CLIENT
+                        </button>
+<button class="px-4 py-2.5 bg-red-50 text-red-600 rounded-full flex items-center gap-2 text-sm font-bold hover:bg-red-100 transition-all">
+<span class="material-symbols-outlined">delete</span>
+                            SUPPRIMER
+                        </button>
+</div>
+<!-- Block 3: Information Cards -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Card 1: General Info -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<h4 class="font-bold text-sm uppercase tracking-wider">Informations Générales</h4>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+<span class="text-xs text-slate-500 font-medium">Téléphone</span>
+<span class="text-sm font-semibold">+225 07 45 88 12 99</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+<span class="text-xs text-slate-500 font-medium">Secteur d'activité</span>
+<span class="text-sm font-semibold">Santé &amp; Médecine</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+<span class="text-xs text-slate-500 font-medium">Quartier</span>
+<span class="text-sm font-semibold">Plateau, Avenue 15</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+<span class="text-xs text-slate-500 font-medium">Adresse complète</span>
+<span class="text-sm font-semibold">Immeuble Le Paris, RDC</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-xs text-slate-500 font-medium">Date d'ajout</span>
+<span class="text-sm font-semibold">12 Octobre 2023, 14:30</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Observations -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+<span class="material-symbols-outlined text-primary">rate_review</span>
+<h4 class="font-bold text-sm uppercase tracking-wider">Observations &amp; Avis</h4>
+</div>
+<div class="flex-1 space-y-4 mb-6">
+<div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg relative">
+<p class="text-sm italic text-slate-600 dark:text-slate-400">"Très intéressé par l'offre Premium. A recontacter lundi pour finaliser les modalités de paiement."</p>
+<span class="text-[10px] text-slate-400 mt-2 block">— Ajouté par Jean D. il y a 3h</span>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg relative">
+<p class="text-sm italic text-slate-600 dark:text-slate-400">"Première visite positive. Structure bien organisée avec un fort potentiel d'équipement."</p>
+<span class="text-[10px] text-slate-400 mt-2 block">— Ajouté par Jean D. le 12/10</span>
+</div>
+</div>
+<button class="mt-auto w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center gap-2 font-bold text-xs hover:bg-slate-200 transition-colors uppercase tracking-tight">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+                                Ajouter une note
+                            </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+    <script>
+        function setupResizer(resizerId, sidebarId, edge) {
+            const resizer = document.getElementById(resizerId);
+            const sidebar = document.getElementById(sidebarId);
+            if (!resizer || !sidebar) return;
+
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                document.body.classList.add('resizing');
+                resizer.classList.add('resizing');
+                
+                const startX = e.clientX;
+                const startWidth = sidebar.offsetWidth;
+                
+                const onMouseMove = (e) => {
+                    let newWidth;
+                    // For sidebars on the left of their parent/screen, dragging right increases width
+                    if (edge === 'right' || edge === 'left' && resizerId.includes('main') || resizerId.includes('list')) {
+                        newWidth = startWidth + (e.clientX - startX);
+                    }
+                    
+                    const minWidth = 100;
+                    const maxWidth = 900;
+                    
+                    if (newWidth < minWidth) newWidth = minWidth;
+                    if (newWidth > maxWidth) newWidth = maxWidth;
+                    
+                    sidebar.style.width = newWidth + 'px';
+                };
+                
+                const onMouseUp = () => {
+                    document.body.classList.remove('resizing');
+                    resizer.classList.remove('resizing');
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                };
+                
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            setupResizer('main-resizer', 'main-sidebar', 'right');
+            setupResizer('list-resizer', 'list-sidebar', 'right');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prospection - Templates Management Layout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d7ff2",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 text-white">
+<span class="material-symbols-outlined block">business_center</span>
+</div>
+<div>
+<h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-white uppercase leading-tight">Gestion du<br/>Portefeuille</h1>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">TABLEAU DE BORD</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+<span class="text-sm font-medium">PORTEFEUILLE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1">target</span>
+<span class="text-sm font-bold">PROSPECTION</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">chat_bubble</span>
+<span class="text-sm font-medium">COMMUNICATION</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="text-sm font-medium">PARAMÈTRES</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+<img alt="Profile" class="w-10 h-10 rounded-full object-cover" data-alt="User profile photo of a professional manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTF43bWCDrzOI-FdBIFCZqscoNb2q1CV2rbxvUIt1kzNXi_6q6T9mpoIZiwllRrAnLUVkT7W3clYVbcfzZTSvW8cSvcmVPDt3dfEyegYShCmpWAj3E1Gbv-ISzHwN693JYu_r4fQwIkcOTJLeG3k8k26-zlZNzTsJ-E3ji3_X6Ftf1yEJ1U0--JK3E95taNEokFjPJkBc5IgrrSDxDyYCEC7-nzZTfl2y62JwzbDRuuMrHUijLT3skbRs7CecUZH35ny6rdQu7jbs"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate">Jean Dupont</p>
+<p class="text-xs text-slate-500 truncate">Directeur Commercial</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">more_vert</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col bg-background-light dark:bg-background-dark overflow-hidden">
+<!-- Top Bar -->
+<header class="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 shrink-0">
+<div class="flex-1 max-w-2xl relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-12 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-sm" placeholder="Rechercher un modèle de communication..." type="text"/>
+</div>
+<div class="flex items-center gap-4 ml-8">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+</button>
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Nouveau Modèle</span>
+</button>
+</div>
+</header>
+<!-- Master-Detail Content -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Master: Grid of Templates -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Modèles de Communication</h2>
+<div class="flex items-center gap-2 text-sm text-slate-500">
+<span>3 modèles actifs</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span>Dernière mise à jour aujourd'hui</span>
+</div>
+</div>
+<div class="grid grid-cols-1 @2xl:grid-cols-2 gap-6">
+<!-- Card 1: Selected -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border-2 border-primary ring-4 ring-primary/5 shadow-xl relative cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full text-[10px] font-bold tracking-wider uppercase">WhatsApp</span>
+<div class="w-10 h-5 bg-primary rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Message de Bienvenue</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3">
+                            Bonjour <span class="text-primary font-medium">{{Nom du Prospect}}</span>, ravi de vous compter parmi nous ! Nous restons à votre disposition pour...
+                        </p>
+<div class="flex items-center gap-4 text-xs text-slate-400">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 2m ago</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span> 1.2k</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold tracking-wider uppercase">SMS PRIORITAIRE</span>
+<div class="w-10 h-5 bg-primary rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Relance Premier Contact</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3">
+                            Hello <span class="text-primary font-medium">{{Nom du Prospect}}</span>, je reviens vers vous concernant notre dernier échange sur <span class="text-primary font-medium">{{Activité}}</span>...
+                        </p>
+<div class="flex items-center gap-4 text-xs text-slate-400">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 1h ago</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span> 842</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm opacity-80 cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-bold tracking-wider uppercase">E-MAIL</span>
+<div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full relative">
+<div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Présentation de nos Crédits</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3">
+                            Cher partenaire, nous avons le plaisir de vous présenter nos nouvelles offres de financement adaptées à...
+                        </p>
+<div class="flex items-center gap-4 text-xs text-slate-400">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 2d ago</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span> 3.5k</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Detail: Editor Panel -->
+<div class="w-[480px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col shrink-0 relative">
+<!-- Panel Header -->
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined">edit</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white">Modifier Modèle</h3>
+<p class="text-xs text-slate-500">ID: TMP-8842-WX</p>
+</div>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<!-- Panel Form Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar pb-32">
+<!-- Title Input -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Titre du modèle</label>
+<input class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-medium" type="text" value="Message de Bienvenue"/>
+</div>
+<!-- Type Toggle -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type de communication</label>
+<div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1">
+<button class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500">SMS</button>
+<button class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm text-primary">WhatsApp</button>
+<button class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500">E-mail</button>
+</div>
+</div>
+<!-- Dynamic Tags -->
+<div class="space-y-3">
+<div class="flex justify-between">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tags dynamiques</label>
+<span class="text-[10px] text-primary font-bold cursor-pointer hover:underline">+ Gérer les tags</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-lg border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors">{{Nom du Prospect}}</span>
+<span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">{{Activité}}</span>
+<span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">{{Ville}}</span>
+<span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">{{Date RDV}}</span>
+</div>
+</div>
+<!-- Message Body -->
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Corps du message</label>
+<span class="text-[10px] text-slate-400">124 / 160 chars</span>
+</div>
+<textarea class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-1 focus:ring-primary text-sm leading-relaxed resize-none" rows="6">Bonjour {{Nom du Prospect}}, ravi de vous compter parmi nous ! Nous restons à votre entière disposition pour toute question concernant votre dossier {{Activité}}. À très bientôt !</textarea>
+</div>
+<!-- Status Toggle -->
+<div class="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Activer le modèle</p>
+<p class="text-xs text-slate-500">Rendre ce modèle disponible pour l'envoi auto.</p>
+</div>
+<div class="w-12 h-6 bg-primary rounded-full relative cursor-pointer shadow-inner">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md"></div>
+</div>
+</div>
+</div>
+<!-- Fixed Footer Buttons -->
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-4">
+<button class="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">Annuler</button>
+<button class="flex-[2] py-3 text-sm font-bold bg-primary hover:bg-primary/90 text-white rounded-xl transition-all shadow-lg shadow-primary/20">Enregistrer les modifications</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

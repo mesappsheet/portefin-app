@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modal Light - Reporter l'échéance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d7ff2",
+                        "background-light": "#f8fafc",
+                        "slate-custom": "#334155",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'premium': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+                        'modal': '0 25px 50px -12px rgba(0, 0, 0, 0.12)'
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-background-light font-display text-slate-900;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 px-10 py-3 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6">
+<span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+</div>
+<h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight uppercase">Gestion Portefeuille</h2>
+</div>
+<label class="flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-400 flex border-none bg-slate-100 items-center justify-center pl-4 rounded-l-lg">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 rounded-lg text-slate-900 focus:outline-0 focus:ring-2 focus:ring-primary border-none bg-slate-100 placeholder:text-slate-500 px-4 rounded-l-none pl-2 text-sm font-normal" placeholder="Rechercher un client..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<nav class="flex items-center gap-6">
+<a class="text-slate-600 text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary py-1" href="#">Portefeuille</a>
+<a class="text-slate-600 text-sm font-medium hover:text-primary transition-colors" href="#">Rapports</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 text-slate-600 hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 text-slate-600 hover:bg-primary/10 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold">Jean Dupont</span>
+<span class="text-xs text-slate-500">Gestionnaire</span>
+</div>
+<img alt="Photo de profil" class="rounded-full size-10 object-cover border-2 border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy60ALpKSOmKOE_skbq4wsHKCwtAEx9yiqM8naERXlfuElYFfJvbNOoTvc-HvdtcDDi05jIV0aA2TJhzWLH02fidVq_c46I_OJV89DM6MhIeVYnNCT5w7qI8CiogBbY6tDU-3wy8uvzovLOkSbeucTuSx1Y023_y39H3HWgOxE2d0cTexUiqiOyOSnTh66uzrVDWb912VubAT66ftAczVUW7mk5YYEe7bKDQ5dHOj7C2186MMga79r5j8DHIJxd8sKJBmURCR7BLw"/>
+</div>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto py-8 px-6">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="text-3xl font-bold tracking-tight mb-2">Portfolio Client</h1>
+<p class="text-slate-500">Suivi des règlements et échéanciers pour le dossier #48291</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 rounded-lg text-sm font-semibold transition-colors">Exporter PDF</button>
+<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">Nouveau Dossier</button>
+</div>
+</div>
+<div class="border-b border-slate-200 mb-6">
+<div class="flex gap-8">
+<a class="pb-4 text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">INFOS GÉNÉRALES</a>
+<a class="pb-4 text-sm font-bold text-primary border-b-2 border-primary" href="#">ÉCHÉANCIER</a>
+<a class="pb-4 text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">HISTORIQUE DES PAIEMENTS</a>
+</div>
+</div>
+<div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-premium">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50">
+<th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Période</th>
+<th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Date prévue</th>
+<th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Statut</th>
+<th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Montant</th>
+<th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr>
+<td class="px-6 py-5 font-medium">Mois 1</td>
+<td class="px-6 py-5 text-slate-500">15/03/2024</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+<span class="size-1.5 rounded-full bg-emerald-500"></span> Payé
+                            </span>
+</td>
+<td class="px-6 py-5 text-slate-300 italic">••••••</td>
+<td class="px-6 py-5 text-right">
+<button class="text-primary font-bold text-sm hover:underline">Détails</button>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-5 font-medium">Mois 2</td>
+<td class="px-6 py-5 text-slate-500">15/04/2024</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+<span class="size-1.5 rounded-full bg-emerald-500"></span> Payé
+                            </span>
+</td>
+<td class="px-6 py-5 text-slate-300 italic">••••••</td>
+<td class="px-6 py-5 text-right">
+<button class="text-primary font-bold text-sm hover:underline">Détails</button>
+</td>
+</tr>
+<tr class="bg-primary/[0.02]">
+<td class="px-6 py-5 font-medium">Mois 3</td>
+<td class="px-6 py-5 text-slate-500">15/05/2024</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+<span class="size-1.5 rounded-full bg-amber-500"></span> À venir
+                            </span>
+</td>
+<td class="px-6 py-5 text-slate-300 italic">••••••</td>
+<td class="px-6 py-5 text-right">
+<button class="flex items-center gap-2 ml-auto py-2 px-4 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary transition-all hover:text-white">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+                                Reporter
+                            </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</main>
+<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+<div class="bg-white border border-slate-100 w-full max-w-[480px] rounded-2xl shadow-modal animate-in fade-in zoom-in duration-300">
+<div class="p-6 border-b border-slate-50 flex justify-between items-center">
+<div>
+<h3 class="text-xl font-bold text-slate-900">Reporter l'échéance</h3>
+<p class="text-sm text-slate-500">Période de règlement : Mai 2024</p>
+</div>
+<button class="text-slate-400 hover:text-slate-600 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6">
+<div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 mb-6">
+<div class="flex items-center justify-between mb-4 px-2">
+<button class="p-1 hover:bg-slate-200 rounded-full transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-600">chevron_left</span>
+</button>
+<p class="font-bold text-sm text-slate-800">Mai 2024</p>
+<button class="p-1 hover:bg-slate-200 rounded-full transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-600">chevron_right</span>
+</button>
+</div>
+<div class="grid grid-cols-7 gap-1 text-center">
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Lun</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Mar</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Mer</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Jeu</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Ven</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Sam</div>
+<div class="text-[10px] font-bold text-slate-400 py-2 uppercase tracking-tighter">Dim</div>
+<div class="h-9"></div>
+<div class="h-9"></div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">1</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">2</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">3</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">4</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">5</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">6</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">7</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">8</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">9</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">10</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">11</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">12</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">13</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">14</div>
+<div class="relative flex items-center justify-center h-9 text-xs font-medium text-slate-300">
+<span class="line-through decoration-slate-400 decoration-1">15</span>
+</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">16</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">17</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">18</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">19</div>
+<div class="flex items-center justify-center h-9">
+<div class="size-8 bg-primary rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-primary/30">20</div>
+</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">21</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">22</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">23</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">24</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">25</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">26</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">27</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">28</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">29</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">30</div>
+<div class="flex items-center justify-center h-9 text-xs font-medium text-slate-700">31</div>
+<div class="h-9"></div>
+<div class="h-9"></div>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold block text-slate-800">Motif du report (optionnel)</label>
+<textarea class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 min-h-[80px] placeholder:text-slate-400 transition-all" placeholder="Ex: Difficulté de trésorerie temporaire, attente virement client..."></textarea>
+</div>
+<div class="mt-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex gap-3">
+<span class="material-symbols-outlined text-primary text-xl">info</span>
+<p class="text-xs text-slate-600 leading-relaxed">
+                        Le report d'échéance du <span class="font-bold text-slate-800">15 mai</span> au <span class="font-bold text-slate-800">20 mai 2024</span> peut engendrer des frais de gestion additionnels selon les conditions du contrat.
+                    </p>
+</div>
+</div>
+<div class="p-6 pt-0 flex gap-3">
+<button class="flex-1 py-3 px-4 rounded-xl text-sm font-bold border border-slate-900 text-slate-900 hover:bg-slate-50 transition-colors">
+                    Annuler
+                </button>
+<button class="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
+                    Confirmer le report
+                </button>
+</div>
+</div>
+</div>
+
+</body></html>

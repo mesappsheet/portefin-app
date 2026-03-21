@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<aside class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div>
+<h1 class="text-slate-900 font-bold text-sm leading-tight uppercase tracking-wider">Gestion du Portefeuille</h1>
+<p class="text-slate-500 text-xs font-medium">Back-office</p>
+</div>
+</div>
+<nav class="flex-1 px-4 py-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">dashboard</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Portefeuille</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">chat</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Communication</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">settings</span>
+<span class="text-sm font-semibold uppercase tracking-wide">Paramètres</span>
+</a>
+</nav>
+<div class="p-4 mt-auto border-t border-slate-100">
+<div class="flex items-center gap-3 p-2">
+<div class="w-10 h-10 rounded-full bg-slate-200" data-alt="Avatar of the current logged in administrator" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB9R2aVSKXe73Tg8uuPnjQoEDyhtgnCI1WaNX03RxT_WdkV8d1KEpskUoaMVPHjuPCUxdPAN6zAiDyL6j4zuNggnFRPPytHq-XG6-0RShZitWawmHqAb_qaF1aNTnIsFqq3aRFNLLn4ujIvE3BcSSK1qIjMzh4TZyIEn-3j_IAkBoj_JJya3l4k8J-BF-v1fIavUqsioG40D1dC4D_gesclgeWWmKVr997oDR5SGpw-V6fqzT5qjTf0KV2ucdS0yJpsvQ9jEJ6O3XQ')"></div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-800">Moussa Camara</span>
+<span class="text-xs text-slate-500">Administrateur</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col overflow-y-auto">
+<header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 pt-6">
+<div class="flex gap-8 overflow-x-auto no-scrollbar">
+<a class="pb-4 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-900 whitespace-nowrap" href="#">CLIENTS</a>
+<a class="pb-4 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-900 whitespace-nowrap" href="#">REMBOURSEMENTS</a>
+<a class="pb-4 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-900 whitespace-nowrap" href="#">FIN ÉCHÉANCE</a>
+<a class="pb-4 text-sm font-bold text-primary border-b-2 border-primary whitespace-nowrap" href="#">CRÉDITS SOLDÉS</a>
+</div>
+</header>
+<div class="p-8 max-w-[1400px] mx-auto w-full">
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+<div>
+<h2 class="text-3xl font-bold text-slate-900 mb-2">Suivi des Crédits Soldés</h2>
+<p class="text-slate-500 max-w-lg">Gérez vos dossiers finalisés et les demandes de renouvellement pour optimiser votre rétention client.</p>
+</div>
+      <div class="flex flex-wrap gap-2">
+        <button id="filter-day" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:border-primary/30 hover:bg-slate-50 flex items-center gap-2">
+          Ce jour <span class="material-symbols-outlined text-sm">expand_more</span>
+        </button>
+        <button id="filter-week" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:border-primary/30 hover:bg-slate-50 flex items-center gap-2">
+          Cette semaine <span class="material-symbols-outlined text-sm">expand_more</span>
+        </button>
+        <button id="filter-month" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg shadow-primary/20">
+          Ce mois <span class="material-symbols-outlined text-sm">expand_more</span>
+        </button>
+        <button id="filter-custom" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:border-primary/30 hover:bg-slate-50 flex items-center gap-2">
+          Période personnalisée <span class="material-symbols-outlined text-sm text-primary">calendar_today</span>
+        </button>
+      </div>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-200">
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Client</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date de Solde</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Montant Crédit</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Statut</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden border border-slate-100">
+<div class="w-full h-full bg-center bg-cover" data-alt="Client profile picture for Alpha Diallo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDu7L4AzxR0zQ0HsOejOvrdsGUU-9kFck-ViNxOMykeAQojk2yIAoUWVW7rQODK8CUJX16Nxp_rdnqH13Tkofe3c_HX9qxhu-2Bg7bcrNFrWHPwPNT9nTzAKlBK-nKrCCq0BWZfag0nl75P_aZlVkW_kTpNnJk2GJbHBZeEjklkAmgQ6pEaaFGGUpCGBNaIgh8YjX49i1e3-rbnWN-BKYKDQg7pVJHbMUQkdCeUdby6wnSplMb08WlFc6VVF54UA2KDgBzTF8lVpws')"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-slate-900">Alpha Diallo</span>
+<span class="text-xs text-slate-500 font-medium">ID: CL-9042</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700">14 Oct 2023</span>
+<span class="text-xs text-slate-400">14:22</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="text-sm font-bold text-slate-900">4 500 000 GNF</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-600 border border-orange-200">En Attente</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-end gap-1.5">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all" title="Appeler">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Copier">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Modifier">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Supprimer">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden border border-slate-100">
+<div class="w-full h-full bg-center bg-cover" data-alt="Client profile picture for Fatoumata Barry" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCquszpH8FRu-u4WccKXDTAqpN2mpw5AKC7hdO9d06eZVJkRRPrTIF2jp3oxX2VK6DezUYT5qNTCexed_flgLXpiL4MxfstMG11-Z3JsEcaflxxszAzka5DJBiGlSSep3_FDwjCoIKlsath0mpGeXV6WCVnqEstpuXAiHJwror1oB1dUUFSIMxqc47LoE8SkwT-6AzwHNpa_EqQFT57YeYQtQkbnVZwIgYsl_emPq556WcDhb-mukpFfuuTDIDwcf0NnyAmzQf5zPE')"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-slate-900">Fatoumata Barry</span>
+<span class="text-xs text-slate-500 font-medium">ID: CL-8211</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700">12 Oct 2023</span>
+<span class="text-xs text-slate-400">09:15</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="text-sm font-bold text-slate-900">2 200 000 GNF</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-slate-100 text-slate-500 border border-slate-200">Soldé</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-end gap-1.5">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all" title="Appeler">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Copier">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Modifier">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Supprimer">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden border border-slate-100">
+<div class="w-full h-full bg-center bg-cover" data-alt="Client profile picture for Ibrahim Soumah" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBGkkbZxZqJBX7XlcKiZ_GkMzd7n5gKJFge-3AKswZ3Sh0aB3n_6Bn9BEB1XPCBmrZ2kaxFbJNNDu3BUHAOI5bTka7cLJSQFbzGCFWTeP8voUchcy_azOWYPbn9PFX_xcvEH7XC0U7xbNu6QGI_t_8aiEsFmmnYFvP-1uZfX743BxlzpQFMX3OGUFLe8n2womYrLPVE-5cB8OP5IdhXRdSy6KFzA0rqTk_mz4k1j5EkOvnMskwRCmL6hQrcdDWTKVprJg4_j5TynRU')"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-slate-900">Ibrahim Soumah</span>
+<span class="text-xs text-slate-500 font-medium">ID: CL-4105</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700">10 Oct 2023</span>
+<span class="text-xs text-slate-400">16:45</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="text-sm font-bold text-slate-900">7 800 000 GNF</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-center">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-600 border border-orange-200">En Attente</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex justify-end gap-1.5">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all" title="Appeler">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Copier">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all" title="Modifier">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Supprimer">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+<div class="text-sm font-medium text-slate-500">
+                        Affichage de <span class="text-slate-900">1 - 3</span> sur <span class="text-slate-900">42</span> dossiers
+                    </div>
+<div class="flex gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-primary bg-primary text-white font-bold text-sm shadow-sm">
+                            1
+                        </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:border-primary/50 transition-colors">
+                            2
+                        </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:border-primary/50 transition-colors">
+                            3
+                        </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<div class="p-8 bg-white rounded-xl border border-slate-200 shadow-sm w-full flex items-center justify-center">
+<div class="flex items-center gap-6">
+<div class="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined text-3xl">verified</span>
+</div>
+<div class="text-center md:text-left">
+<p class="text-slate-500 text-sm font-semibold uppercase tracking-wider mb-1">Total Soldé (Mois)</p>
+<h4 class="text-4xl font-bold text-slate-900">128 Dossiers</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(function() {
+    // --- STATE ---
+    let settledCredits = [];
+    let filteredCredits = [];
+    let currentFilter = 'month';
+
+    // --- DOM SELECTORS ---
+    const els = {
+        tbody: document.querySelector('tbody'),
+        totalSold: document.querySelector('h4.text-4xl.font-bold.text-slate-900'),
+        filterBtns: {
+            day: document.getElementById('filter-day'),
+            week: document.getElementById('filter-week'),
+            month: document.getElementById('filter-month'),
+            custom: document.getElementById('filter-custom')
+        },
+        paginationInfo: document.querySelector('.text-sm.font-medium.text-slate-500')
+    };
+
+    // --- INIT ---
+    async function init() {
+        console.log("Initializing Settled Credits...");
+        setupFilters();
+        await loadData();
+    }
+
+    async function loadData() {
+        els.tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-500 italic">Chargement...</td></tr>`;
+        try {
+            const { data, error } = await window.supabase
+                .from('credits')
+                .select('*')
+                .eq('status', 'SOLDÉ');
+
+            if (error) throw error;
+            settledCredits = data || [];
+            applyFilter('month');
+        } catch (err) {
+            console.error("Error loading settled credits:", err);
+            els.tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500">Erreur Supabase : ${err.message}</td></tr>`;
+        }
+    }
+
+    function setupFilters() {
+        els.filterBtns.day?.addEventListener('click', () => applyFilter('day'));
+        els.filterBtns.week?.addEventListener('click', () => applyFilter('week'));
+        els.filterBtns.month?.addEventListener('click', () => applyFilter('month'));
+    }
+
+    function applyFilter(filter) {
+        currentFilter = filter;
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        // Update UI
+        Object.keys(els.filterBtns).forEach(k => {
+            const btn = els.filterBtns[k];
+            if (!btn) return;
+            if (k === filter) {
+                btn.className = "px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg shadow-orange-500/20";
+            } else {
+                btn.className = "px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:border-primary/30 hover:bg-slate-50 flex items-center gap-2";
+            }
+        });
+
+        filteredCredits = settledCredits.filter(c => {
+            if (!c.updated_at) return true;
+            const date = new Date(c.updated_at);
+            if (filter === 'day') return date.toDateString() === startOfToday.toDateString();
+            if (filter === 'week') {
+                const oneWeekAgo = new Date(startOfToday);
+                oneWeekAgo.setDate(startOfToday.getDate() - 7);
+                return date >= oneWeekAgo;
+            }
+            if (filter === 'month') return date.getMonth() === startOfToday.getMonth() && date.getFullYear() === startOfToday.getFullYear();
+            return true;
+        });
+
+        render();
+    }
+
+    function render() {
+        const total = filteredCredits.length;
+        if(els.totalSold) els.totalSold.innerText = `${total} Dossiers`;
+        
+        if (filteredCredits.length === 0) {
+            els.tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-20 text-center text-slate-500 italic">Aucun crédit soldé pour cette période.</td></tr>`;
+            if(els.paginationInfo) els.paginationInfo.innerHTML = `Affichage de <span class="text-slate-900">0</span> sur <span class="text-slate-900">${total}</span> dossiers`;
+            return;
+        }
+
+        els.tbody.innerHTML = filteredCredits.map(c => {
+            const date = new Date(c.updated_at || c.end_date);
+            const amount = new Intl.NumberFormat('fr-FR').format(c.amount);
+            const initials = c.client_name ? c.client_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+
+            return `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                ${initials}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-900">${c.client_name || 'Inconnu'}</span>
+                                <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-slate-700">${date.toLocaleDateString('fr-FR')}</span>
+                            <span class="text-xs text-slate-400">${date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 text-right">
+                        <span class="text-sm font-bold text-slate-900">${amount} GNF</span>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex justify-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-slate-100 text-slate-500 border border-slate-200">SOLDÉ</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex justify-end gap-1.5">
+                             <button onclick="alert('Relance client ${c.client_name}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                                <span class="material-symbols-outlined text-[18px]">refresh</span>
+                            </button>
+                            <button onclick="alert('Détails du dossier')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all font-bold">
+                                <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        if(els.paginationInfo) els.paginationInfo.innerHTML = `Affichage de <span class="text-slate-900">1 - ${total}</span> sur <span class="text-slate-900">${total}</span> dossiers`;
+    }
+
+    if (window.supabase) init();
+    else document.addEventListener('supabase-ready', init);
+
+})();
+</script>
+</main>
+</div>
+</body></html>

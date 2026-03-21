@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Paramètres - Champs &amp; Badges</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-size: 24px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0">
+<div class="p-6">
+<h1 class="text-primary text-xs font-bold uppercase tracking-wider mb-1">Gestion du Portefeuille</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Administration Centrale</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm font-medium">Rapports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">settings</span>
+<span class="text-sm font-bold uppercase tracking-tight">Paramètres</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 px-2 py-2">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">JD</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Jean Dupont</p>
+<p class="text-[10px] text-slate-500 truncate">Administrateur</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">logout</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto h-screen">
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+<div class="px-8 py-6">
+<h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Paramètres Administratifs</h2>
+</div>
+<div class="px-8 flex gap-8">
+<button class="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-primary transition-colors">Général</button>
+<button class="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-primary transition-colors">Affichage des vues</button>
+<button class="pb-3 border-b-2 border-primary text-primary font-bold text-xs uppercase tracking-widest">Champs &amp; Badges</button>
+</div>
+</header>
+<div class="p-8 max-w-5xl mx-auto space-y-8">
+<!-- Section 1: Formulaire d'Ajout de Client -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Formulaire d'Ajout de Client</h3>
+<p class="text-sm text-slate-500">Configurez les champs obligatoires lors de la création d'un nouveau dossier.</p>
+</div>
+<span class="material-symbols-outlined text-slate-300">app_registration</span>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Item Active -->
+<div class="flex items-center justify-between p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">person</span>
+</div>
+<span class="font-medium text-sm">Nom / Prénom</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item Active -->
+<div class="flex items-center justify-between p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">call</span>
+</div>
+<span class="font-medium text-sm">Téléphone 1</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item Inactive -->
+<div class="flex items-center justify-between p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<span class="font-medium text-sm text-slate-500">Adresse</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item Active -->
+<div class="flex items-center justify-between p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="font-medium text-sm">Montant du Crédit</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item Inactive -->
+<div class="flex items-center justify-between p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">business_center</span>
+</div>
+<span class="font-medium text-sm text-slate-500">Secteur d'activité</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Section 2: Personnalisation des Badges -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Personnalisation des Badges</h3>
+<p class="text-sm text-slate-500">Modifiez le libellé et la couleur des indicateurs visuels.</p>
+</div>
+<div class="p-6 space-y-10">
+<!-- Group: Santé -->
+<div>
+<label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Catégorie: Santé du dossier</label>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Badge Editable 1 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-semibold text-slate-500 uppercase">Libellé</span>
+<div class="h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></div>
+</div>
+<input class="w-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold focus:ring-primary focus:border-primary" type="text" value="SAIN"/>
+</div>
+<div class="shrink-0 text-center">
+<p class="text-[10px] text-slate-400 mb-2 font-bold uppercase">Aperçu</p>
+<span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-full border border-emerald-200 dark:border-emerald-800">SAIN</span>
+</div>
+</div>
+<!-- Badge Editable 2 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-semibold text-slate-500 uppercase">Libellé</span>
+<div class="h-4 w-4 rounded-full bg-rose-500 ring-4 ring-rose-500/20"></div>
+</div>
+<input class="w-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold focus:ring-primary focus:border-primary" type="text" value="SOUFFRANCE"/>
+</div>
+<div class="shrink-0 text-center">
+<p class="text-[10px] text-slate-400 mb-2 font-bold uppercase">Aperçu</p>
+<span class="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-black rounded-full border border-rose-200 dark:border-rose-800">SOUFFRANCE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Group: Statut -->
+<div>
+<label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Catégorie: Statut de paiement</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Status 1 -->
+<div class="space-y-3">
+<div class="flex items-center gap-2">
+<div class="h-3 w-3 rounded-full bg-primary"></div>
+<input class="flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold px-2 py-1.5" type="text" value="EN COURS"/>
+</div>
+<div class="flex justify-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg border border-primary/20">EN COURS</span>
+</div>
+</div>
+<!-- Status 2 -->
+<div class="space-y-3">
+<div class="flex items-center gap-2">
+<div class="h-3 w-3 rounded-full bg-slate-400"></div>
+<input class="flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold px-2 py-1.5" type="text" value="SOLDÉ"/>
+</div>
+<div class="flex justify-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+<span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black rounded-lg border border-slate-200 dark:border-slate-600">SOLDÉ</span>
+</div>
+</div>
+<!-- Status 3 -->
+<div class="space-y-3">
+<div class="flex items-center gap-2">
+<div class="h-3 w-3 rounded-full bg-amber-500"></div>
+<input class="flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold px-2 py-1.5" type="text" value="EN ATTENTE"/>
+</div>
+<div class="flex justify-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+<span class="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 text-[10px] font-black rounded-lg border border-amber-200 dark:border-amber-800/30">EN ATTENTE</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Action Footer -->
+<div class="flex justify-end gap-4 pb-12">
+<button class="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Réinitialiser</button>
+<button class="px-8 py-3 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">save</span>
+                        Sauvegarder les modifications
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

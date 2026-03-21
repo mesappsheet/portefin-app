@@ -1,0 +1,279 @@
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="bg-primary p-2 rounded-lg text-white">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div>
+<h1 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Portefeuille</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Administrateur</p>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold">Tableau de Bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="text-sm font-semibold">Portefeuilles</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-sm font-semibold">Reporting</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-semibold">Paramètres</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Photo de profil de l'administrateur" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzEdZzZjHY1h4MTsO1LsfzxX1gC1zVAkYbI9EIQrQgiDGCiPxuinT7l6Yp1GdvmEIzNt0h-bNZFKA80qOfy4gWldJRH-sq8TAsMsuYR9P-G7RAtEEtEsGXNWxMzGRRkqUza1MDLNAZKohVeHTn3Fw_PYhLe5WUgKMvxrcLhffXfY4EO7MAFL_HjEAw8ZOmPwx57riplf3tchwB27KU3VmbpWqEBGrNzCwa5RuVYwDLwfiu1L-q3No6yRRfsu2uDh5wi2VjG7YTHTI"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Marc Lefebvre</p>
+<p class="text-xs text-slate-500 truncate">Gestionnaire Senior</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-hidden bg-background-light dark:bg-background-dark">
+<!-- Header Section -->
+<header class="bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 px-8 py-4">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Paramètres du Tableau de Bord</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Personnalisez les widgets et indicateurs affichés sur votre vue principale.</p>
+</div>
+<button class="bg-primary text-white font-bold py-2.5 px-6 rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                        Enregistrer
+                    </button>
+</div>
+<!-- Tabs -->
+<div class="flex gap-8 border-b border-slate-200 dark:border-slate-800">
+<button class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-900 transition-all">GÉNÉRAL</button>
+<button class="pb-3 text-sm font-bold text-primary border-b-2 border-primary">AFFICHAGE DES VUES</button>
+<button class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-900 transition-all">CHAMPS &amp; BADGES</button>
+</div>
+</header>
+<!-- Scrollable Settings Container -->
+<div class="flex-1 overflow-y-auto p-8">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-7xl mx-auto">
+<!-- Card 1: INDICATEURS CLÉS (KPIs) -->
+<div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h3 class="text-primary font-black uppercase tracking-widest text-sm">INDICATEURS CLÉS (KPIs)</h3>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Remboursements du Jour</p>
+<p class="text-sm text-slate-500">Suivi des flux financiers entrants quotidiens</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">event_available</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Fins d'Échéance du Mois</p>
+<p class="text-sm text-slate-500">Alerte sur les contrats arrivant à terme</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Montant Total des Encours</p>
+<p class="text-sm text-slate-500">Volume global des crédits actifs</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Nouveaux Prospects (Semaine)</p>
+<p class="text-sm text-slate-500">Acquisition client sur les 7 derniers jours</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Card 2: GRAPHIQUES & STATISTIQUES -->
+<div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h3 class="text-primary font-black uppercase tracking-widest text-sm">GRAPHIQUES &amp; STATISTIQUES</h3>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">show_chart</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Évolution des Crédits</p>
+<p class="text-sm text-slate-500">Courbe de progression mensuelle</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Répartition Santé du Portefeuille</p>
+<p class="text-sm text-slate-500">Vue d'ensemble des risques</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item -->
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">conversion_path</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Taux de Conversion</p>
+<p class="text-sm text-slate-500">Performance des prospects transformés</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Card 3: ACCÈS RAPIDES & DÉFAUTS -->
+<div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden xl:col-span-2">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h3 class="text-primary font-black uppercase tracking-widest text-sm">ACCÈS RAPIDES &amp; DÉFAUTS</h3>
+</div>
+<div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">ads_click</span>
+</div>
+<div>
+<p class="font-bold text-lg text-slate-900 dark:text-slate-100">Boutons de raccourcis modules</p>
+<p class="text-sm text-slate-500">Afficher la barre d'accès rapide en haut de page</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">calendar_month</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-lg text-slate-900 dark:text-slate-100">Période d'analyse par défaut</p>
+<p class="text-sm text-slate-500 mb-4">Sélectionnez la plage temporelle initiale au chargement</p>
+<div class="relative">
+<select class="block w-full px-4 py-3 text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:focus:ring-primary dark:focus:border-primary appearance-none font-semibold">
+<option>Aujourd'hui</option>
+<option>Cette Semaine</option>
+<option selected="">Ce Mois</option>
+<option>Ce Trimestre</option>
+<option>Cette Année</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Global Footer Save Action -->
+<div class="p-6 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-4">
+<span class="text-sm text-slate-500 italic">Dernière modification le 12/10/2023 par Marc L.</span>
+<button class="bg-primary text-white font-bold py-4 px-10 rounded-xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/30 flex items-center gap-3 transform hover:-translate-y-1">
+<span class="material-symbols-outlined">verified</span>
+                    Enregistrer les préférences du Dashboard
+                </button>
+</div>
+</main>
+</div>
+
+```</body></html>

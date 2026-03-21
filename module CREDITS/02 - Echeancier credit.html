@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Credit Schedule Management - Jean Dupont</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1f8cf9",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1923",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="p-6">
+<h1 class="text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Gestion du Portefeuille</h1>
+<p class="text-primary text-sm font-semibold mb-8">CLIENTS</p>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">TABLEAU DE BORD</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined !fill-1">wallet</span>
+<span class="text-sm font-semibold">PORTEFEUILLE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-sm font-medium">COMMUNICATION</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">PARAMÈTRES</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="text-sm font-semibold truncate">Jean Dupont</p>
+<p class="text-xs text-slate-500 truncate">Gestionnaire</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto relative">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-xl font-bold">Échéancier du Crédit - Jean Dupont</h2>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    Retour aux détails du client
+                </button>
+</header>
+<div class="p-8 max-w-6xl mx-auto space-y-8">
+<!-- Info Cards -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800">
+<div class="p-6">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Montant Total du Crédit</p>
+<p id="ech-montant" class="text-2xl font-bold text-slate-900 dark:text-white">— FCFA</p>
+</div>
+<div class="p-6">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Date de Début</p>
+<p id="ech-date-debut" class="text-2xl font-bold text-slate-900 dark:text-white">—</p>
+</div>
+<div class="p-6">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Date de Fin Prévue</p>
+<p id="ech-date-fin" class="text-2xl font-bold text-slate-900 dark:text-white">—</p>
+</div>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="flex justify-end">
+<button id="btn-actualiser" onclick="charger()" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+                        Actualiser l'échéancier
+                    </button>
+</div>
+<!-- Table -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 dark:bg-slate-800/50">
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">N°</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Date Mensuelle de Paiement</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 text-center">Statut</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 text-right">Action</th>
+</tr>
+</thead>
+<tbody id="echeancier-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr><td colspan="4" class="px-6 py-10 text-center">
+<div class="flex flex-col items-center gap-3 text-slate-400">
+<span class="material-symbols-outlined text-4xl animate-spin">sync</span>
+<span class="text-sm font-medium">Chargement de l'échéancier...</span>
+</div>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- ═══ MODAL REPORTER ═══ -->
+<div id="modal-reporter" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+<div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">calendar_month</span>
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest">Reporter l'échéance</span>
+</div>
+<h3 class="text-xl font-bold">Nouvelle date de paiement</h3>
+<p id="reporter-label" class="text-sm text-slate-500 mt-0.5">Échéance N°—</p>
+</div>
+<button onclick="closeReporterModal()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Nouvelle Date de Paiement</label>
+<div class="relative">
+<input id="input-reporter-date" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"/>
+<span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-[20px]">event</span>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Motif du report</label>
+<input id="input-reporter-motif" type="text" placeholder="Ex: Difficultés financières..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"/>
+</div>
+</div>
+<div class="p-4 bg-primary/5 rounded-xl border border-primary/10 flex gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+<p class="text-xs text-primary leading-relaxed font-medium">Cette échéance sera marquée comme reportée dans Supabase. La date originale est conservée.</p>
+</div>
+</div>
+<div class="p-6 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-end gap-3">
+<button onclick="closeReporterModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Annuler</button>
+<button onclick="saveReport()" class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-lg">save</span>Enregistrer le report
+</button>
+</div>
+</div>
+</div>
+
+<!-- ═══ SCRIPT SUPABASE + LOCALSTORAGE ═══ -->
+<script>
+(function() {
+    const SUPABASE_URL  = 'https://lkuwgggwdtbzjgplwylr.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
+    const STORAGE_KEY   = 'credit_echeancier_actif';
+    const defaults      = { dateDebut: '2026-03-15', nbMensualites: 3, creditId: null };
+
+    const hdrs = {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+
+    // ── Helpers Supabase ─────────────────────────────────────
+    async function sbGet(table, q = '') {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { headers: hdrs });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+    async function sbPatch(table, q, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+    async function sbDelete(table, q) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { method: 'DELETE', headers: hdrs });
+        if (!r.ok) throw new Error(await r.text());
+    }
+    async function sbPost(table, body) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', headers: hdrs, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+    }
+
+    // ── Calcul des dates (30j + décalage week-end) ───────────
+    function nextWorkday(date, days) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        return d;
+    }
+    function buildSchedule(startStr, nb) {
+        const start = new Date(startStr + 'T00:00:00');
+        return Array.from({ length: nb }, (_, i) => nextWorkday(start, 30 * (i + 1)));
+    }
+    function toISO(d) { return d.toISOString().split('T')[0]; }
+    function fmtFR(d)  { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+    function fmtLongFR(d) { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+
+    // ── localStorage ─────────────────────────────────────────
+    function getLocal() {
+        try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : { ...defaults }; }
+        catch { return { ...defaults }; }
+    }
+
+    // ── Chargement principal ─────────────────────────────────
+    async function charger() {
+        const local = getLocal();
+        const dates = buildSchedule(local.dateDebut, local.nbMensualites);
+        const dateFin = dates[dates.length - 1];
+
+        // ① Affichage immédiat depuis localStorage — tout En attente
+        renderCards(local.dateDebut, local.amount || 0, dateFin);
+        renderTable(dates.map((d, i) => ({
+            installment_number: i + 1,
+            scheduled_date:     toISO(d),
+            status: 'En attente', is_paid: false, is_reported: false
+        })));
+
+        const creditId      = local.creditId   || null;
+        const hasLocalEdit  = !!local.lastLocalEdit;  // signal de modification récente
+
+        // ══════════════════════════════════════════════════════
+        // ② MODE RESET (modification récente détectée)
+        //    → Effacer tout dans Supabase + tout afficher "En attente"
+        //    → Supprimer le signal lastLocalEdit du cache
+        // ══════════════════════════════════════════════════════
+        if (hasLocalEdit) {
+            showToast('🔄 Nouvelles dates détectées — réinitialisation de l\'échéancier...', 'info');
+
+            if (creditId) {
+                try {
+                    // Supprimer TOUS les anciens repayments Supabase
+                    await sbDelete('repayments', `credit_id=eq.${creditId}`);
+
+                    // Mettre à jour les dates dans la table credits
+                    await sbPatch('credits', `id=eq.${creditId}`, {
+                        start_date: local.dateDebut,
+                        end_date:   toISO(dateFin)
+                    });
+
+                    // Insérer les nouvelles échéances fraîches (tout "En attente")
+                    const nouvellesEch = dates.map((d, i) => ({
+                        credit_id:          creditId,
+                        installment_number: i + 1,
+                        scheduled_date:     toISO(d),
+                        status:             'En attente',
+                        is_paid:            false,
+                        is_reported:        false
+                    }));
+                    await sbPost('repayments', nouvellesEch);
+
+                    showToast('✅ Échéancier réinitialisé — tout est remis à zéro !', 'success');
+                } catch(err) {
+                    console.warn('[Reset Supabase] Opération limitée :', err.message);
+                    showToast('💾 Réinitialisé localement (Supabase hors ligne)', 'warning');
+                }
+            } else {
+                // Pas de creditId → au moins affichage local propre est déjà fait
+                showToast('✅ Échéancier recalculé (local)', 'success');
+            }
+
+            // ✅ Supprimer le signal de modification du localStorage
+            //    pour ne pas re-déclencher le reset au prochain chargement
+            const updatedLocal = { ...local };
+            delete updatedLocal.lastLocalEdit;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
+
+            return; // Fin ici — tout est "En attente", pas besoin de fusion Supabase
+        }
+
+        // ══════════════════════════════════════════════════════
+        // ③ MODE NORMAL (pas de modification récente)
+        //    → Fusion des statuts Supabase sur les dates locales
+        // ══════════════════════════════════════════════════════
+        try {
+            if (!creditId) throw new Error('Pas de credit_id — affichage local uniquement');
+
+            const [creditArr, sbRepayments] = await Promise.all([
+                sbGet('credits', `id=eq.${creditId}&select=id,amount,client_name`),
+                sbGet('repayments', `credit_id=eq.${creditId}&select=id,installment_number,status,is_paid,is_reported&order=installment_number.asc`)
+            ]);
+
+            const amount = creditArr.length ? creditArr[0].amount : (local.amount || 0);
+            renderCards(local.dateDebut, amount, dateFin);
+
+            // Fusion : dates locales + statuts Supabase
+            const merged = dates.map((d, i) => {
+                const sbRow = (sbRepayments || []).find(r => r.installment_number === (i + 1));
+                return {
+                    id:                 sbRow?.id,
+                    installment_number: i + 1,
+                    scheduled_date:     toISO(d),
+                    status:             sbRow?.status      || 'En attente',
+                    is_paid:            sbRow?.is_paid      || false,
+                    is_reported:        sbRow?.is_reported  || false
+                };
+            });
+            renderTable(merged);
+
+        } catch(err) {
+            console.warn('[Supabase] Affichage local seul :', err.message);
+        }
+    }
+
+    // ── Rendu Cards (top: montant, dates) ────────────────────
+    function renderCards(startDate, amount, endDate) {
+        const el = id => document.getElementById(id);
+        if (el('ech-date-debut')) el('ech-date-debut').textContent = fmtFR(startDate);
+        if (el('ech-date-fin'))   el('ech-date-fin').textContent   = endDate ? fmtFR(typeof endDate === 'string' ? endDate : toISO(endDate)) : '—';
+        if (el('ech-montant'))    el('ech-montant').textContent    = amount ? Number(amount).toLocaleString('fr-FR') + ' FCFA' : '— FCFA';
+    }
+
+    // ── Rendu Tableau ─────────────────────────────────────────
+    function renderTable(repayments) {
+        const tbody = document.getElementById('echeancier-tbody');
+        if (!tbody) return;
+
+        if (!repayments.length) {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic text-sm">Aucune échéance enregistrée.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = repayments.map(r => {
+            const num     = String(r.installment_number).padStart(2, '0');
+            const dateStr = r.scheduled_date;
+            const isPaid  = r.is_paid;
+            const isRep   = r.is_reported;
+
+            // Badge statut
+            let badge;
+            if (isPaid) {
+                badge = `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase tracking-tighter"><span class="material-symbols-outlined text-[14px]">check_circle</span> Payé</span>`;
+            } else if (isRep) {
+                badge = `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 uppercase tracking-tighter"><span class="material-symbols-outlined text-[14px]">update</span> Reporté</span>`;
+            } else {
+                badge = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 uppercase tracking-tighter">En attente</span>`;
+            }
+
+            // Boutons action
+            let actions;
+            if (isPaid) {
+                actions = `<span class="text-xs font-medium text-slate-400 italic">Aucune action</span>`;
+            } else {
+                actions = `
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="encaisser('${r.id}', ${r.installment_number})" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
+                            <span class="material-symbols-outlined text-[15px]">payments</span> Encaisser
+                        </button>
+                        <button onclick="ouvrirReporter('${r.id}', ${r.installment_number}, '${dateStr}')" class="inline-flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">calendar_month</span> Reporter
+                        </button>
+                    </div>`;
+            }
+
+            const rowBg = isPaid ? '' : (isRep ? 'bg-purple-50/20 dark:bg-purple-900/5' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30');
+            return `<tr class="transition-colors ${rowBg}">
+                <td class="px-6 py-5 text-sm font-medium text-slate-400">${num}</td>
+                <td class="px-6 py-5 text-sm font-semibold">${fmtLongFR(dateStr)}</td>
+                <td class="px-6 py-5 text-center">${badge}</td>
+                <td class="px-6 py-5 text-right">${actions}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── Action : Encaisser ───────────────────────────────────
+    window.encaisser = async function(repId, num) {
+        if (!repId || repId === 'undefined') { showToast('ID manquant (mode cache)', 'warning'); return; }
+        if (!confirm(`Confirmer le paiement de l'échéance N°${num} ?`)) return;
+        try {
+            await sbPatch('repayments', `id=eq.${repId}`, {
+                is_paid: true, status: 'Payé',
+                actual_payment_date: new Date().toISOString().split('T')[0]
+            });
+            showToast(`✅ Échéance N°${num} encaissée dans Supabase !`, 'success');
+            charger();
+        } catch(e) { showToast('Erreur Supabase : ' + e.message, 'warning'); }
+    };
+
+    // ── Action : Reporter ────────────────────────────────────
+    let _reportId = null;
+    window.ouvrirReporter = function(repId, num, dateActuelle) {
+        _reportId = repId;
+        const m = document.getElementById('modal-reporter');
+        const lbl = document.getElementById('reporter-label');
+        const inp = document.getElementById('input-reporter-date');
+        if (lbl) lbl.textContent = `Échéance N°${String(num).padStart(2, '0')} — Date actuelle : ${fmtLongFR(dateActuelle)}`;
+        if (inp) inp.value = dateActuelle;
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    };
+
+    window.closeReporterModal = function() {
+        const m = document.getElementById('modal-reporter');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    };
+
+    window.saveReport = async function() {
+        const nouvelleDate = document.getElementById('input-reporter-date')?.value;
+        const motif        = document.getElementById('input-reporter-motif')?.value || '';
+        if (!nouvelleDate) { showToast('Veuillez sélectionner une date', 'warning'); return; }
+
+        if (!_reportId || _reportId === 'undefined') {
+            showToast('Report sauvegardé (mode cache uniquement)', 'info');
+            closeReporterModal();
+            return;
+        }
+        try {
+            await sbPatch('repayments', `id=eq.${_reportId}`, {
+                scheduled_date: nouvelleDate, is_reported: true,
+                status: 'Reporté', report_reason: motif
+            });
+            showToast('✅ Report enregistré dans Supabase !', 'success');
+            closeReporterModal();
+            charger();
+        } catch(e) { showToast('Erreur : ' + e.message, 'warning'); }
+    };
+
+    document.addEventListener('click', e => {
+        if (e.target === document.getElementById('modal-reporter')) closeReporterModal();
+    });
+
+    // ── Toast ─────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const colors = { success: 'bg-emerald-600', info: 'bg-blue-600', warning: 'bg-amber-500', error: 'bg-red-600' };
+        const t = document.createElement('div');
+        t.className = `fixed bottom-6 right-6 z-[999] ${colors[type] || colors.success} text-white px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold transform translate-y-4 opacity-0 transition-all duration-300`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.transform = 'translateY(0)'; t.style.opacity = '1'; }, 10);
+        setTimeout(() => { t.style.transform = 'translateY(16px)'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 4000);
+    }
+
+    // ── Init & exposition globale ─────────────────────────────
+    window.charger = charger;
+
+    // 🔔 Rechargement automatique quand l'écran 01 sauvegarde une modification
+    // (même onglet via app.js — CustomEvent)
+    window.addEventListener('echeancier-updated', function(e) {
+        console.log('[Échéancier] Modification détectée depuis écran 01 → rechargement automatique', e.detail);
+        charger();
+    });
+
+    // Écoute les modifications depuis un autre onglet (multi-onglets)
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) charger();
+    });
+
+    // Démarrage automatique
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', charger);
+    else charger();
+})();
+</script>
+</main>
+</div>
+</body></html>

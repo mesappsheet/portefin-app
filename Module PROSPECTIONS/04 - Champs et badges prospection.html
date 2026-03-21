@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prospection Settings - Fields &amp; Badges</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex flex-col min-h-screen w-full">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-50 text-lg font-bold leading-tight tracking-tight uppercase">Gestion Portefeuille</h2>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 text-sm font-semibold hover:text-primary transition-colors" href="#">TABLEAU DE BORD</a>
+<a class="text-primary text-sm font-semibold border-b-2 border-primary pb-1" href="#">PROSPECTION</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-semibold hover:text-primary transition-colors" href="#">CLIENTS</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-semibold hover:text-primary transition-colors" href="#">RAPPORTS</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/50" placeholder="Rechercher..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full"></span>
+</button>
+<div class="size-10 rounded-full border-2 border-primary/20 p-0.5">
+<img alt="User profile" class="rounded-full w-full h-full object-cover" data-alt="Photo de profil utilisateur" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGDoVYlNizkHH39slPZLJMMaywujdLxSj9GYo7XAO9V49JD4RgHGtpyx9n7nOop785kg_l_GOCQbeGKAxnAtH5ZY8aPcnOHrAaXxC_aU1RXMsxYQW1WMHCuIdq3Nl7_Bzb8AgZKqENlHUDp1EJNUcQqwT86Dyms6QrgkS6MsUO-hbZNP4tc0cFkuK_RrExGH8p6TpyMwaF1EhjPs7VMCS8Qsem2_bwHQYrhlTbE8MTup0_rRgp3h83Bba5_SBJei-jOTjW4Fx0lQA"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col p-6 gap-6">
+<div class="flex items-center gap-3 p-2">
+<div class="size-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">group_add</span>
+</div>
+<div>
+<h3 class="text-slate-900 dark:text-slate-50 font-bold">Prospection</h3>
+<p class="text-xs text-slate-500">Module de gestion</p>
+</div>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold uppercase tracking-wider">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="text-sm font-semibold uppercase tracking-wider">Prospects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined font-fill">settings</span>
+<span class="text-sm font-semibold uppercase tracking-wider">Paramètres</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span class="text-sm font-semibold uppercase tracking-wider">Archives</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-10 bg-background-light dark:bg-background-dark">
+<!-- Page Title -->
+<div class="mb-8">
+<h1 class="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Paramètres de Prospection</h1>
+<p class="text-slate-500 mt-2 text-lg">Configurez les formulaires et l'apparence visuelle de votre module de prospection.</p>
+</div>
+<!-- Horizontal Tabs -->
+<div class="border-b border-slate-200 dark:border-slate-800 mb-10">
+<nav class="flex gap-10">
+<a class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest" href="#">Général</a>
+<a class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest" href="#">Affichage des vues</a>
+<a class="pb-4 text-sm font-bold text-primary border-b-2 border-primary uppercase tracking-widest" href="#">Champs &amp; Badges</a>
+</nav>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+<!-- Card 1: Formulaire d'Ajout -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-50 dark:border-slate-800 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+<h2 class="text-xl font-bold text-slate-900 dark:text-slate-50 leading-none">Formulaire d'Ajout de Prospect</h2>
+</div>
+<div class="p-6 space-y-4">
+<p class="text-sm text-slate-500 mb-6">Définissez les champs obligatoires lors de la création d'une nouvelle fiche prospect.</p>
+<!-- Toggle Item -->
+<div class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-800">
+<div>
+<p class="font-semibold text-slate-900 dark:text-slate-100">Nom / Prénom</p>
+<p class="text-xs text-slate-400">Identité complète du prospect</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-800">
+<div>
+<p class="font-semibold text-slate-900 dark:text-slate-100">Téléphone 1</p>
+<p class="text-xs text-slate-400">Contact principal nécessaire</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-800">
+<div>
+<p class="font-semibold text-slate-900 dark:text-slate-100">Quartier</p>
+<p class="text-xs text-slate-400">Localisation géographique</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-800">
+<div>
+<p class="font-semibold text-slate-900 dark:text-slate-100">Secteur d'activité</p>
+<p class="text-xs text-slate-400">Catégorisation métier</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-3">
+<div>
+<p class="font-semibold text-slate-900 dark:text-slate-100">Adresse complète</p>
+<p class="text-xs text-slate-400">Coordonnées postales précises</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="p-6 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
+<button class="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all text-sm uppercase tracking-wide">Enregistrer</button>
+</div>
+</section>
+<!-- Card 2: Personnalisation des Badges -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-50 dark:border-slate-800 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">palette</span>
+<h2 class="text-xl font-bold text-slate-900 dark:text-slate-50 leading-none">Personnalisation des Badges</h2>
+</div>
+<div class="p-6 space-y-6">
+<div>
+<h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Statut du Prospect</h3>
+<!-- Rows -->
+<div class="space-y-4">
+<!-- Nouveau -->
+<div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+<div class="flex-1">
+<input class="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-0" type="text" value="NOUVEAU"/>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-emerald-400 border-2 border-white shadow-sm cursor-pointer"></div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-tighter">NOUVEAU</span>
+</div>
+</div>
+<!-- Qualifié -->
+<div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+<div class="flex-1">
+<input class="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-0" type="text" value="QUALIFIÉ"/>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-blue-500 border-2 border-white shadow-sm cursor-pointer"></div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<span class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-full uppercase tracking-tighter">QUALIFIÉ</span>
+</div>
+</div>
+<!-- À Relancer -->
+<div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+<div class="flex-1">
+<input class="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-0" type="text" value="À RELANCER"/>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-orange-500 border-2 border-white shadow-sm cursor-pointer"></div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<span class="px-3 py-1 bg-orange-100 text-orange-700 text-[10px] font-black rounded-full uppercase tracking-tighter">À RELANCER</span>
+</div>
+</div>
+<!-- Non Intéressé -->
+<div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+<div class="flex-1">
+<input class="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-0" type="text" value="NON INTÉRESSÉ"/>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-400 border-2 border-white shadow-sm cursor-pointer"></div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<span class="px-3 py-1 bg-slate-200 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-tighter">NON INTÉRESSÉ</span>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-primary hover:border-primary transition-all font-semibold text-sm">
+<span class="material-symbols-outlined">add</span>
+                                    AJOUTER UN STATUT
+                                </button>
+</div>
+</div>
+<div class="p-6 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+<p class="text-xs text-slate-500 italic">Dernière modification le 24 Oct. 2023</p>
+<button class="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all text-sm uppercase tracking-wide">Mettre à jour</button>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body></html>

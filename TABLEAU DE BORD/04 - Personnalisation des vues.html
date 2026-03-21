@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Paramètres - Personnalisation des Vues</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .ios-toggle:checked + .toggle-bg {
+            background-color: #f27f0d;
+        }
+        .ios-toggle:checked + .toggle-bg:after {
+            transform: translateX(100%);
+        }
+        .toggle-bg:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: white;
+            border-radius: 9999px;
+            height: 1.25rem;
+            width: 1.25rem;
+            transition: transform 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-background-dark/50 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="p-6">
+<h1 class="text-primary text-xs font-bold uppercase tracking-widest">Gestion Portefeuille</h1>
+<p class="text-slate-500 text-xs mt-1">Administration Système</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">group</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">payments</span>
+<span class="text-sm font-medium">Remboursements</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl fill-1">settings</span>
+<span class="text-sm font-semibold">Paramètres</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Jean Dupont</p>
+<p class="text-[10px] text-slate-500 truncate">Administrateur Senior</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-background-dark flex flex-col">
+<!-- Header -->
+<header class="p-8 pb-0">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Paramètres Administratifs</h2>
+<p class="text-slate-500 mt-1">Configurez l'interface et les préférences globales de l'application.</p>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex gap-8 border-b border-slate-200 dark:border-slate-800">
+<button class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">GÉNÉRAL</button>
+<button class="pb-4 text-sm font-bold text-primary border-b-2 border-primary">AFFICHAGE DES VUES</button>
+<button class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">CHAMPS &amp; BADGES</button>
+</div>
+</header>
+<!-- Content Grid -->
+<div class="p-8 grid grid-cols-1 xl:grid-cols-3 gap-6">
+<!-- Card 1: Vue CLIENTS -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+<h3 class="text-primary font-bold uppercase tracking-wider text-xs">Vue CLIENTS</h3>
+<p class="text-slate-500 text-xs mt-1">Personnalisation du répertoire principal</p>
+</div>
+<div class="p-6 space-y-8">
+<!-- Section A -->
+<div>
+<h4 class="text-slate-900 dark:text-white text-sm font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-slate-400">view_column</span>
+                            Colonnes du Tableau
+                        </h4>
+<div class="space-y-3">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Nom du Client / Montant</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Indicateur Santé</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Statut Dossier</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">ID Client Interne</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Secteur Activité</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+</div>
+</div>
+<!-- Section B -->
+<div>
+<h4 class="text-slate-900 dark:text-white text-sm font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-slate-400">side_navigation</span>
+                            Volet Informations (Side-panel)
+                        </h4>
+<div class="space-y-3">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Téléphones &amp; Contacts</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Détail des Montants</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Dates Clés</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Adresse Complète</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Notes Internes</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Vue REMBOURSEMENTS -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+<h3 class="text-primary font-bold uppercase tracking-wider text-xs">Vue REMBOURSEMENTS</h3>
+<p class="text-slate-500 text-xs mt-1">Configuration des flux financiers</p>
+</div>
+<div class="p-6">
+<h4 class="text-slate-900 dark:text-white text-sm font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-slate-400">list_alt</span>
+                        Paramètres de Liste
+                    </h4>
+<div class="space-y-3">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Nom du Client</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Montant versé</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Date du versement</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Validation Responsable</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Heure exacte</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Type de paiement (Moyen)</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+</div>
+</div>
+</div>
+<!-- Card 3: Vue FIN D'ÉCHÉANCE -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+<h3 class="text-primary font-bold uppercase tracking-wider text-xs">Vue FIN D'ÉCHÉANCE</h3>
+<p class="text-slate-500 text-xs mt-1">Suivi des échéanciers et alertes</p>
+</div>
+<div class="p-6">
+<h4 class="text-slate-900 dark:text-white text-sm font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-slate-400">event_busy</span>
+                        Affichage Échéances
+                    </h4>
+<div class="space-y-3">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Date limite calculée</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">Badge État "ÉCHU"</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-sm text-slate-700 dark:text-slate-300">État du recouvrement</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group opacity-60">
+<span class="text-sm text-slate-700 dark:text-slate-300">Historique des relances</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg"></div>
+</div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer Action -->
+<div class="mt-auto p-8 flex justify-end">
+<button class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95">
+<span class="material-symbols-outlined">save</span>
+                Enregistrer les préférences
+            </button>
+</div>
+</main>
+</div>
+
+```</body></html>

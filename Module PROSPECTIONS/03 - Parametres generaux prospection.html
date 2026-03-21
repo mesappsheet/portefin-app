@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#f27f0d",
+              "background-light": "#f8f7f5",
+              "background-dark": "#221910",
+            },
+            fontFamily: {
+              "display": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<title>Prospection Settings - Gestion du Portefeuille</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-background-dark border-r border-primary/10 flex flex-col">
+<div class="p-6">
+<h1 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-normal uppercase tracking-wider">Gestion du Portefeuille</h1>
+<p class="text-primary text-sm font-medium leading-normal">Prospection</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-primary/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold tracking-wide uppercase">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-primary/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="text-sm font-semibold tracking-wide uppercase">Portefeuille</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-primary/5 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-sm font-semibold tracking-wide uppercase">Communication</span>
+</a>
+<div class="pt-4 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Configuration</div>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-primary">settings</span>
+<span class="text-sm font-bold tracking-wide uppercase">Paramètres</span>
+</a>
+</nav>
+<div class="p-4 border-t border-primary/10">
+<div class="flex items-center gap-3 p-2">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">JD</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Jean Dupont</span>
+<span class="text-xs text-slate-500">Administrateur</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Header / Top Nav Tabs -->
+<header class="bg-white dark:bg-background-dark border-b border-primary/10 px-8 pt-6">
+<div class="flex gap-10">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-primary text-slate-900 dark:text-slate-100 pb-4 transition-all" href="#">
+<p class="text-sm font-bold leading-normal tracking-wider">GÉNÉRAL</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-400 hover:text-primary pb-4 transition-all" href="#">
+<p class="text-sm font-bold leading-normal tracking-wider uppercase">Affichage des vues</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-400 hover:text-primary pb-4 transition-all" href="#">
+<p class="text-sm font-bold leading-normal tracking-wider uppercase">Champs &amp; Badges</p>
+</a>
+</div>
+</header>
+<!-- Scrollable Body -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 max-w-5xl mx-auto w-full">
+<!-- Card 1: Thème Visuel -->
+<section class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-primary/5 p-6">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold mb-6">Thème visuel</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Mode Clair -->
+<div class="relative group cursor-pointer border-2 border-primary rounded-xl overflow-hidden aspect-video bg-background-light flex flex-col justify-between p-4 shadow-md transition-all">
+<div class="flex justify-between items-start">
+<div class="w-1/2 h-4 bg-slate-200 rounded-full"></div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm">check</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="w-full h-2 bg-slate-200 rounded-full"></div>
+<div class="w-2/3 h-2 bg-slate-200 rounded-full"></div>
+</div>
+<div class="mt-2 text-primary font-bold">Mode Clair</div>
+</div>
+<!-- Mode Sombre -->
+<div class="relative group cursor-pointer border-2 border-transparent hover:border-primary/30 rounded-xl overflow-hidden aspect-video bg-background-dark flex flex-col justify-between p-4 transition-all shadow-sm">
+<div class="flex justify-between items-start">
+<div class="w-1/2 h-4 bg-slate-700 rounded-full"></div>
+<div class="w-6 h-6 rounded-full border border-slate-600"></div>
+</div>
+<div class="space-y-2">
+<div class="w-full h-2 bg-slate-700 rounded-full"></div>
+<div class="w-2/3 h-2 bg-slate-700 rounded-full"></div>
+</div>
+<div class="mt-2 text-slate-400 font-bold">Mode Sombre</div>
+</div>
+</div>
+</section>
+<!-- Card 2: Région et Langue -->
+<section class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-primary/5 p-6">
+<h2 class="text-primary text-sm font-bold uppercase tracking-widest mb-6">RÉGION ET LANGUE</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-500">Fuseau Horaire</label>
+<div class="relative">
+<select class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-3 px-4 appearance-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100">
+<option>(GMT+01:00) Paris, Bruxelles, Madrid</option>
+<option>(GMT+00:00) London, Lisbon, Dublin</option>
+<option>(GMT+02:00) Athens, Istanbul, Cairo</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-500">Format de date</label>
+<div class="relative">
+<select class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-3 px-4 appearance-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100">
+<option>JJ/MM/AAAA</option>
+<option>MM/JJ/AAAA</option>
+<option>AAAA-MM-JJ</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Card 3: Système -->
+<section class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-primary/5 p-6">
+<h2 class="text-primary text-sm font-bold uppercase tracking-widest mb-6">SYSTÈME</h2>
+<div class="space-y-6">
+<!-- Toggle 1 -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-base font-semibold text-slate-900 dark:text-slate-100">Mode Silencieux</span>
+<span class="text-sm text-slate-500">Désactiver toutes les notifications sonores de l'application.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="h-px bg-primary/5"></div>
+<!-- Toggle 2 -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-base font-semibold text-slate-900 dark:text-slate-100">Sauvegarde Automatique</span>
+<span class="text-sm text-slate-500">Enregistrer les modifications en temps réel sur le serveur.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Bottom Actions -->
+<div class="flex justify-end gap-4 pb-12">
+<button class="px-6 py-2 rounded-lg font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Annuler</button>
+<button class="px-8 py-2 rounded-lg font-bold bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">Enregistrer</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

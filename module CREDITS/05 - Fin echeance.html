@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portfolio - Suivi des Fins d'Échéance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-size: 20px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-primary/10 flex flex-col shrink-0">
+<div class="p-6">
+<h1 class="text-primary font-extrabold text-xl tracking-tight">GESTION DU PORTEFEUILLE</h1>
+<p class="text-slate-500 text-xs font-bold tracking-widest uppercase mt-1">Clients</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold tracking-wide">TABLEAU DE BORD</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/25 transition-all" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="text-sm font-semibold tracking-wide">PORTEFEUILLE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="text-sm font-semibold tracking-wide">COMMUNICATION</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-semibold tracking-wide">PARAMÈTRES</span>
+</a>
+</nav>
+<div class="p-4 border-t border-primary/10">
+<div class="bg-primary/5 rounded-xl p-4 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full bg-primary/20" data-alt="Avatar de l'utilisateur gestionnaire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE3GghhY9pwFMqljDhqxigr_t6dV1yv1NcXCsR7IqNFCyPn7POD3a8kqwc_2DsEUhtSJr_GfN68F7B_PUmVEsBw_56NkyDYJaGtM7cGXRf7acOfKso8dZx46Zomr29TaqpQE2F5PKzZqbUebl4bzmNng6ltARBQk3z_b8jMamxwid0H8-CG0pDQL0ov_gSVHJ3g_IuO_KcAzkpntb62N59F9FKp9TCdy7BZaB4Au3nWXNGTb68yrznLG1L7CRrTKe05tEQ7Xvcz7M"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Admin Gestion</p>
+<p class="text-xs text-slate-500 truncate">Gestionnaire Senior</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Top Navigation Tabs -->
+<header class="bg-white dark:bg-slate-900 border-b border-primary/10 shrink-0">
+<div class="px-8 flex items-center">
+<nav class="flex gap-8">
+<a class="py-5 text-sm font-bold text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">CLIENTS</a>
+<a class="py-5 text-sm font-bold text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">REMBOURSEMENTS</a>
+<a class="py-5 text-sm font-bold text-primary border-b-2 border-primary" href="#">FIN ÉCHÉANCE</a>
+<a class="py-5 text-sm font-bold text-slate-500 hover:text-primary transition-colors border-b-2 border-transparent" href="#">CRÉDITS SOLDÉS</a>
+</nav>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-6">
+<!-- Header Section -->
+<div class="flex flex-wrap justify-between items-end gap-6">
+<div class="space-y-1">
+<h2 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Suivi des Fins d'Échéances</h2>
+<p class="text-slate-500 text-lg">Surveillez et gérez les crédits arrivant à terme</p>
+</div>
+<!-- Filters -->
+<div class="flex items-center bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-primary/10">
+    <button id="filter-day" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 rounded-lg">Ce jour</button>
+    <button id="filter-week" class="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-lg shadow-md shadow-primary/20">Cette semaine</button>
+    <button id="filter-month" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 rounded-lg">Ce mois</button>
+    <div class="w-px h-6 bg-slate-200 mx-2"></div>
+    <button id="filter-custom" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 rounded-lg">
+        <span class="material-symbols-outlined">calendar_today</span>
+        Période personnalisée
+    </button>
+</div>
+</div>
+<!-- Table Card -->
+<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-primary/10 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-primary/5">
+<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Client</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date d'échéance</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Montant crédit</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">État / Statut</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-primary/5">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">JD</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Jean Dupont</p>
+<p class="text-xs text-slate-500 font-medium tracking-tight">ID: 1024</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-semibold text-slate-700 dark:text-slate-300">14 Oct 2023</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-600 w-fit">Échu</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-lg font-black text-slate-900 dark:text-slate-100">4 500 000 <span class="text-sm font-medium text-slate-500">GNF</span></span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">Souffrance</span>
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">En cours</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Appeler">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm" title="WhatsApp">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm" title="Copier">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Supprimer">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm" title="Modifier">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">MK</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Marie Koné</p>
+<p class="text-xs text-slate-500 font-medium tracking-tight">ID: 1025</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-semibold text-slate-700 dark:text-slate-300">18 Oct 2023</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-lg font-black text-slate-900 dark:text-slate-100">2 200 000 <span class="text-sm font-medium text-slate-500">GNF</span></span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-wide">Sain</span>
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">En cours</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">AD</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Abdoulaye Diallo</p>
+<p class="text-xs text-slate-500 font-medium tracking-tight">ID: 1026</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-semibold text-slate-700 dark:text-slate-300">20 Oct 2023</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-lg font-black text-slate-900 dark:text-slate-100">1 750 000 <span class="text-sm font-medium text-slate-500">GNF</span></span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-wide">Sain</span>
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">En cours</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold">FS</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-slate-100">Fatou Sylla</p>
+<p class="text-xs text-slate-500 font-medium tracking-tight">ID: 1027</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-semibold text-slate-700 dark:text-slate-300">12 Oct 2023</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-600 w-fit">Échu</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-lg font-black text-slate-900 dark:text-slate-100">5 000 000 <span class="text-sm font-medium text-slate-500">GNF</span></span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">Souffrance</span>
+<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">En cours</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-primary/5">
+<p class="text-sm font-semibold text-slate-500">
+                        Affichage de <span class="text-slate-900 dark:text-white">1-4</span> sur <span class="text-slate-900 dark:text-white">124</span> clients
+                    </p>
+<div class="flex gap-2">
+<button class="flex items-center gap-1 px-4 py-2 rounded-lg bg-white dark:bg-slate-700 border border-primary/10 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+                            Précédent
+                        </button>
+<button class="flex items-center gap-1 px-4 py-2 rounded-lg bg-white dark:bg-slate-700 border border-primary/10 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
+                            Suivant
+                            <span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+(function() {
+    // --- STATE ---
+    let allCredits = [];
+    let filteredCredits = [];
+    let currentPage = 1;
+    let itemsPerPage = 7;
+    let currentFilter = 'week'; 
+    let currentSort = { field: 'end_date', ascending: true };
+
+    // --- DOM SELECTORS ---
+    const getElements = () => ({
+        tbody: document.querySelector('tbody'),
+        filterBtns: {
+            day: document.getElementById('filter-day'),
+            week: document.getElementById('filter-week'),
+            month: document.getElementById('filter-month'),
+            custom: document.getElementById('filter-custom')
+        },
+        pagination: {
+            info: document.querySelector('.px-6.py-4.bg-slate-50 p'), // To be unique if possible
+            prev: Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Précédent')),
+            next: Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Suivant'))
+        },
+        headers: document.querySelectorAll('th')
+    });
+
+    // --- LOGIC ---
+
+    async function init() {
+        console.log("Initializing dynamic Fin d'Echeance...");
+        setupEventListeners();
+        await loadData();
+        applyFilter('week'); // Default
+    }
+
+    async function loadData() {
+        const els = getElements();
+        if(els.tbody) els.tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-500 italic">Chargement...</td></tr>`;
+
+        try {
+            const { data, error } = await window.supabase
+                .from('credits')
+                .select('*')
+                .eq('status', 'EN COURS');
+
+            if (error) throw error;
+            allCredits = data || [];
+        } catch (err) {
+            console.error("Error loading credits:", err);
+            if(els.tbody) els.tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold">Erreur : ${err.message}</td></tr>`;
+        }
+    }
+
+    function setupEventListeners() {
+        const els = getElements();
+        
+        els.filterBtns.day?.addEventListener('click', () => applyFilter('day'));
+        els.filterBtns.week?.addEventListener('click', () => applyFilter('week'));
+        els.filterBtns.month?.addEventListener('click', () => applyFilter('month'));
+        els.filterBtns.custom?.addEventListener('click', () => alert('Sélection de période personnalisée à venir.'));
+        
+        els.pagination.prev?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                render();
+            }
+        });
+
+        els.pagination.next?.addEventListener('click', () => {
+            if (currentPage * itemsPerPage < filteredCredits.length) {
+                currentPage++;
+                render();
+            }
+        });
+
+        els.headers.forEach(th => {
+            th.classList.add('cursor-pointer', 'hover:text-primary', 'transition-colors');
+            th.addEventListener('click', () => {
+                const text = th.innerText.toLowerCase();
+                let field = 'end_date';
+                if (text.includes('client')) field = 'client_name';
+                else if (text.includes('échéance')) field = 'end_date';
+                else if (text.includes('montant')) field = 'amount';
+                else if (text.includes('état')) field = 'health';
+                
+                if (currentSort.field === field) {
+                    currentSort.ascending = !currentSort.ascending;
+                } else {
+                    currentSort.field = field;
+                    currentSort.ascending = true;
+                }
+                
+                sortData();
+                render();
+            });
+        });
+    }
+
+    function sortData() {
+        filteredCredits.sort((a, b) => {
+            let valA = a[currentSort.field] || '';
+            let valB = b[currentSort.field] || '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return currentSort.ascending ? -1 : 1;
+            if (valA > valB) return currentSort.ascending ? 1 : -1;
+            return 0;
+        });
+    }
+
+    function applyFilter(filter) {
+        currentFilter = filter;
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // --- UI TOGGLE LOGIC ---
+        const els = getElements();
+        Object.keys(els.filterBtns).forEach(k => {
+            const btn = els.filterBtns[k];
+            if (!btn) return;
+            if (k === filter) {
+                btn.className = "px-4 py-2 text-sm font-semibold bg-orange-500 text-white rounded-lg shadow-md shadow-orange-500/20 transition-all";
+            } else {
+                btn.className = "px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 rounded-lg transition-all";
+            }
+        });
+
+        filteredCredits = allCredits.filter(c => {
+            if (!c.end_date) return false;
+            const endDate = new Date(c.end_date);
+            if (filter === 'day') {
+                return endDate.toDateString() === today.toDateString();
+            } else if (filter === 'week') {
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+                return endDate >= today && endDate <= nextWeek;
+            } else if (filter === 'month') {
+                return endDate.getMonth() === today.getMonth() && endDate.getFullYear() === today.getFullYear();
+            }
+            return true;
+        });
+
+        sortData();
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const els = getElements();
+        if(!els.tbody) return;
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageData = filteredCredits.slice(start, end);
+
+        if (pageData.length === 0) {
+            els.tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-20 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <span class="material-symbols-outlined text-4xl text-slate-300">event_busy</span>
+                            <p class="text-slate-500 font-medium">Aucun crédit arrivant à terme.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            els.tbody.innerHTML = pageData.map(c => {
+                const isExpired = new Date(c.end_date) < new Date();
+                const initials = c.client_name ? c.client_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+                const formattedDate = new Date(c.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                const amount = new Intl.NumberFormat('fr-FR').format(c.amount);
+
+                return `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors border-b border-primary/5 last:border-0">
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">${initials}</div>
+                                <div>
+                                    <p class="font-bold text-slate-900 dark:text-slate-100">${c.client_name || 'Inconnu'}</p>
+                                    <p class="text-[10px] text-slate-500 font-medium tracking-tight">ID: ${c.id.substring(0, 8)}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300 text-sm">${formattedDate}</span>
+                                ${isExpired ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-red-100 text-red-600 w-fit">Échu</span>' : ''}
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-sm font-black text-slate-900 dark:text-slate-100">${amount} GNF</span>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold ${c.health === 'SAIN' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} uppercase">${c.health || 'SAIN'}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 text-right">
+                             <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="alert('Appel vers client')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                    <span class="material-symbols-outlined text-[18px]">call</span>
+                                </button>
+                                <button onclick="alert('WhatsApp client')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
+                                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                                </button>
+                                <button onclick="alert('Détails du dossier')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        const total = filteredCredits.length;
+        const actualEnd = Math.min(end, total);
+        const actualStart = total === 0 ? 0 : start + 1;
+        
+        const infoEl = document.querySelector('.text-sm.font-semibold.text-slate-500'); // Targeted selector
+        if (infoEl) infoEl.innerHTML = `Affichage de <span class="text-slate-900 dark:text-white">${actualStart}-${actualEnd}</span> sur <span class="text-slate-900 dark:text-white">${total}</span> dossiers`;
+        
+        if (els.pagination.prev) els.pagination.prev.disabled = currentPage === 1;
+        if (els.pagination.next) els.pagination.next.disabled = end >= total;
+    }
+
+    if (window.supabase) init();
+    else document.addEventListener('supabase-ready', init);
+
+})();
+</script>
+</main>
+
+</div>
+</body></html>

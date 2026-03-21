@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Maquette Fonctionnelle - Gestion de Portefeuille</title>
+
+    <!-- Tailwind & Google Fonts (Comme dans les maquettes) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1763cf",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-nav { @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-100 font-bold; }
+        
+        /* Transition pour le chargement des vues */
+        #view-container {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .view-loading {
+            opacity: 0.5;
+        }
+
+        /* Styles pour les modales */
+        #modal-overlay {
+            display: none;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        #modal-overlay.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden">
+    
+    <div id="app-root" class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside class="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark hidden lg:flex flex-col">
+            <div class="p-6 flex items-center gap-3">
+                <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-tight uppercase">Portefeuille</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Client Management</p>
+                </div>
+            </div>
+            
+            <nav class="flex-1 px-4 py-4 space-y-1" id="main-nav">
+                <button data-module="dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav text-left">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-sm font-semibold uppercase tracking-wide">Tableau de Bord</span>
+                </button>
+                <button data-module="prospection" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                    <span class="material-symbols-outlined">person_search</span>
+                    <span class="text-sm font-semibold tracking-wide">Prospection</span>
+                </button>
+                <button data-module="credits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span class="text-sm font-semibold tracking-wide">Crédits</span>
+                </button>
+                <button data-module="settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-sm font-semibold tracking-wide">Paramètres</span>
+                </button>
+            </nav>
+
+            <!-- Liste des écrans du module actif (dynamique) -->
+            <div class="px-4 py-4 border-t border-slate-100 dark:border-slate-800">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Écrans disponibles</p>
+                <div id="sub-screens-list" class="space-y-1 max-h-48 overflow-y-auto">
+                    <!-- Injecté par JS -->
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-3 p-2">
+                    <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-primary">JK</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">Jean Kouassi</p>
+                        <p class="text-xs text-slate-500 truncate">Superviseur</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div id="view-container" class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            <!-- Les vues sont injectées ici -->
+             <div class="flex items-center justify-center h-full">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+             </div>
+        </div>
+    </div>
+
+    <!-- Overlay pour les modales -->
+    <div id="modal-overlay" class="fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative border border-slate-200 dark:border-slate-800">
+            <button id="close-modal" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 z-10">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div id="modal-content">
+                <!-- Contenu de la modale injecté ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
