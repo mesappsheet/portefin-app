@@ -2,10 +2,19 @@
 <html class="dark" lang="fr">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Maquette Fonctionnelle - Gestion de Portefeuille</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>PorteFin - Gestion de Portefeuille</title>
 
-    <!-- Tailwind & Google Fonts (Comme dans les maquettes) -->
+    <!-- PWA Meta -->
+    <meta name="theme-color" content="#1763cf"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="apple-mobile-web-app-title" content="PorteFin"/>
+    <meta name="description" content="Plateforme SaaS de gestion de portefeuille microfinance."/>
+    <link rel="manifest" href="./manifest.json"/>
+    <link rel="apple-touch-icon" href="./icons/icon-192.svg"/>
+
+    <!-- Tailwind & Google Fonts -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -33,7 +42,7 @@
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .active-nav { @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-100 font-bold; }
-        
+
         /* Transition pour le chargement des vues */
         #view-container {
             transition: opacity 0.2s ease-in-out;
@@ -51,12 +60,198 @@
         #modal-overlay.active {
             display: flex;
         }
+
+        /* ── Mobile Drawer ── */
+        #mobile-drawer-overlay {
+            display: none;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
+        }
+        #mobile-drawer-overlay.active { display: block; }
+
+        #mobile-drawer {
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #mobile-drawer.open {
+            transform: translateX(0);
+        }
+
+        /* ── Bottom Tab Bar (mobile) ── */
+        #bottom-tab-bar {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .bottom-tab.active-tab {
+            color: #1763cf;
+        }
+        .bottom-tab.active-tab .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* ── Responsive overrides for injected views ── */
+        /* Dashboard header */
+        @media (max-width: 768px) {
+            #view-container header {
+                height: auto !important;
+                padding: 12px 16px !important;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            #view-container header .flex.items-center.gap-4:last-child {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            #view-container header input[type="text"] {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            /* Dashboard clock - hide on very small screens */
+            #view-container header .min-w-\\[110px\\] {
+                display: none;
+            }
+            /* Main content padding */
+            #view-container > .flex-1.overflow-y-auto {
+                padding: 16px !important;
+            }
+            #view-container .p-8 {
+                padding: 16px !important;
+            }
+            #view-container .space-y-8 > * + * {
+                margin-top: 16px !important;
+            }
+
+            /* Master-detail: stack vertically on mobile */
+            #view-container .flex-1.flex.overflow-hidden {
+                flex-direction: column !important;
+            }
+            /* Fixed-width list panels become full width */
+            #view-container section[class*="w-[450px]"],
+            #view-container section[class*="w-[500px]"],
+            #view-container section[id="list-sidebar"] {
+                width: 100% !important;
+                max-height: 45vh !important;
+                border-right: none !important;
+                border-bottom: 1px solid rgba(148,163,184,0.2) !important;
+            }
+            /* Resizer hidden on mobile */
+            #view-container .resizer-v {
+                display: none !important;
+            }
+            /* Grid cols-6 -> cols-3 on mobile */
+            #view-container .grid-cols-6 {
+                grid-template-columns: repeat(3, 1fr) !important;
+            }
+            /* Table horizontal scroll */
+            #view-container table {
+                display: block;
+                overflow-x: auto;
+            }
+            /* Module cards text */
+            #view-container .text-3xl {
+                font-size: 1.5rem !important;
+            }
+            /* Header buttons smaller */
+            #view-container header button .text-lg,
+            #view-container header .text-lg {
+                font-size: 0.875rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #view-container .grid-cols-6 {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            #view-container section[class*="w-[450px]"],
+            #view-container section[class*="w-[500px]"],
+            #view-container section[id="list-sidebar"] {
+                max-height: 35vh !important;
+            }
+        }
+
+        /* Add bottom padding when bottom bar is visible */
+        @media (max-width: 1023px) {
+            #view-container {
+                padding-bottom: 64px;
+            }
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden">
-    
-    <div id="app-root" class="flex h-screen w-full">
-        <!-- Sidebar -->
+
+    <!-- Mobile Top Bar (visible < lg) -->
+    <header id="mobile-topbar" class="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 z-30 relative flex-shrink-0">
+        <button id="btn-open-drawer" class="p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Ouvrir le menu">
+            <span class="material-symbols-outlined text-2xl">menu</span>
+        </button>
+        <div class="flex items-center gap-2">
+            <div class="size-8 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+            </div>
+            <h1 class="text-sm font-bold tracking-tight uppercase">PorteFin</h1>
+        </div>
+        <div class="w-10"></div><!-- spacer for centering -->
+    </header>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-drawer-overlay" class="fixed inset-0 z-40 lg:hidden"></div>
+
+    <!-- Mobile Drawer -->
+    <aside id="mobile-drawer" class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-background-dark z-50 flex flex-col shadow-2xl lg:hidden">
+        <div class="p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-tight uppercase">PorteFin</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Client Management</p>
+                </div>
+            </div>
+            <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fermer le menu">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto" id="mobile-nav">
+            <button data-module="dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav text-left">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-semibold uppercase tracking-wide">Tableau de Bord</span>
+            </button>
+            <button data-module="prospection" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                <span class="material-symbols-outlined">person_search</span>
+                <span class="text-sm font-semibold tracking-wide">Prospection</span>
+            </button>
+            <button data-module="credits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-sm font-semibold tracking-wide">Crédits</span>
+            </button>
+            <button data-module="settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-semibold tracking-wide">Paramètres</span>
+            </button>
+
+            <!-- Sub-screens mobile -->
+            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Écrans disponibles</p>
+                <div id="mobile-sub-screens" class="space-y-1 max-h-48 overflow-y-auto">
+                    <!-- Injecté par JS -->
+                </div>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-3 p-2" id="mobile-user-info">
+                <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-primary">JK</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold truncate">Jean Kouassi</p>
+                    <p class="text-xs text-slate-500 truncate">Superviseur</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="app-root" class="flex flex-col lg:flex-row h-screen w-full">
+        <!-- Sidebar (desktop only) -->
         <aside class="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark hidden lg:flex flex-col">
             <div class="p-6 flex items-center gap-3">
                 <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
@@ -67,7 +262,7 @@
                     <p class="text-xs text-slate-500 dark:text-slate-400">Client Management</p>
                 </div>
             </div>
-            
+
             <nav class="flex-1 px-4 py-4 space-y-1" id="main-nav">
                 <button data-module="dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav text-left">
                     <span class="material-symbols-outlined">dashboard</span>
@@ -87,7 +282,7 @@
                 </button>
             </nav>
 
-            <!-- Liste des écrans du module actif (dynamique) -->
+            <!-- Liste des écrans du module actif -->
             <div class="px-4 py-4 border-t border-slate-100 dark:border-slate-800">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Écrans disponibles</p>
                 <div id="sub-screens-list" class="space-y-1 max-h-48 overflow-y-auto">
@@ -114,6 +309,26 @@
              </div>
         </div>
     </div>
+
+    <!-- Bottom Tab Bar (mobile only) -->
+    <nav id="bottom-tab-bar" class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-30 flex items-stretch justify-around">
+        <button data-module="dashboard" class="bottom-tab active-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors">
+            <span class="material-symbols-outlined text-xl">dashboard</span>
+            <span class="text-[10px] font-semibold">Bord</span>
+        </button>
+        <button data-module="prospection" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
+            <span class="material-symbols-outlined text-xl">person_search</span>
+            <span class="text-[10px] font-semibold">Prospects</span>
+        </button>
+        <button data-module="credits" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
+            <span class="material-symbols-outlined text-xl">payments</span>
+            <span class="text-[10px] font-semibold">Crédits</span>
+        </button>
+        <button data-module="settings" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
+            <span class="material-symbols-outlined text-xl">settings</span>
+            <span class="text-[10px] font-semibold">Réglages</span>
+        </button>
+    </nav>
 
     <!-- Overlay pour les modales -->
     <div id="modal-overlay" class="fixed inset-0 z-50 items-center justify-center p-4">
