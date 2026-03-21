@@ -5,7 +5,7 @@ class ProspectionModule {
     getTableName() { return 'prospects'; }
 
     getConflictFields() {
-        return ['full_name', 'phone'];
+        return ['full_name'];
     }
 
     /**
@@ -31,7 +31,7 @@ class ProspectionModule {
     validate(data) {
         let errors = [];
         if (!data.full_name) errors.push("Le nom complet est obligatoire.");
-        if (!data.phone) errors.push("Le numéro de téléphone est requis.");
+        // Téléphone facultatif
         return errors;
     }
 

@@ -35,7 +35,7 @@ class CreditModule {
         if (isNaN(data.start_date.getTime())) errors.push("La date de déblocage est invalide.");
         if (!data.end_date || isNaN(data.end_date.getTime())) errors.push("La date de fin d'échéance est obligatoire.");
         if (data.start_date >= data.end_date) errors.push("La date de fin doit être après la date de début.");
-        if (!data.phone) errors.push("Le numéro de téléphone est obligatoire.");
+        // Téléphone facultatif
         return errors;
     }
 
