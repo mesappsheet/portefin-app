@@ -299,11 +299,14 @@
 
             <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
                 <div class="flex items-center gap-3 p-2">
-                    <img alt="User avatar" class="size-10 rounded-full border-2 border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB86P_sTOm0CZVXbbmptBHZueHa1mAvIOVqULWK3qMpIWQ4WBukAK1EPb9nzyV_gQZmTXWFxkDn_OoGpFxW5ucBbMq0nn-lSPsVVaPwi3b81vef8s5ZcIBUTXl9zf64W-NRZ3xZTWJOcx_RNt2_6xn0J3aBaalNLTd9tj_6cZauYAqb7Z6nq_-TYSTpbw18ilSEduqEv6O2fCzfTGm5qglXpGBoUtGhpl8Kbwwm-tMlOJCQ6rLx1Tn5HilQWWuxH2wrN3v1nkSqe6A"/>
+                    <div id="sidebar-avatar" class="size-10 rounded-full border-2 border-primary/30 flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style="background:#f27f0d">-</div>
                     <div class="flex-1 min-w-0 sidebar-text">
-                        <p class="text-sm font-bold truncate">Jean Kouassi</p>
-                        <p class="text-[10px] text-slate-500 truncate font-medium">Superviseur</p>
+                        <p id="sidebar-user-name" class="text-sm font-bold truncate">-</p>
+                        <p id="sidebar-user-role" class="text-[10px] text-slate-500 truncate font-medium">-</p>
                     </div>
+                    <button onclick="porteFinLogout()" title="Se déconnecter" class="sidebar-text p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex-shrink-0">
+                        <span class="material-symbols-outlined text-lg">logout</span>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -424,7 +427,7 @@
             </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-8">
 <div class="flex flex-col gap-1">
-<h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Bienvenue, Jean.</h3>
+<h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Bienvenue, <span id="dashboard-welcome-name">.</span></h3>
 <p class="text-slate-500 dark:text-slate-400">Voici les indicateurs clés de votre performance aujourd'hui.</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -7675,6 +7678,44 @@ Suivant
                 confirmBtn.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Confirmer l'importation`;
             }
         }
+    </script>
+
+    <!-- ── AUTH SESSION ─────────────────────────────────────────────────── -->
+    <script>
+    (function() {
+        const raw = localStorage.getItem("portefin_session");
+        if (!raw) {
+            window.location.href = "./login.html";
+            return;
+        }
+        try {
+            const user = JSON.parse(raw);
+
+            // Nom dans la sidebar
+            const nameEl   = document.getElementById("sidebar-user-name");
+            const roleEl   = document.getElementById("sidebar-user-role");
+            const avatarEl = document.getElementById("sidebar-avatar");
+
+            if (nameEl)   nameEl.textContent   = user.name  || user.email || "Utilisateur";
+            if (roleEl)   roleEl.textContent   = user.role  || "Utilisateur";
+            if (avatarEl) avatarEl.textContent = (user.name || "U")[0].toUpperCase();
+
+            // Accueil personnalisé
+            const welcomeEl = document.getElementById("dashboard-welcome-name");
+            if (welcomeEl) {
+                const first = (user.name || "").split(" ")[0] || "vous";
+                welcomeEl.textContent = first + ".";
+            }
+        } catch(e) {
+            localStorage.removeItem("portefin_session");
+            window.location.href = "./login.html";
+        }
+    })();
+
+    function porteFinLogout() {
+        localStorage.removeItem("portefin_session");
+        window.location.href = "./login.html";
+    }
     </script>
 </body>
 </html>

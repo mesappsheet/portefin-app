@@ -3,7 +3,7 @@
 
 [[redirects]]
   from = "/"
-  to = "/MAQUETTE_COMPLETE.html"
+  to = "/login.html"
   status = 200
 
 [[redirects]]

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PorteFin — Connexion</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: "#f27f0d", "primary-dark": "#d46a00" },
+                    fontFamily: { sans: ["Inter", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+        .hero-bg {
+            background: linear-gradient(150deg, #1a0a00 0%, #8b3e00 40%, #f27f0d 80%, #ff9d2e 100%);
+        }
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f27f0d, #d46a00);
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(242,127,13,0.4);
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(242,127,13,0.5);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .input-field {
+            width: 100%; padding: 11px 14px 11px 42px;
+            border-radius: 10px; border: 1.5px solid #e2e8f0;
+            font-size: 14px; font-family: 'Inter', sans-serif;
+            background: #f8fafc; color: #0f172a;
+            transition: all 0.2s; outline: none;
+        }
+        .input-field:focus {
+            border-color: #f27f0d; background: white;
+            box-shadow: 0 0 0 3px rgba(242,127,13,0.12);
+        }
+        .input-field::placeholder { color: #94a3b8; }
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; font-size: 19px; }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 18px; }
+        .toggle-pw:hover { color: #f27f0d; }
+
+        .tab-btn { transition: all 0.2s; border-radius: 8px; padding: 8px 0; font-size: 14px; cursor: pointer; color: #64748b; }
+        .tab-btn.active { background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.12); color: #f27f0d; font-weight: 700; }
+
+        .field-error { font-size: 11px; color: #ef4444; margin-top: 4px; display: none; }
+        .field-error.show { display: block; }
+
+        .form-panel { transition: opacity 0.2s; }
+        .form-panel.hidden-panel { display: none; }
+
+        .strength-bar { height: 3px; border-radius: 2px; transition: all 0.3s; }
+
+        #toast { transition: all 0.3s; transform: translateY(-12px); opacity: 0; pointer-events: none; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-fade { animation: fadeIn 0.5s ease-out; }
+        .anim-up { animation: slideUp 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900" style="font-family:'Inter',sans-serif;min-height:100vh;">
+
+<!-- Toast -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold text-white" style="min-width:300px">
+    <span id="toast-icon" class="material-symbols-outlined text-xl filled"></span>
+    <span id="toast-msg"></span>
+</div>
+
+<div class="flex min-h-screen">
+
+    <!-- ===== PANNEAU GAUCHE ===== -->
+    <div class="hidden lg:flex lg:w-[52%] hero-bg grid-pattern flex-col justify-between p-12 relative overflow-hidden">
+        <!-- Cercles décoratifs -->
+        <div class="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 -mr-20 -mt-20"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-black/10 -ml-32 -mb-32"></div>
+
+        <!-- Logo -->
+        <div class="relative z-10 flex items-center gap-3 anim-fade">
+            <div class="size-11 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white text-2xl">account_balance_wallet</span>
+            </div>
+            <div>
+                <p class="text-white font-bold text-xl leading-none">PorteFin</p>
+                <p class="text-orange-100/60 text-xs font-medium tracking-wider uppercase">Microfinance SaaS</p>
+            </div>
+        </div>
+
+        <!-- Contenu central -->
+        <div class="relative z-10 space-y-7 anim-up">
+            <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-orange-50 font-semibold tracking-wide">
+                <span class="size-1.5 rounded-full bg-green-400 inline-block animate-pulse"></span>
+                Plateforme certifiée · Conforme BCEAO
+            </div>
+
+            <div>
+                <h1 class="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight">
+                    Pilotez votre<br/>
+                    <span class="text-orange-200">microfinance</span><br/>
+                    intelligemment
+                </h1>
+                <p class="mt-4 text-orange-100/75 text-base leading-relaxed max-w-md">
+                    Gestion de prospects, cycles de crédit complets et reporting avancé — tout en un tableau de bord unifié.
+                </p>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl font-black text-white">98%</p>
+                    <p class="text-orange-100/60 text-xs mt-1 font-medium leading-tight">Taux de<br/>recouvrement</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl font-black text-white">12k+</p>
+                    <p class="text-orange-100/60 text-xs mt-1 font-medium leading-tight">Dossiers<br/>gérés</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl font-black text-white">4.9★</p>
+                    <p class="text-orange-100/60 text-xs mt-1 font-medium leading-tight">Note<br/>clients</p>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="space-y-2.5">
+                <div class="flex items-center gap-3 text-orange-50/85 text-sm">
+                    <span class="material-symbols-outlined text-green-400 text-xl filled flex-shrink-0">check_circle</span>
+                    Tableau de bord temps réel & KPIs microfinance
+                </div>
+                <div class="flex items-center gap-3 text-orange-50/85 text-sm">
+                    <span class="material-symbols-outlined text-green-400 text-xl filled flex-shrink-0">check_circle</span>
+                    Gestion complète du cycle de crédit & échéanciers
+                </div>
+                <div class="flex items-center gap-3 text-orange-50/85 text-sm">
+                    <span class="material-symbols-outlined text-green-400 text-xl filled flex-shrink-0">check_circle</span>
+                    Communications automatisées & alertes intelligentes
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer gauche -->
+        <div class="relative z-10 flex items-center justify-between">
+            <p class="text-orange-100/40 text-xs">© 2026 PorteFin. Tous droits réservés.</p>
+            <div class="flex items-center gap-2 bg-green-500/15 border border-green-500/25 rounded-full px-3 py-1">
+                <span class="size-1.5 rounded-full bg-green-400 animate-pulse inline-block"></span>
+                <span class="text-green-300 text-xs font-medium">Système opérationnel</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PANNEAU DROIT ===== -->
+    <div class="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 overflow-y-auto bg-slate-50">
+
+        <!-- Logo mobile -->
+        <div class="flex lg:hidden items-center gap-3 mb-8 self-start">
+            <div class="size-10 rounded-xl flex items-center justify-center" style="background:#f27f0d">
+                <span class="material-symbols-outlined text-white text-xl">account_balance_wallet</span>
+            </div>
+            <div>
+                <p class="font-bold">PorteFin</p>
+                <p class="text-slate-500 text-xs">Microfinance SaaS</p>
+            </div>
+        </div>
+
+        <!-- Carte principale -->
+        <div class="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/60 p-8 sm:p-10 anim-up">
+
+            <!-- Tab switcher -->
+            <div class="flex bg-slate-100 rounded-xl p-1 mb-7 gap-1">
+                <button id="tab-login" onclick="switchTab('login')" class="tab-btn active flex-1">Se connecter</button>
+                <button id="tab-register" onclick="switchTab('register')" class="tab-btn flex-1">S'inscrire</button>
+            </div>
+
+            <!-- ── CONNEXION ── -->
+            <div id="panel-login" class="form-panel space-y-5">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight text-slate-900">Bon retour !</h2>
+                    <p class="text-slate-500 text-sm mt-1">Accédez à votre espace de gestion.</p>
+                </div>
+
+                <!-- Identifiant -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">person</span>
+                        <input id="login-id" type="text" placeholder="Email ou Administrateur" class="input-field" autocomplete="username"/>
+                    </div>
+                    <p id="login-id-err" class="field-error">Identifiant requis</p>
+                </div>
+
+                <!-- Mot de passe -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">lock</span>
+                        <input id="login-password" type="password" placeholder="Mot de passe" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter') signIn()"/>
+                        <span class="toggle-pw material-symbols-outlined" onclick="togglePw('login-password', this)">visibility_off</span>
+                    </div>
+                    <p id="login-pw-err" class="field-error">Mot de passe requis</p>
+                </div>
+
+                <!-- Bouton -->
+                <button id="btn-login" onclick="signIn()" class="btn-primary w-full flex items-center justify-center gap-2 rounded-xl py-3 text-white font-bold text-sm">
+                    <span id="spinner-login" class="spinner hidden"></span>
+                    <span class="material-symbols-outlined text-xl">login</span>
+                    <span id="label-login">Se connecter</span>
+                </button>
+            </div>
+
+            <!-- ── INSCRIPTION ── -->
+            <div id="panel-register" class="form-panel hidden-panel space-y-4">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight text-slate-900">Créer un compte</h2>
+                    <p class="text-slate-500 text-sm mt-1">Rejoignez PorteFin en quelques secondes.</p>
+                </div>
+
+                <!-- Nom complet -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">badge</span>
+                        <input id="reg-name" type="text" placeholder="Prénom et Nom" class="input-field" autocomplete="name"/>
+                    </div>
+                    <p id="reg-name-err" class="field-error">Nom requis</p>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">mail</span>
+                        <input id="reg-email" type="email" placeholder="votre@email.com" class="input-field" autocomplete="email"/>
+                    </div>
+                    <p id="reg-email-err" class="field-error">Email invalide</p>
+                </div>
+
+                <!-- Mot de passe -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">lock</span>
+                        <input id="reg-password" type="password" placeholder="Choisir un mot de passe (8 car. min.)" class="input-field" autocomplete="new-password" oninput="checkStrength(this.value)"/>
+                        <span class="toggle-pw material-symbols-outlined" onclick="togglePw('reg-password', this)">visibility_off</span>
+                    </div>
+                    <p id="reg-pw-err" class="field-error">8 caractères minimum requis</p>
+                    <div class="flex gap-1 mt-2">
+                        <div class="strength-bar flex-1 bg-slate-200" id="bar-1"></div>
+                        <div class="strength-bar flex-1 bg-slate-200" id="bar-2"></div>
+                        <div class="strength-bar flex-1 bg-slate-200" id="bar-3"></div>
+                        <div class="strength-bar flex-1 bg-slate-200" id="bar-4"></div>
+                    </div>
+                    <p id="strength-label" class="text-[11px] text-slate-400 mt-1"></p>
+                </div>
+
+                <!-- Confirmation -->
+                <div>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">lock_clock</span>
+                        <input id="reg-confirm" type="password" placeholder="Confirmer le mot de passe" class="input-field" autocomplete="new-password" onkeydown="if(event.key==='Enter') signUp()"/>
+                        <span class="toggle-pw material-symbols-outlined" onclick="togglePw('reg-confirm', this)">visibility_off</span>
+                    </div>
+                    <p id="reg-confirm-err" class="field-error">Les mots de passe ne correspondent pas</p>
+                </div>
+
+                <!-- Bouton -->
+                <button id="btn-register" onclick="signUp()" class="btn-primary w-full flex items-center justify-center gap-2 rounded-xl py-3 text-white font-bold text-sm">
+                    <span id="spinner-register" class="spinner hidden"></span>
+                    <span class="material-symbols-outlined text-xl">person_add</span>
+                    <span id="label-register">Créer mon compte</span>
+                </button>
+            </div>
+
+            <!-- Sécurité -->
+            <div class="mt-6 flex items-center justify-center gap-4 text-[11px] text-slate-400">
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">shield</span> Données sécurisées</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">encrypted</span> AES-256</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">verified_user</span> RGPD</span>
+            </div>
+        </div>
+
+        <div class="mt-5 text-center">
+            <p class="text-xs text-slate-400">Besoin d'aide ? <a href="mailto:support@portefin.app" style="color:#f27f0d">Contacter le support</a></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // ── Config ──────────────────────────────────────────────────────────────
+    const SB_URL = "https://lkuwgggwdtbzjgplwylr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo";
+    const sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+
+    // Compte administrateur (hardcodé)
+    const ADMIN_ID   = "Administrateur";
+    const ADMIN_PASS = "Codjo@1989";
+    const APP_URL    = "./MAQUETTE_COMPLETE.html";
+
+    // ── Vérifie si déjà connecté ─────────────────────────────────────────────
+    const existingSession = localStorage.getItem("portefin_session");
+    if (existingSession) { window.location.href = APP_URL; }
+
+    // ── Tab switcher ─────────────────────────────────────────────────────────
+    function switchTab(tab) {
+        const isLogin = tab === "login";
+        document.getElementById("tab-login").classList.toggle("active", isLogin);
+        document.getElementById("tab-register").classList.toggle("active", !isLogin);
+        document.getElementById("panel-login").classList.toggle("hidden-panel", !isLogin);
+        document.getElementById("panel-register").classList.toggle("hidden-panel", isLogin);
+        clearErrors();
+    }
+
+    // ── Connexion ────────────────────────────────────────────────────────────
+    async function signIn() {
+        clearErrors();
+        const id = document.getElementById("login-id").value.trim();
+        const pw = document.getElementById("login-password").value;
+        let valid = true;
+
+        if (!id) { showErr("login-id-err"); valid = false; }
+        if (!pw) { showErr("login-pw-err"); valid = false; }
+        if (!valid) return;
+
+        setBusy("login", true);
+
+        // ── Cas admin ────────────────────────────────────────────────────────
+        if (id === ADMIN_ID) {
+            if (pw !== ADMIN_PASS) {
+                showToast("error", "Mot de passe administrateur incorrect.");
+                setBusy("login", false);
+                return;
+            }
+            saveSession({ name: "Administrateur", email: "admin@portefin.app", role: "Administrateur" });
+            showToast("success", "Bienvenue, Administrateur !");
+            setTimeout(() => { window.location.href = APP_URL; }, 900);
+            return;
+        }
+
+        // ── Cas utilisateur normal (Supabase) ────────────────────────────────
+        try {
+            const { data, error } = await sbClient.auth.signInWithPassword({ email: id, password: pw });
+            if (error) throw error;
+            const user = data.user;
+            const name = user.user_metadata?.full_name || user.email.split("@")[0];
+            saveSession({ name, email: user.email, role: "Utilisateur", id: user.id });
+            showToast("success", `Bienvenue, ${name} !`);
+            setTimeout(() => { window.location.href = APP_URL; }, 900);
+        } catch (err) {
+            const msg = (err.message || "").includes("Invalid login")
+                ? "Email ou mot de passe incorrect."
+                : (err.message || "Erreur de connexion.");
+            showToast("error", msg);
+            setBusy("login", false);
+        }
+    }
+
+    // ── Inscription ──────────────────────────────────────────────────────────
+    async function signUp() {
+        clearErrors();
+        const name    = document.getElementById("reg-name").value.trim();
+        const email   = document.getElementById("reg-email").value.trim();
+        const pw      = document.getElementById("reg-password").value;
+        const confirm = document.getElementById("reg-confirm").value;
+        let valid = true;
+
+        if (!name)                      { showErr("reg-name-err"); valid = false; }
+        if (!isValidEmail(email))       { showErr("reg-email-err"); valid = false; }
+        if (pw.length < 8)              { showErr("reg-pw-err"); valid = false; }
+        if (pw !== confirm)             { showErr("reg-confirm-err"); valid = false; }
+        if (!valid) return;
+
+        setBusy("register", true);
+
+        try {
+            // Inscription Supabase
+            const { data: signUpData, error: signUpErr } = await sbClient.auth.signUp({
+                email, password: pw,
+                options: { data: { full_name: name } }
+            });
+            if (signUpErr) throw signUpErr;
+
+            // Connexion immédiate (fonctionne si "Confirm email" est désactivé dans Supabase)
+            const { data: signInData, error: signInErr } = await sbClient.auth.signInWithPassword({ email, password: pw });
+            if (signInErr) {
+                // Email confirmation activée → compte créé mais pas encore confirmé
+                showToast("info", "Compte créé ! Connectez-vous avec vos identifiants.");
+                setBusy("register", false);
+                setTimeout(() => switchTab("login"), 1800);
+                return;
+            }
+
+            const user = signInData.user;
+            saveSession({ name, email: user.email, role: "Utilisateur", id: user.id });
+            showToast("success", `Compte créé ! Bienvenue, ${name} !`);
+            setTimeout(() => { window.location.href = APP_URL; }, 1000);
+        } catch (err) {
+            const msg = (err.message || "").includes("already registered")
+                ? "Cet email est déjà utilisé. Connectez-vous."
+                : (err.message || "Erreur lors de l'inscription.");
+            showToast("error", msg);
+            setBusy("register", false);
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function saveSession(user) {
+        localStorage.setItem("portefin_session", JSON.stringify(user));
+    }
+
+    function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+    function togglePw(id, icon) {
+        const input = document.getElementById(id);
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        icon.textContent = show ? "visibility" : "visibility_off";
+    }
+
+    function setBusy(key, busy) {
+        const btn     = document.getElementById(`btn-${key}`);
+        const spinner = document.getElementById(`spinner-${key}`);
+        const label   = document.getElementById(`label-${key}`);
+        btn.disabled  = busy;
+        spinner.classList.toggle("hidden", !busy);
+        if (label) label.textContent = busy ? (key === "login" ? "Connexion…" : "Inscription…") : (key === "login" ? "Se connecter" : "Créer mon compte");
+    }
+
+    function showErr(id) { document.getElementById(id)?.classList.add("show"); }
+    function clearErrors() { document.querySelectorAll(".field-error").forEach(e => e.classList.remove("show")); }
+
+    function showToast(type, msg) {
+        const t = document.getElementById("toast");
+        const icon = document.getElementById("toast-icon");
+        const text = document.getElementById("toast-msg");
+        const colors = { success: "#22c55e", error: "#ef4444", info: "#f27f0d" };
+        const icons  = { success: "check_circle", error: "cancel", info: "info" };
+        t.style.background = colors[type] || colors.info;
+        icon.textContent   = icons[type]  || "info";
+        text.textContent   = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 3500);
+    }
+
+    function checkStrength(pw) {
+        const bars  = [1,2,3,4].map(i => document.getElementById(`bar-${i}`));
+        const label = document.getElementById("strength-label");
+        let score = 0;
+        if (pw.length >= 8)   score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        const colors = ["", "#ef4444", "#f97316", "#eab308", "#22c55e"];
+        const labels = ["", "Faible", "Moyen", "Bon", "Excellent"];
+        bars.forEach((b, i) => { b.style.background = i < score ? colors[score] : "#e2e8f0"; });
+        label.textContent = pw.length ? labels[score] : "";
+        label.style.color = colors[score] || "#94a3b8";
+    }
+</script>
+</body>
+</html>
