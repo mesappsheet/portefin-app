@@ -439,7 +439,7 @@
 <h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Bienvenue, <span id="dashboard-welcome-name">.</span></h3>
 <p class="text-slate-500 dark:text-slate-400">Voici les indicateurs clés de votre performance aujourd'hui.</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 <div onclick="switchModule('credits'); loadScreen('credits_progress');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -480,6 +480,20 @@
 <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Crédits Actifs</p>
 <h4 id="stat-active-credits-total" class="text-2xl font-bold mt-1">0 FCFA</h4>
 </div>
+
+<!-- Cadran Impayés -->
+<div onclick="switchModule('credits'); loadScreen('credits_unpaid');" class="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-200 dark:border-red-800 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all group col-span-1 md:col-span-2 lg:col-span-1">
+<div class="flex items-center justify-between mb-3">
+<div class="size-10 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 flex items-center justify-center">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="material-symbols-outlined text-red-300 group-hover:text-red-500 transition-colors text-base">arrow_forward</span>
+</div>
+<p class="text-sm font-medium text-red-500 dark:text-red-400">Impayés</p>
+<h4 id="stat-unpaid-count" class="text-2xl font-bold mt-1 text-red-700 dark:text-red-400">0 client</h4>
+<div id="stat-unpaid-names" class="mt-2 space-y-0.5"></div>
+</div>
+
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 <div onclick="event.stopPropagation(); switchModule('prospection')" class="group relative overflow-hidden rounded-2xl bg-primary h-64 shadow-lg shadow-primary/20 cursor-pointer">
@@ -6805,6 +6819,32 @@ Suivant
             if (document.getElementById('stat-active-credits-total')) {
                 document.getElementById('stat-active-credits-total').textContent = `${stats.total.toLocaleString('fr-FR')} ${cur}`;
             }
+
+            // Impayés — échéances passées non payées
+            (async () => {
+                const today = new Date().toISOString().split('T')[0];
+                const { data: unpaid } = await fetch(
+                    `${_SB_URL}/rest/v1/repayments?select=credits(client_name)&scheduled_date=lt.${today}&is_paid=eq.false`,
+                    { headers: { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` } }
+                ).then(r => r.json()).then(d => ({ data: d })).catch(() => ({ data: [] }));
+
+                const countEl = document.getElementById('stat-unpaid-count');
+                const namesEl = document.getElementById('stat-unpaid-names');
+                if (!countEl || !namesEl) return;
+
+                if (!unpaid || unpaid.length === 0) {
+                    countEl.textContent = '0 client';
+                    namesEl.innerHTML = '<p class="text-xs text-green-600 font-semibold">✓ Tous à jour</p>';
+                    return;
+                }
+
+                // Dédoublonner par nom
+                const names = [...new Set(unpaid.map(r => r.credits?.client_name).filter(Boolean))];
+                countEl.textContent = `${names.length} client${names.length > 1 ? 's' : ''}`;
+                namesEl.innerHTML = names.slice(0, 4).map(n =>
+                    `<p class="text-xs text-red-600 font-semibold truncate">• ${n}</p>`
+                ).join('') + (names.length > 4 ? `<p class="text-xs text-red-400">+${names.length - 4} autres...</p>` : '');
+            })();
 
             // Control Screen specific updates
             if (document.getElementById('stat-repayments-day-control-val')) {
