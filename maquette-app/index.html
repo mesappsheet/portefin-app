@@ -173,6 +173,17 @@
             #view-container {
                 padding-bottom: 64px;
             }
+            /* Android: single scrollable view for list + details */
+            .android-device #view-container .flex-1.flex.overflow-hidden {
+                overflow: auto !important;
+                height: auto !important;
+            }
+            .android-device #view-container section[class*="w-[450px]"],
+            .android-device #view-container section[class*="w-[500px]"],
+            .android-device #view-container section[id="list-sidebar"] {
+                max-height: none !important;
+                overflow: visible !important;
+            }
         }
     </style>
 </head>

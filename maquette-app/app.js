@@ -56,6 +56,13 @@ window.addEventListener("appinstalled", () => {
 });
 
 /* ═══════════════════════════════════════════
+   ANDROID DETECTION
+   ═══════════════════════════════════════════ */
+function isAndroid() {
+    return /Android/i.test(navigator.userAgent);
+}
+
+/* ═══════════════════════════════════════════
    AUTHENTICATION
    ═══════════════════════════════════════════ */
 async function initAuth() {
@@ -195,6 +202,11 @@ const dom = {
    INITIALISATION
    ═══════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", async () => {
+    // Add Android class to body for CSS targeting
+    if (isAndroid()) {
+        document.body.classList.add("android-device");
+    }
+
     const authenticated = await initAuth();
     if (!authenticated) return;
 
@@ -416,6 +428,8 @@ async function loadScreen(moduleKey, screenId) {
 function applyMobileResponsiveFixes() {
     if (window.innerWidth >= 1024) return;
 
+    const android = isAndroid();
+
     // Hide internal sidebars (they're redundant - the app shell has its own)
     dom.viewContainer.querySelectorAll("aside").forEach(aside => {
         aside.style.display = "none";
@@ -426,70 +440,75 @@ function applyMobileResponsiveFixes() {
         r.style.display = "none";
     });
 
-    // Make fixed-width sections full-width on mobile + add collapsible toggle
+    // Make fixed-width sections full-width on mobile
     dom.viewContainer.querySelectorAll("section").forEach(sec => {
         const cls = sec.className || "";
         if (cls.includes("w-[") || cls.includes("list-sidebar") || sec.id === "list-sidebar") {
             sec.style.width = "100%";
             sec.style.maxWidth = "100%";
             sec.style.borderRight = "none";
-            sec.style.borderBottom = "1px solid rgba(148,163,184,0.2)";
             sec.style.position = "relative";
-            sec.style.transition = "max-height 0.3s ease";
-            sec.style.overflow = "hidden";
 
-            // Set initial collapsed state
-            sec.style.maxHeight = window.innerWidth < 480 ? "35vh" : "45vh";
-            sec.dataset.expanded = "true";
+            if (android) {
+                // Android: liste et détails sur une même vue scrollable, pas de collapsible
+                sec.style.maxHeight = "none";
+                sec.style.overflow = "visible";
+                sec.style.borderBottom = "2px solid rgba(148,163,184,0.15)";
+                sec.style.transition = "none";
+                // Remove any existing toggle bar
+                const existingToggle = sec.querySelector(".mobile-list-toggle");
+                if (existingToggle) existingToggle.remove();
+            } else {
+                // iOS / autres: comportement collapsible existant
+                sec.style.borderBottom = "1px solid rgba(148,163,184,0.2)";
+                sec.style.transition = "max-height 0.3s ease";
+                sec.style.overflow = "hidden";
+                sec.style.maxHeight = window.innerWidth < 480 ? "35vh" : "45vh";
+                sec.dataset.expanded = "true";
 
-            // Add toggle bar if not already added
-            if (!sec.querySelector(".mobile-list-toggle")) {
-                const toggleBar = document.createElement("div");
-                toggleBar.className = "mobile-list-toggle";
-                toggleBar.style.cssText = "display:flex;align-items:center;justify-content:center;padding:6px 0;cursor:pointer;background:linear-gradient(to bottom,transparent,rgba(148,163,184,0.08));border-top:1px solid rgba(148,163,184,0.15);gap:4px;position:sticky;bottom:0;z-index:5;";
-                toggleBar.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;color:#64748b;transition:transform 0.3s">expand_less</span><span style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">Réduire la liste</span>';
-                sec.appendChild(toggleBar);
+                if (!sec.querySelector(".mobile-list-toggle")) {
+                    const toggleBar = document.createElement("div");
+                    toggleBar.className = "mobile-list-toggle";
+                    toggleBar.style.cssText = "display:flex;align-items:center;justify-content:center;padding:6px 0;cursor:pointer;background:linear-gradient(to bottom,transparent,rgba(148,163,184,0.08));border-top:1px solid rgba(148,163,184,0.15);gap:4px;position:sticky;bottom:0;z-index:5;";
+                    toggleBar.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;color:#64748b;transition:transform 0.3s">expand_less</span><span style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">Réduire la liste</span>';
+                    sec.appendChild(toggleBar);
 
-                const icon = toggleBar.querySelector(".material-symbols-outlined");
-                const label = toggleBar.querySelector("span:last-child");
+                    const icon = toggleBar.querySelector(".material-symbols-outlined");
+                    const label = toggleBar.querySelector("span:last-child");
 
-                toggleBar.addEventListener("click", () => {
-                    const isExpanded = sec.dataset.expanded === "true";
-                    if (isExpanded) {
-                        // Collapse - show only toggle bar
-                        sec.style.maxHeight = "36px";
-                        sec.dataset.expanded = "false";
-                        icon.textContent = "expand_more";
-                        icon.style.transform = "";
-                        label.textContent = "Afficher la liste";
-                        toggleBar.style.borderTop = "none";
-                        toggleBar.style.background = "rgba(148,163,184,0.06)";
-                    } else {
-                        // Expand
-                        sec.style.maxHeight = window.innerWidth < 480 ? "35vh" : "45vh";
-                        sec.dataset.expanded = "true";
-                        icon.textContent = "expand_less";
-                        label.textContent = "Réduire la liste";
-                        toggleBar.style.borderTop = "1px solid rgba(148,163,184,0.15)";
-                        toggleBar.style.background = "linear-gradient(to bottom,transparent,rgba(148,163,184,0.08))";
-                    }
-                });
+                    toggleBar.addEventListener("click", () => {
+                        const isExpanded = sec.dataset.expanded === "true";
+                        if (isExpanded) {
+                            sec.style.maxHeight = "36px";
+                            sec.dataset.expanded = "false";
+                            icon.textContent = "expand_more";
+                            icon.style.transform = "";
+                            label.textContent = "Afficher la liste";
+                            toggleBar.style.borderTop = "none";
+                            toggleBar.style.background = "rgba(148,163,184,0.06)";
+                        } else {
+                            sec.style.maxHeight = window.innerWidth < 480 ? "35vh" : "45vh";
+                            sec.dataset.expanded = "true";
+                            icon.textContent = "expand_less";
+                            label.textContent = "Réduire la liste";
+                            toggleBar.style.borderTop = "1px solid rgba(148,163,184,0.15)";
+                            toggleBar.style.background = "linear-gradient(to bottom,transparent,rgba(148,163,184,0.08))";
+                        }
+                    });
 
-                // Swipe down to collapse, swipe up to expand
-                let touchStartY = 0;
-                sec.addEventListener("touchstart", (e) => {
-                    touchStartY = e.touches[0].clientY;
-                }, { passive: true });
-                sec.addEventListener("touchend", (e) => {
-                    const diffY = e.changedTouches[0].clientY - touchStartY;
-                    if (diffY < -60 && sec.dataset.expanded === "false") {
-                        // Swipe up -> expand
-                        toggleBar.click();
-                    } else if (diffY > 60 && sec.dataset.expanded === "true") {
-                        // Swipe down -> collapse
-                        toggleBar.click();
-                    }
-                }, { passive: true });
+                    let touchStartY = 0;
+                    sec.addEventListener("touchstart", (e) => {
+                        touchStartY = e.touches[0].clientY;
+                    }, { passive: true });
+                    sec.addEventListener("touchend", (e) => {
+                        const diffY = e.changedTouches[0].clientY - touchStartY;
+                        if (diffY < -60 && sec.dataset.expanded === "false") {
+                            toggleBar.click();
+                        } else if (diffY > 60 && sec.dataset.expanded === "true") {
+                            toggleBar.click();
+                        }
+                    }, { passive: true });
+                }
             }
         }
     });
@@ -499,6 +518,12 @@ function applyMobileResponsiveFixes() {
     masterDetailContainers.forEach(container => {
         if (container.children.length > 1) {
             container.style.flexDirection = "column";
+            if (android) {
+                // Android: allow full scroll of both list + details together
+                container.style.overflow = "auto";
+                container.style.height = "auto";
+                container.style.minHeight = "0";
+            }
         }
     });
 
