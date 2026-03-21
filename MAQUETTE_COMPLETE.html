@@ -439,7 +439,7 @@
 <h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Bienvenue, <span id="dashboard-welcome-name">.</span></h3>
 <p class="text-slate-500 dark:text-slate-400">Voici les indicateurs clés de votre performance aujourd'hui.</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
 <div onclick="switchModule('credits'); loadScreen('credits_progress');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -492,6 +492,19 @@
 <p class="text-sm font-medium text-red-500 dark:text-red-400">Impayés</p>
 <h4 id="stat-unpaid-count" class="text-2xl font-bold mt-1 text-red-700 dark:text-red-400">0 client</h4>
 <div id="stat-unpaid-names" class="mt-2 space-y-0.5"></div>
+</div>
+
+<!-- Cadran En Souffrance -->
+<div onclick="switchModule('credits'); loadScreen('credits_souffrance');" class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-xl border border-orange-200 dark:border-orange-800 shadow-sm cursor-pointer hover:border-orange-400 hover:shadow-md transition-all group col-span-1 md:col-span-2 lg:col-span-1">
+<div class="flex items-center justify-between mb-3">
+<div class="size-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 flex items-center justify-center">
+<span class="material-symbols-outlined">health_and_safety</span>
+</div>
+<span class="material-symbols-outlined text-orange-300 group-hover:text-orange-500 transition-colors text-base">arrow_forward</span>
+</div>
+<p class="text-sm font-medium text-orange-500 dark:text-orange-400">En Souffrance</p>
+<h4 id="stat-souffrance-count" class="text-2xl font-bold mt-1 text-orange-700 dark:text-orange-400">0 crédit</h4>
+<div id="stat-souffrance-names" class="mt-2 space-y-0.5"></div>
 </div>
 
 </div>
@@ -2851,6 +2864,7 @@
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
 <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
+<a onclick="loadScreen('credits_souffrance')" class="pb-4 border-b-2 border-transparent text-rose-400 hover:text-rose-600 font-bold text-sm tracking-wide cursor-pointer">SOUFFRANCE</a>
 </div>
 </header>
 <div class="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
@@ -3222,6 +3236,7 @@ Reporter
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
 <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
+<a onclick="loadScreen('credits_souffrance')" class="pb-4 border-b-2 border-transparent text-rose-400 hover:text-rose-600 font-bold text-sm tracking-wide cursor-pointer">SOUFFRANCE</a>
 </div>
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-8 max-w-7xl mx-auto w-full">
@@ -3436,6 +3451,7 @@ Reporter
 <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-primary text-primary font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
 <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
 <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
+<a onclick="loadScreen('credits_souffrance')" class="pb-4 border-b-2 border-transparent text-rose-400 hover:text-rose-600 font-bold text-sm tracking-wide cursor-pointer">SOUFFRANCE</a>
 </div>
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-6">
@@ -3673,6 +3689,94 @@ Suivant
         </table>
     </div>
     <p id="unpaid-total-line" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
+</div>
+`,
+            credits_souffrance: `
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 pt-6 flex-shrink-0">
+    <div class="flex items-center gap-4 mb-4">
+        <button onclick="toggleSidebar('main-sidebar')" class="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors mr-1">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h2 class="text-xl font-bold text-rose-600">Clients en Souffrance</h2>
+        <span id="souffrance-count-badge" class="px-2.5 py-0.5 bg-rose-100 text-rose-700 text-xs font-black rounded-full hidden">0</span>
+    </div>
+    <div class="flex gap-8 overflow-x-auto no-scrollbar">
+        <a onclick="loadScreen('credits_clients')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CLIENTS</a>
+        <a onclick="loadScreen('credits_progress')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">REMBOURSEMENTS</a>
+        <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
+        <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
+        <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-transparent text-red-400 hover:text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
+        <a onclick="loadScreen('credits_souffrance')" class="pb-4 border-b-2 border-rose-500 text-rose-600 font-bold text-sm tracking-wide cursor-pointer">SOUFFRANCE</a>
+    </div>
+</header>
+<div class="flex-1 overflow-y-auto p-8 space-y-6 max-w-7xl mx-auto w-full">
+
+    <!-- KPI Barre -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-rose-50 border border-rose-100 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 flex-shrink-0">
+                <span class="material-symbols-outlined">sentiment_very_dissatisfied</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-rose-400 uppercase tracking-widest">Clients en souffrance</p>
+                <p id="souffrance-kpi-clients" class="text-2xl font-black text-rose-700">—</p>
+            </div>
+        </div>
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-primary flex-shrink-0">
+                <span class="material-symbols-outlined">account_balance</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-orange-400 uppercase tracking-widest">Encours en souffrance</p>
+                <p id="souffrance-kpi-amount" class="text-2xl font-black text-primary">—</p>
+            </div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 flex-shrink-0">
+                <span class="material-symbols-outlined">percent</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Part du portefeuille</p>
+                <p id="souffrance-kpi-pct" class="text-2xl font-black text-slate-700">—</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres + Recherche -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Liste des crédits en souffrance</h3>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                <input oninput="filterSouffranceList(this.value)" id="souffrance-search" class="w-64 pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 outline-none transition-all shadow-sm" placeholder="Rechercher un client..." type="text"/>
+            </div>
+            <button onclick="fetchSouffranceClients()" class="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="Actualiser">
+                <span class="material-symbols-outlined text-[20px]">sync</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-rose-50 dark:bg-rose-900/10">
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest">Client</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest">Montant crédit</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Date début</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Date fin</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Statut</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="souffrance-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr><td colspan="6" class="px-6 py-16 text-center text-slate-400 font-medium">
+                    <div class="animate-pulse">Chargement des dossiers en souffrance...</div>
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p id="souffrance-total-line" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
 </div>
 `,
             credits_comm: `
@@ -4267,6 +4371,7 @@ Suivant
                     { id: 'credits_settled', label: 'Crédits soldés' },
                     { id: 'credits_end_term', label: 'Fin échéance' },
                     { id: 'credits_unpaid', label: 'Impayés' },
+                    { id: 'credits_souffrance', label: 'En souffrance' },
                     { id: 'credits_comm', label: 'Communications crédits' },
                     { id: 'credits_report', label: 'Report échéance', isModal: true },
                     { id: 'credits_new_dossier', label: 'Nouveau dossier client', isModal: true }
@@ -4471,6 +4576,7 @@ Suivant
                     if (screenId === 'credits_settled') fetchSettledCredits();
                     if (screenId === 'credits_end_term') fetchEndTermCredits();
                     if (screenId === 'credits_unpaid') fetchUnpaidClients();
+                    if (screenId === 'credits_souffrance') fetchSouffranceClients();
                     if (screenId === 'prospection_comm' || screenId === 'credits_comm') fetchCommTemplates();
                     if (screenId === 'import_manager') {
                         // Ensure module is identified
@@ -6467,6 +6573,111 @@ Suivant
         }
 
         // ══════════════════════════════════════════════════════════════════
+        //  SOUFFRANCE — Crédits dont health = 'SOUFFRANCE'
+        // ══════════════════════════════════════════════════════════════════
+        let _souffranceData = [];
+
+        async function fetchSouffranceClients() {
+            const tbody = document.getElementById('souffrance-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-16 text-center text-slate-400 animate-pulse">Chargement...</td></tr>';
+
+            const { data: all, error: errAll } = await _supabase
+                .from('credits').select('id, amount').not('status', 'ilike', 'Soldé%');
+            const totalPortefeuille = (all || []).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+
+            const { data, error } = await _supabase
+                .from('credits')
+                .select('id, client_name, phone, amount, start_date, end_date, status, health, activity')
+                .ilike('health', 'SOUFFRANCE%')
+                .not('status', 'ilike', 'Soldé%')
+                .order('end_date', { ascending: true });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold">Erreur : ${error.message}</td></tr>`;
+                return;
+            }
+            _souffranceData = data || [];
+            renderSouffranceTable(_souffranceData, totalPortefeuille);
+        }
+
+        function renderSouffranceTable(rows, totalPortefeuille = 0) {
+            const tbody  = document.getElementById('souffrance-table-body');
+            const kpiCli = document.getElementById('souffrance-kpi-clients');
+            const kpiAmt = document.getElementById('souffrance-kpi-amount');
+            const kpiPct = document.getElementById('souffrance-kpi-pct');
+            const badge  = document.getElementById('souffrance-count-badge');
+            const totEl  = document.getElementById('souffrance-total-line');
+            if (!tbody) return;
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-16 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <span class="material-symbols-outlined text-5xl text-green-400">favorite</span>
+                        <p class="font-bold text-slate-500">Aucun crédit en souffrance !</p>
+                    </div>
+                </td></tr>`;
+                if (kpiCli) kpiCli.textContent = '0';
+                if (kpiAmt) kpiAmt.textContent = '0 FCFA';
+                if (kpiPct) kpiPct.textContent = '0%';
+                if (badge)  { badge.textContent = '0'; badge.classList.add('hidden'); }
+                if (totEl)  totEl.textContent = '';
+                return;
+            }
+
+            const totalAmt = rows.reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+            const pct = totalPortefeuille > 0 ? Math.round((totalAmt / totalPortefeuille) * 100) : 0;
+
+            if (kpiCli) kpiCli.textContent = rows.length;
+            if (kpiAmt) kpiAmt.textContent = totalAmt.toLocaleString('fr-FR') + ' FCFA';
+            if (kpiPct) kpiPct.textContent = pct + '%';
+            if (badge)  { badge.textContent = rows.length; badge.classList.remove('hidden'); }
+            if (totEl)  totEl.textContent  = `${rows.length} dossier(s) en souffrance`;
+
+            tbody.innerHTML = rows.map(c => {
+                const phoneClean = (c.phone || '').replace(/\s/g, '');
+                return `<tr class="hover:bg-rose-50/40 dark:hover:bg-rose-900/10 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-black text-sm flex-shrink-0">${(c.client_name?.[0]||'?').toUpperCase()}</div>
+                            <div>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm">${c.client_name || '—'}</p>
+                                <p class="text-xs text-slate-400">${c.activity || ''}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-black text-rose-600 text-sm">${parseFloat(c.amount||0).toLocaleString('fr-FR')} FCFA</p>
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm text-slate-500">${c.start_date || '—'}</td>
+                    <td class="px-6 py-4 text-center text-sm text-slate-500">${c.end_date || '—'}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-700">${c.status || '—'}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${phoneClean ? `
+                            <a href="tel:${phoneClean}" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
+                                <span class="material-symbols-outlined text-sm">call</span>
+                            </a>
+                            <a href="https://wa.me/${phoneClean}" target="_blank" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                                <span class="material-symbols-outlined text-sm">chat</span>
+                            </a>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterSouffranceList(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) { renderSouffranceTable(_souffranceData); return; }
+            renderSouffranceTable(_souffranceData.filter(c =>
+                (c.client_name || '').toLowerCase().includes(q)
+            ));
+        }
+
+        // ══════════════════════════════════════════════════════════════════
         //  IMPAYÉS — Échéances passées non payées
         // ══════════════════════════════════════════════════════════════════
         let _unpaidData = [];
@@ -6844,6 +7055,30 @@ Suivant
                 namesEl.innerHTML = names.slice(0, 4).map(n =>
                     `<p class="text-xs text-red-600 font-semibold truncate">• ${n}</p>`
                 ).join('') + (names.length > 4 ? `<p class="text-xs text-red-400">+${names.length - 4} autres...</p>` : '');
+            })();
+
+            // En Souffrance — crédits avec health = SOUFFRANCE
+            (async () => {
+                const { data: souffrance } = await fetch(
+                    `${_SB_URL}/rest/v1/credits?select=client_name&health=ilike.SOUFFRANCE*&status=neq.SOLDE`,
+                    { headers: { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` } }
+                ).then(r => r.json()).then(d => ({ data: d })).catch(() => ({ data: [] }));
+
+                const countEl = document.getElementById('stat-souffrance-count');
+                const namesEl = document.getElementById('stat-souffrance-names');
+                if (!countEl || !namesEl) return;
+
+                if (!souffrance || souffrance.length === 0) {
+                    countEl.textContent = '0 crédit';
+                    namesEl.innerHTML = '<p class="text-xs text-green-600 font-semibold">✓ Portefeuille sain</p>';
+                    return;
+                }
+
+                const names = souffrance.map(c => c.client_name).filter(Boolean);
+                countEl.textContent = `${names.length} crédit${names.length > 1 ? 's' : ''}`;
+                namesEl.innerHTML = names.slice(0, 4).map(n =>
+                    `<p class="text-xs text-orange-600 font-semibold truncate">• ${n}</p>`
+                ).join('') + (names.length > 4 ? `<p class="text-xs text-orange-400">+${names.length - 4} autres...</p>` : '');
             })();
 
             // Control Screen specific updates
