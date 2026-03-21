@@ -4724,7 +4724,7 @@ Suivant
                 const isWA = (t.type || '').toUpperCase().includes('WHATSAPP');
                 const brand = isWA ? 'emerald' : 'blue';
                 return `
-                <div data-id="${t.id}" onclick="handleEditCommTemplate('${t.id}')" class="template-card hover-lift bg-white dark:bg-slate-900 p-8 rounded-[38px] border ${t.active ? `border-${brand}-500 ring-8 ring-${brand}-500/5 shadow-2xl z-10` : 'border-slate-200 opacity-80'} transition-all cursor-pointer">
+                <div data-id="${t.id}" data-type="${t.type}" onclick="handleEditCommTemplate('${t.id}')" class="template-card hover-lift bg-white dark:bg-slate-900 p-8 rounded-[38px] border ${t.active ? `border-${brand}-500 ring-8 ring-${brand}-500/5 shadow-2xl z-10` : 'border-slate-200 opacity-80'} transition-all cursor-pointer">
                     <div class="flex items-center justify-between mb-8">
                         <div class="px-3 py-1 bg-${brand}-50 text-${brand}-600 text-[9px] font-black rounded-full uppercase tracking-widest border border-${brand}-100">${t.type} <span class="text-slate-400 ml-1">· ${t.category || ''}</span></div>
                         <label class="relative inline-flex items-center cursor-pointer scale-110" onclick="event.stopPropagation()">
@@ -7059,19 +7059,23 @@ Suivant
             const cards = document.querySelectorAll('.template-card');
             let count = 0;
             cards.forEach(card => {
-                const badge = card.querySelector('.template-type-badge') || card.querySelector('span.uppercase');
-                if (!badge) return;
-                const badgeText = badge.textContent.toLowerCase();
-                
-                if (type === 'all' || badgeText.includes(type.toLowerCase())) {
-                    card.classList.remove('hidden');
-                    card.style.display = 'block';
-                    count++;
-                } else {
-                    card.classList.add('hidden');
-                    card.style.display = 'none';
-                }
+                const cardType = (card.getAttribute('data-type') || '').toLowerCase();
+                const show = type === 'all' || cardType.includes(type.toLowerCase());
+                card.style.display = show ? '' : 'none';
+                if (show) count++;
             });
+
+            // Feedback visuel sur les boutons actifs
+            document.querySelectorAll('[onclick^="handleFilterTemplates"]').forEach(btn => {
+                const btnType = btn.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+                const isActive = btnType === type;
+                btn.classList.toggle('bg-white', isActive);
+                btn.classList.toggle('dark:bg-slate-800', isActive);
+                btn.classList.toggle('shadow-sm', isActive);
+                btn.classList.toggle('text-primary', isActive);
+                btn.classList.toggle('text-slate-500', !isActive);
+            });
+
             showNotification(`${count} modèle(s) affiché(s)`);
         }
 
