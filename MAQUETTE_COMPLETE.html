@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAQUETTE COMPLETE - Portfolio Management</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Bibliothèques Système d'Import -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="scripts/import/ImportEngine.js?v=2.1.0"></script>
+    <script src="scripts/import/CreditModule.js?v=2.1.0"></script>
+    <script src="scripts/import/ProspectionModule.js?v=2.1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
@@ -311,6 +318,62 @@
     </div>
 
     <!-- Modal Overlay -->
+    <!-- Modal Confirmation Suppression Collective (2 étapes) -->
+    <div id="bulk-delete-overlay" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-red-100 dark:border-red-900/30 overflow-hidden">
+            <!-- Bande rouge haut -->
+            <div class="bg-red-600 px-6 py-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings:'FILL' 1">warning</span>
+                </div>
+                <div>
+                    <h3 id="bulk-delete-title" class="text-white font-black text-base uppercase tracking-widest">Suppression définitive</h3>
+                    <p class="text-red-100 text-xs font-medium mt-0.5">Cette action est irréversible</p>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 1 -->
+            <div id="bulk-delete-step1">
+                <div class="px-6 py-6 space-y-4">
+                    <p id="bulk-delete-message" class="text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed"></p>
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 space-y-2">
+                        <p class="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-widest">Ce qui sera supprimé :</p>
+                        <ul id="bulk-delete-details" class="text-xs text-red-600 dark:text-red-400 font-medium space-y-1 list-disc list-inside"></ul>
+                    </div>
+                    <p class="text-xs text-slate-500 italic">Aucune restauration possible après confirmation.</p>
+                </div>
+                <div class="px-6 pb-6 flex gap-3">
+                    <button onclick="closeBulkDeleteModal()" class="flex-1 py-3 px-4 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 transition-colors">
+                        Annuler
+                    </button>
+                    <button onclick="bulkDeleteGoStep2()" class="flex-1 py-3 px-4 rounded-xl text-sm font-black bg-red-100 hover:bg-red-200 text-red-700 transition-all flex items-center justify-center gap-2">
+                        Continuer →
+                    </button>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 2 -->
+            <div id="bulk-delete-step2" class="hidden">
+                <div class="px-6 py-6 space-y-4">
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Pour confirmer, tapez <span class="font-black text-red-600 bg-red-50 px-2 py-0.5 rounded">SUPPRIMER</span> dans le champ ci-dessous :</p>
+                    <input id="bulk-delete-type-input" type="text" oninput="onBulkDeleteTypeInput(this)" placeholder="Tapez SUPPRIMER ici..." autocomplete="off"
+                        class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:outline-none focus:border-red-400 transition-colors tracking-widest uppercase">
+                    <p id="bulk-delete-type-hint" class="text-xs text-slate-400 italic">Le bouton s'activera une fois le mot correctement saisi.</p>
+                </div>
+                <div class="px-6 pb-6 flex gap-3">
+                    <button onclick="bulkDeleteGoStep1()" class="flex-1 py-3 px-4 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 transition-colors">
+                        ← Retour
+                    </button>
+                    <button id="bulk-delete-confirm-btn" disabled onclick="bulkDeleteExecute()"
+                        class="flex-1 py-3 px-4 rounded-xl text-sm font-black bg-red-200 text-red-300 cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">delete_forever</span>
+                        Supprimer définitivement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-overlay" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4 lg:p-12 overflow-y-auto bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
         <div class="bg-white dark:bg-background-dark w-full max-w-5xl rounded-3xl shadow-2xl relative flex flex-col max-h-full">
             <button onclick="closeModal()" class="absolute top-6 right-6 z-10 size-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -365,41 +428,42 @@
 <p class="text-slate-500 dark:text-slate-400">Voici les indicateurs clés de votre performance aujourd'hui.</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div onclick="switchModule('credits'); loadScreen('credits_progress');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
 <span class="material-symbols-outlined">trending_up</span>
 </div>
-<span class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full">+5.2%</span>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-emerald-400 transition-colors text-base">arrow_forward</span>
 </div>
 <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Remboursements du Jour</p>
 <h4 id="stat-repayments-day" class="text-2xl font-bold mt-1">0 FCFA</h4>
 </div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div onclick="switchModule('credits'); loadScreen('credits_end_term');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-primary hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
 <span class="material-symbols-outlined">event_note</span>
 </div>
-<span class="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">Stable</span>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors text-base">arrow_forward</span>
 </div>
 <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Fins d'Échéance du Mois</p>
 <h4 id="stat-endterm-month" class="text-2xl font-bold mt-1">0 Dossiers</h4>
 </div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div onclick="switchModule('prospection'); loadScreen('prospection_list');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
 <span class="material-symbols-outlined">group</span>
 </div>
-<span class="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">+12%</span>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-amber-400 transition-colors text-base">arrow_forward</span>
 </div>
 <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Nouveaux Prospects</p>
 <h4 id="stat-new-prospects" class="text-2xl font-bold mt-1">0</h4>
 </div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+<div onclick="switchModule('credits');" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-slate-400 hover:shadow-md transition-all group">
 <div class="flex items-center justify-between mb-4">
 <div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 flex items-center justify-center">
 <span class="material-symbols-outlined">assignment</span>
 </div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-slate-500 transition-colors text-base">arrow_forward</span>
 </div>
 <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Crédits Actifs</p>
 <h4 id="stat-active-credits-total" class="text-2xl font-bold mt-1">0 FCFA</h4>
@@ -1458,14 +1522,21 @@
                 <span class="material-symbols-outlined">menu</span>
             </button>
             <h2 class="text-xl font-bold">Prospection</h2>
-            <button onclick="toggleSidebar('prospection-list-sidebar')" class="size-9 flex items-center justify-center rounded-lg bg-primary/5 text-primary hover:bg-primary/10 transition-colors ml-2">
-                <span class="material-symbols-outlined text-lg">format_list_bulleted</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="prospects-bulk-delete-btn" onclick="bulkDeleteProspects()" class="hidden px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-600/20">
+                <span class="material-symbols-outlined text-lg">delete_forever</span>
+                <span id="prospects-bulk-delete-label">Supprimer</span>
+            </button>
+            <button onclick="loadScreen('import_manager')" class="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                <span class="material-symbols-outlined text-lg">upload</span>
+                Importer
+            </button>
+            <button onclick="window.editingProspectId = null; openModal('prospection_add')" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
+                <span class="material-symbols-outlined text-lg">person_add</span>
+                Nouveau Prospect
             </button>
         </div>
-        <button onclick="window.editingProspectId = null; openModal('prospection_add')" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
-            <span class="material-symbols-outlined text-lg">person_add</span>
-            Nouveau Prospect
-        </button>
     </div>
     <div class="flex gap-8">
         <a class="pb-3 border-b-2 border-primary text-primary text-xs font-bold tracking-wider uppercase cursor-pointer" onclick="loadScreen('prospection_list')">Liste et Détails</a>
@@ -1476,12 +1547,9 @@
 <div class="flex-1 flex overflow-hidden">
     <!-- Left: List Section -->
     <!-- Left: List Section -->
-    <aside id="prospection-list-sidebar" class="sidebar-overlay flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" style="--sidebar-width: 380px;">
-        <div class="px-4 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
+    <aside id="prospection-list-sidebar" class="flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[380px]">
+        <div class="px-4 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
             <h3 class="font-bold text-sm uppercase tracking-widest text-slate-400">Liste des Prospects</h3>
-            <button onclick="toggleSidebar('prospection-list-sidebar')" class="size-7 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
         </div>
         <div class="px-4 py-3 space-y-3">
             <div class="flex items-center gap-3">
@@ -1510,6 +1578,7 @@
             <table class="w-full text-left border-collapse">
                 <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800 text-[10px] text-slate-500 font-bold uppercase tracking-wider z-10">
                     <tr>
+                        <th class="px-4 py-3 w-8"><input type="checkbox" id="prospect-select-all" onchange="toggleAllProspects(this)" class="w-4 h-4 accent-primary cursor-pointer rounded"></th>
                         <th class="px-4 py-3">Prospect / Date</th>
                         <th class="px-4 py-3">Contact</th>
                         <th class="px-4 py-3">Secteur</th>
@@ -1567,8 +1636,6 @@
             </table>
         </div>
     </aside>
-    <!-- Sub-Resizer -->
-    <div id="prospection-list-resizer" class="resizer-v" data-target="prospection-list-sidebar" data-side="right"></div>
     <!-- Right: Details Section -->
     <section id="prospect-details-view" class="flex-1 bg-slate-50/50 dark:bg-slate-950/50 p-8 overflow-y-auto space-y-8 no-scrollbar">
         <!-- Header Card -->
@@ -1589,32 +1656,40 @@
             </div>
         </div>
 
-        <!-- Action Grid -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 lg:gap-4">
-            <button id="btn-call-prospect" onclick="handleProspectCall()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-primary/5 transition-all">
-                <span class="material-symbols-outlined text-primary text-xl">call</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">Appeler</span>
+        <!-- Menu Actions Prospect -->
+        <div class="relative flex justify-end">
+            <button onclick="toggleActionMenu('prospect-action-menu')" class="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm font-bold text-sm text-slate-700 dark:text-slate-300">
+                <span class="material-symbols-outlined text-lg">menu</span>
+                Actions
             </button>
-            <button id="btn-whatsapp-prospect" onclick="handleProspectWhatsapp()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-green-500/50 hover:bg-green-50 transition-all">
-                <span class="material-symbols-outlined text-green-600 text-xl">chat</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">WhatsApp</span>
-            </button>
-            <button id="btn-sms-prospect" onclick="handleProspectSms()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50 transition-all">
-                <span class="material-symbols-outlined text-blue-600 text-xl">sms</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">SMS</span>
-            </button>
-            <button id="btn-edit-prospect" onclick="handleEditProspect()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 transition-all">
-                <span class="material-symbols-outlined text-slate-600 text-xl">edit</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">Modifier</span>
-            </button>
-            <button id="btn-note-prospect" onclick="openModal('prospection_note_add')" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-amber-500/50 hover:bg-amber-50 transition-all">
-                <span class="material-symbols-outlined text-amber-500 text-xl">event_note</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">Note</span>
-            </button>
-            <button id="btn-delete-prospect" onclick="handleDeleteProspect()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-red-500/50 hover:bg-red-50 group transition-all">
-                <span class="material-symbols-outlined text-red-500 text-xl">delete</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 group-hover:text-red-600">Supprimer</span>
-            </button>
+            <div id="prospect-action-menu" class="hidden absolute right-0 top-12 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-52 overflow-hidden">
+                <button id="btn-call-prospect" onclick="handleProspectCall(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
+                    <span class="material-symbols-outlined text-primary text-lg">call</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Appeler</span>
+                </button>
+                <button id="btn-whatsapp-prospect" onclick="handleProspectWhatsapp(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-green-600 text-lg">chat</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">WhatsApp</span>
+                </button>
+                <button id="btn-sms-prospect" onclick="handleProspectSms(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-blue-600 text-lg">sms</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">SMS</span>
+                </button>
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                <button id="btn-edit-prospect" onclick="handleEditProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
+                </button>
+                <button id="btn-note-prospect" onclick="openModal('prospection_note_add'); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-amber-500 text-lg">event_note</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Ajouter une note</span>
+                </button>
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                <button id="btn-delete-prospect" onclick="handleDeleteProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
+                    <span class="text-sm font-semibold text-red-600">Supprimer</span>
+                </button>
+            </div>
         </div>
 
         <!-- Info Cards Grid -->
@@ -2691,15 +2766,20 @@
             <span class="material-symbols-outlined">menu</span>
         </button>
         <h2 class="text-2xl font-bold">Portefeuille Clients</h2>
-        <button onclick="toggleSidebar('credits-list-sidebar')" class="size-9 flex items-center justify-center rounded-lg bg-primary/5 text-primary hover:bg-primary/10 transition-colors ml-2">
-            <span class="material-symbols-outlined text-lg">format_list_bulleted</span>
-        </button>
     </div>
-<div class="flex gap-3">
-<button onclick="openModal('credits_new_dossier')" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
-<span class="material-symbols-outlined text-lg">add</span>
-                        Nouveau Client
-                    </button>
+<div class="flex gap-3 items-center">
+    <button id="credits-bulk-delete-btn" onclick="bulkDeleteCredits()" class="hidden px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-600/20">
+        <span class="material-symbols-outlined text-lg">delete_forever</span>
+        <span id="credits-bulk-delete-label">Supprimer</span>
+    </button>
+    <button onclick="currentModule = 'credits'; loadScreen('import_manager');" class="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+        <span class="material-symbols-outlined text-lg">upload</span>
+        Importer
+    </button>
+    <button onclick="openModal('credits_new_dossier')" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Nouveau Client
+    </button>
 </div>
 </div>
 <div class="flex gap-8 overflow-x-auto no-scrollbar">
@@ -2712,12 +2792,9 @@
 <div class="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
     <!-- Left Sidebar (Overlay) -->
     <!-- Client List Sidebar (Push) -->
-    <aside id="credits-list-sidebar" class="sidebar-overlay flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" style="--sidebar-width: 380px;">
-        <div class="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
+    <aside id="credits-list-sidebar" class="flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[380px]">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
             <h3 class="font-bold text-sm uppercase tracking-widest text-slate-400">Liste des Clients</h3>
-            <button onclick="toggleSidebar('credits-list-sidebar')" class="size-7 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
         </div>
         <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner-sm">
 <div class="relative">
@@ -2725,7 +2802,8 @@
 <input oninput="handleSearchCredits(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 border rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all shadow-sm" placeholder="Rechercher un client..." type="text"/>
 </div>
 </div>
-<div class="grid grid-cols-[1fr_100px_100px] px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+<div class="grid grid-cols-[28px_1fr_100px_100px] px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 items-center">
+<input type="checkbox" id="credit-select-all" onchange="toggleAllCredits(this)" class="w-4 h-4 accent-primary cursor-pointer rounded">
 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client / Montant</span>
 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Santé</span>
 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Statut</span>
@@ -2734,48 +2812,55 @@
 <div class="p-8 text-center text-slate-400">
     <p class="text-sm">Sélectionner un client pour afficher les détails du crédit</p>
 </div>
-</div>
 </aside>
-<div id="credits-list-resizer" class="resizer-v" data-target="credits-list-sidebar" data-side="right"></div>
 <section class="flex-1 overflow-y-auto custom-scrollbar p-8">
 <div id="credit-details-container" class="max-w-4xl mx-auto space-y-6 hidden">
-<div class="bg-white dark:bg-slate-900 rounded-2xl p-10 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center shadow-sm">
-<div class="relative">
-<div class="w-32 h-32 rounded-full bg-primary/10 border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden mb-6 flex items-center justify-center">
-<span class="material-symbols-outlined text-border-gray-300 text-6xl text-primary/50">person</span>
+<div class="bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+  <div class="relative flex-shrink-0">
+    <div class="w-14 h-14 rounded-full bg-primary/10 border-2 border-white dark:border-slate-700 shadow-md flex items-center justify-center">
+      <span class="material-symbols-outlined text-3xl text-primary/50">person</span>
+    </div>
+    <span id="detail-credit-health-badge" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-slate-500 border-2 border-white dark:border-slate-800 rounded-full shadow"></span>
+  </div>
+  <div class="min-w-0 flex-1">
+    <h2 id="detail-credit-client-name" class="text-lg font-bold text-slate-900 dark:text-white truncate">-</h2>
+    <span class="text-slate-400 text-xs font-medium">Créé le <span id="detail-credit-client-date">-</span></span>
+  </div>
 </div>
-<span id="detail-credit-health-badge" class="absolute bottom-8 right-2 w-6 h-6 bg-slate-500 border-4 border-white dark:border-slate-800 rounded-full shadow-lg"></span>
-</div>
-<h2 id="detail-credit-client-name" class="text-3xl font-bold text-slate-900 dark:text-white">-</h2>
-<div class="flex items-center gap-2 mt-2">
-<span class="text-slate-500 text-sm font-medium">Créé le <span id="detail-credit-client-date">-</span></span>
-</div>
-</div>
-                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 lg:gap-4">
-                        <button onclick="handleCall()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-primary/5 transition-all">
-                            <span class="material-symbols-outlined text-primary text-xl">call</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">Appeler</span>
+                    <!-- Menu Actions Crédit -->
+                    <div class="relative flex justify-end">
+                        <button onclick="toggleActionMenu('credit-action-menu')" class="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm font-bold text-sm text-slate-700 dark:text-slate-300">
+                            <span class="material-symbols-outlined text-lg">menu</span>
+                            Actions
                         </button>
-                        <button onclick="handleWhatsapp()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-green-500/50 hover:bg-green-50 transition-all">
-                            <span class="material-symbols-outlined text-green-600 text-xl">chat</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">WhatsApp</span>
-                        </button>
-                        <button onclick="handleSms()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50 transition-all">
-                            <span class="material-symbols-outlined text-blue-600 text-xl">sms</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">SMS</span>
-                        </button>
-                        <button onclick="handleDeleteCredit()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-red-500/50 hover:bg-red-50 group transition-all">
-                            <span class="material-symbols-outlined text-red-500 text-xl">delete</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest group-hover:text-red-600">Supprimer</span>
-                        </button>
-                        <button id="btn-edit-credit" onclick="handleEditCredit()" class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 transition-all">
-                            <span class="material-symbols-outlined text-slate-600 text-xl">edit</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">Modifier</span>
-                        </button>
-                        <button onclick="if(currentCredit) { populateScheduleView(currentCredit); loadScreen('credits_schedule'); }" class="flex flex-col items-center justify-center gap-2 p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-                            <span class="material-symbols-outlined text-xl">payments</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">Échéancier</span>
-                        </button>
+                        <div id="credit-action-menu" class="hidden absolute right-0 top-12 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-52 overflow-hidden">
+                            <button onclick="handleCall(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
+                                <span class="material-symbols-outlined text-primary text-lg">call</span>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Appeler</span>
+                            </button>
+                            <button onclick="handleWhatsapp(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition-colors text-left">
+                                <span class="material-symbols-outlined text-green-600 text-lg">chat</span>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">WhatsApp</span>
+                            </button>
+                            <button onclick="handleSms(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left">
+                                <span class="material-symbols-outlined text-blue-600 text-lg">sms</span>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">SMS</span>
+                            </button>
+                            <button onclick="if(currentCredit) { populateScheduleView(currentCredit); loadScreen('credits_schedule'); } closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
+                                <span class="material-symbols-outlined text-primary text-lg">payments</span>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Échéancier</span>
+                            </button>
+                            <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                            <button id="btn-edit-credit" onclick="handleEditCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+                                <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
+                            </button>
+                            <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                            <button onclick="handleDeleteCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
+                                <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
+                                <span class="text-sm font-semibold text-red-600">Supprimer</span>
+                            </button>
+                        </div>
                     </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
 <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -2828,6 +2913,10 @@
 <div>
 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ADRESSE</p>
 <p id="detail-credit-client-address" class="text-sm font-semibold text-slate-800 dark:text-slate-200">-</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">EMAIL</p>
+<p id="detail-credit-client-email" class="text-sm font-semibold text-slate-800 dark:text-slate-200">-</p>
 </div>
 </div>
 </div>
@@ -3863,7 +3952,97 @@ Suivant
         </button>
     </div>
 </div>
-`
+`,
+            import_manager: `
+<header class="h-16 flex-shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-8 flex items-center justify-between z-10">
+    <div class="flex items-center gap-4 flex-1">
+        <button onclick="currentModule === 'credits' ? loadScreen('credits_clients') : loadScreen('prospection_list')" class="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors mr-2">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 id="import-title" class="text-lg font-bold uppercase tracking-tighter">Import Intelligent des Données</h2>
+    </div>
+</header>
+<div class="flex-1 overflow-y-auto p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="md:col-span-1 space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">1. Préparation</h3>
+                <p class="text-xs text-slate-500 mb-6">Utilisez notre modèle pour garantir que vos données sont correctement formatées.</p>
+                <div class="grid grid-cols-2 gap-4">
+                <button onclick="currentModule = 'credits'; downloadImportTemplate()" class="py-3 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all text-[9px] uppercase tracking-widest flex flex-col items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+                    MODÈLE CRÉDITS
+                </button>
+                <button onclick="currentModule = 'prospection'; downloadImportTemplate()" class="py-3 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all text-[9px] uppercase tracking-widest flex flex-col items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-lg">person_search</span>
+                    MODÈLE PROSPECTS
+                </button>
+            </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border-2 border-dashed border-primary/30 shadow-sm relative group hover:border-primary transition-all flex flex-col items-center justify-center min-h-[250px]">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest absolute top-6 left-6">2. Chargement</h3>
+                <input type="file" id="import-file-input" accept=".xlsx, .xls" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="onImportFileSelect(event)">
+                <div class="text-center space-y-4">
+                    <div class="size-20 mx-auto rounded-3xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                        <span class="material-symbols-outlined text-4xl">upload_file</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-black text-slate-700 dark:text-slate-200">Glissez votre fichier ici</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Excel (.xlsx) - Max 5mo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="md:col-span-2 space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col min-h-[500px]">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex flex-col gap-1">
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">3. Analyse & Prévisualisation</h3>
+                        <p id="import-module-label" class="text-xs font-bold text-primary">-</p>
+                    </div>
+                    <div id="import-stats" class="hidden flex gap-3">
+                        <span class="text-[9px] font-black px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-500/10 uppercase tracking-widest" id="import-stat-ok">0 VALIDES</span>
+                        <span class="text-[9px] font-black px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg border border-rose-500/10 uppercase tracking-widest" id="import-stat-errors">0 ERREURS</span>
+                    </div>
+                </div>
+                
+                <div id="import-preview-wrapper" class="flex-1 overflow-hidden border rounded-2xl border-slate-100 dark:border-slate-800 relative flex flex-col">
+                    <div id="import-empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-300 gap-4 py-20">
+                        <span class="material-symbols-outlined text-6xl opacity-10">view_list</span>
+                        <p class="text-[10px] font-black uppercase tracking-[0.4em] opacity-30">En attente de données...</p>
+                    </div>
+                    <div id="import-preview-table-container" class="hidden flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                                    <th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest">Ligne</th>
+                                    <th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest">Détails</th>
+                                    <th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-center">Statut</th>
+                                    <th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest">Défauts / Alertes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-preview-body" class="divide-y divide-slate-50 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex items-center justify-between">
+                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider italic">Les lignes en erreur seront ignorées lors de la validation.</p>
+                     <div class="flex gap-4">
+                        <button onclick="currentModule === 'credits' ? loadScreen('credits_clients') : loadScreen('prospection_list')" class="px-6 py-3 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-slate-900 transition-colors">
+                            Annuler
+                        </button>
+                        <button id="import-confirm-btn" disabled onclick="executeBatchImport()" class="px-10 py-4 bg-primary text-white font-black rounded-2xl shadow-2xl shadow-primary/20 opacity-40 cursor-not-allowed transition-all text-[10px] uppercase tracking-[0.4em] flex items-center gap-3">
+                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                            Confirmer l'importation
+                        </button>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+`,
         };
 
         const CONFIG = {
@@ -3976,20 +4155,6 @@ Suivant
             const firstScreen = moduleConfig.screens.find(s => !s.isModal);
             if (firstScreen) loadScreen(firstScreen.id);
 
-            // Auto-open list sidebars for Prospection and Credits on Desktop
-            if (window.innerWidth >= 1024) {
-                if (moduleKey === 'prospection') {
-                    setTimeout(() => {
-                        const sb = document.getElementById('prospection-list-sidebar');
-                        if (sb && !sb.classList.contains('active')) toggleSidebar('prospection-list-sidebar');
-                    }, 500);
-                } else if (moduleKey === 'credits') {
-                    setTimeout(() => {
-                        const sb = document.getElementById('credits-list-sidebar');
-                        if (sb && !sb.classList.contains('active')) toggleSidebar('credits-list-sidebar');
-                    }, 500);
-                }
-            }
 
             // Auto-close main sidebar on small screens or when it's an overlay
             const sidebar = document.getElementById('main-sidebar');
@@ -4117,7 +4282,13 @@ Suivant
                     if (screenId === 'credits_settled') fetchSettledCredits();
                     if (screenId === 'credits_end_term') fetchEndTermCredits();
                     if (screenId === 'prospection_comm' || screenId === 'credits_comm') fetchCommTemplates();
-                    if (screenId === 'prospection_fields') renderProspectFields();
+                    if (screenId === 'import_manager') {
+                        // Ensure module is identified
+                        const moduleLabel = document.getElementById('import-module-label');
+                        if (moduleLabel) {
+                            moduleLabel.textContent = currentModule === 'credits' ? "Module : CRÉDITS (Données Strictes + Échéancier)" : "Module : PROSPECTION (Coordonnées & Activités)";
+                        }
+                    }
                 } catch (e) {
                     console.error("Error during screen initialization:", e);
                 }
@@ -4686,6 +4857,8 @@ Suivant
             const container = document.getElementById('credits-list-container');
             if (!container) return;
 
+            selectedCreditIds.clear();
+            updateCreditSelectionBar();
             container.innerHTML = '<div class="p-8 text-center text-slate-400">Chargement...</div>';
 
             let query = _supabase
@@ -4699,7 +4872,12 @@ Suivant
                     end_date,
                     type,
                     client_id,
-                    clients!inner (
+                    client_name,
+                    phone,
+                    activity,
+                    email,
+                    address,
+                    clients (
                         id,
                         full_name,
                         phone1,
@@ -4711,7 +4889,7 @@ Suivant
                 `);
 
             if (search) {
-                query = query.ilike('clients.full_name', `%${search}%`);
+                query = query.or(`client_name.ilike.%${search}%,phone.ilike.%${search}%,activity.ilike.%${search}%`);
             }
 
             const { data, error } = await query.order('start_date', { ascending: false });
@@ -4727,16 +4905,21 @@ Suivant
                 return;
             }
 
+            // Réinitialiser la sélection à chaque rechargement
+            selectedCreditIds.clear();
+            updateCreditSelectionBar();
+
             container.innerHTML = data.map(credit => {
-                const clientName = credit.clients?.full_name || credit.client_name || 'Inconnu';
+                const clientName = (credit.clients && credit.clients.full_name) || credit.client_name || 'Prospect Anonyme';
                 const initials = clientName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                
-                let healthClass = credit.health === 'Sain' 
-                    ? 'bg-green-100 text-green-700' 
+
+                let healthClass = credit.health === 'Sain'
+                    ? 'bg-green-100 text-green-700'
                     : 'bg-orange-100 text-orange-700';
 
                 return `
-                <div class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick='showCreditDetails(${JSON.stringify(credit).replace(/'/g, "&#39;")})'>
+                <div id="credit-row-${credit.id}" class="grid grid-cols-[28px_1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick='showCreditDetails(${JSON.stringify(credit).replace(/'/g, "&#39;")})'>
+                    <input type="checkbox" data-id="${credit.id}" onchange="toggleCreditSelection('${credit.id}', this)" onclick="event.stopPropagation()" class="w-4 h-4 accent-primary cursor-pointer rounded flex-shrink-0">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm uppercase">${initials}</div>
                         <div class="truncate">
@@ -4846,7 +5029,7 @@ Suivant
 
             let query = _supabase
                 .from('repayments')
-                .select('*, credits!inner(id, amount, client_id, clients!inner(id, full_name))')
+                .select('*, credits(id, amount, client_id, client_name, phone, activity, email, address, clients(id, full_name, phone1))')
                 .order('scheduled_date', { ascending: true });
 
             if (period !== 'all') {
@@ -4856,7 +5039,7 @@ Suivant
             }
 
             if (search) {
-                query = query.ilike('credits.clients.full_name', `%${search}%`);
+                query = query.or(`credits.client_name.ilike.%${search}%,repayments.credits.phone.ilike.%${search}%`);
             }
 
             const { data, error } = await query;
@@ -4886,9 +5069,9 @@ Suivant
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
-                                ${r.credits.clients.full_name[0]}
+                                ${(r.credits.clients?.full_name || r.credits.client_name || 'U')[0]}
                             </div>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">${r.credits.clients.full_name}</span>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">${r.credits.clients?.full_name || r.credits.client_name || 'Client Inconnu'}</span>
                         </div>
                     </td>
                     <td class="px-6 py-4 text-sm font-black text-slate-900 dark:text-slate-100">${(r.credits.amount / 10).toLocaleString()} FCFA</td>
@@ -4934,13 +5117,13 @@ Suivant
 
             let query = _supabase
                 .from('credits')
-                .select('*, clients!inner(*)')
+                .select('*, clients(*)')
                 .neq('status', 'Soldé')
                 .lte('end_date', endDateLimit.toISOString().split('T')[0])
                 .order('end_date', { ascending: true });
 
             if (search) {
-                query = query.ilike('clients.full_name', `%${search}%`);
+                query = query.or(`client_name.ilike.%${search}%,phone.ilike.%${search}%`);
             }
 
             const { data, error, count } = await query;
@@ -4968,9 +5151,9 @@ Suivant
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${c.clients.full_name[0]}</div>
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${(c.clients?.full_name || c.client_name || 'U')[0]}</div>
                             <div>
-                                <p class="font-bold text-slate-900 dark:text-slate-100">${c.clients.full_name}</p>
+                                <p class="font-bold text-slate-900 dark:text-slate-100">${c.clients?.full_name || c.client_name || 'Client Inconnu'}</p>
                                 <p class="text-xs text-slate-500 font-medium tracking-tight">ID: ${c.id.substring(0,8)}</p>
                             </div>
                         </div>
@@ -5021,12 +5204,12 @@ Suivant
 
             let query = _supabase
                 .from('credits')
-                .select('*, clients!inner(*)')
+                .select('*, clients(*)')
                 .eq('status', 'Soldé')
                 .order('end_date', { ascending: false });
 
             if (search) {
-                query = query.ilike('clients.full_name', `%${search}%`);
+                query = query.or(`client_name.ilike.%${search}%,phone.ilike.%${search}%`);
             }
 
             const { data, error } = await query;
@@ -5049,9 +5232,9 @@ Suivant
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold uppercase">${c.clients.full_name[0]}</div>
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold uppercase">${(c.clients?.full_name || c.client_name || 'U')[0]}</div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-slate-900">${c.clients.full_name}</span>
+                                <span class="font-bold text-slate-900">${c.clients?.full_name || c.client_name || 'Client Inconnu'}</span>
                                 <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
                             </div>
                         </div>
@@ -5107,10 +5290,12 @@ Suivant
             document.getElementById('detail-credit-start-date').textContent = new Date(credit.start_date).toLocaleDateString('fr-FR');
             document.getElementById('detail-credit-end-date').textContent = credit.end_date ? new Date(credit.end_date).toLocaleDateString('fr-FR') : '-';
             
-            document.getElementById('detail-credit-client-phone').textContent = p?.phone1 || '-';
-            document.getElementById('detail-credit-client-activity').textContent = p?.activity || '-';
+            // Priority to credit table fields, fallback to client object
+            document.getElementById('detail-credit-client-phone').textContent = credit.phone || p?.phone1 || '-';
+            document.getElementById('detail-credit-client-activity').textContent = credit.activity || p?.activity || '-';
             
-            document.getElementById('detail-credit-client-address').textContent = p?.address || '-';
+            document.getElementById('detail-credit-client-address').textContent = credit.address || p?.address || '-';
+            document.getElementById('detail-credit-client-email').textContent = credit.email || p?.email || '-';
             document.getElementById('detail-credit-client-date').textContent = new Date(credit.start_date).getFullYear();
 
             // Update health badge
@@ -5298,7 +5483,7 @@ Suivant
                     credit_id: currentCredit.id,
                     installment_number: monthCount,
                     scheduled_date: currentDate.toISOString().split('T')[0],
-                    amount: installmentAmount,
+                    amount: null, // Pas de montant affiché selon demande
                     status: 'En attente'
                 });
 
@@ -6100,7 +6285,7 @@ Suivant
                     amount,
                     end_date,
                     status,
-                    clients!inner (
+                    clients (
                         full_name,
                         phone1
                     )
@@ -6136,9 +6321,9 @@ Suivant
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${client.full_name ? client.full_name.substring(0,2).toUpperCase() : '??'}</div>
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${(client?.full_name || c.client_name || 'U').substring(0,2).toUpperCase()}</div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-slate-900">${client.full_name}</span>
+                                <span class="font-bold text-slate-900">${client?.full_name || c.client_name || 'Client Inconnu'}</span>
                                 <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
                             </div>
                         </div>
@@ -6318,6 +6503,7 @@ Suivant
 
         async function handleSaveProspect() {
             const name = document.getElementById('prospect-name').value;
+            const email = document.getElementById('prospect-email')?.value || "";
             const phone = document.getElementById('prospect-phone').value;
             const phone2 = document.getElementById('prospect-phone2').value;
             const date = document.getElementById('prospect-date').value;
@@ -6344,6 +6530,7 @@ Suivant
 
             const prospectData = {
                 full_name: name,
+                email: email || null,
                 phone: phone,
                 phone2: phone2,
                 created_at: date,
@@ -6368,9 +6555,10 @@ Suivant
                     if (selectedProspectId === window.editingProspectId) showProspectDetails(window.editingProspectId);
                 }
             } else {
+                // Upsert to handle duplicates correctly if manually entered too
                 const { data: prospect, error } = await _supabase
                     .from('prospects')
-                    .insert([prospectData])
+                    .upsert(prospectData, { onConflict: 'full_name,phone' })
                     .select()
                     .single();
 
@@ -6384,7 +6572,7 @@ Suivant
                             author_name: 'Système'
                         }]);
                     }
-                    showNotification("Prospect ajouté !", "success");
+                    showNotification("Prospect enregistré !", "success");
                     closeModal();
                     fetchProspects();
                 }
@@ -6406,7 +6594,6 @@ Suivant
             let errors = [];
             const fields = [
                 { id: 'credit-name', label: "Nom complet" },
-                { id: 'credit-email', label: "Email" },
                 { id: 'credit-phone1', label: "Téléphone 1" },
                 { id: 'credit-amount', label: "Montant" },
                 { id: 'credit-start-date', label: "Date début" },
@@ -6428,15 +6615,12 @@ Suivant
                 return;
             }
 
-            // The UPDATE logic has been removed to respect the "Delete & Re-insert" requirement for modifications.
-            // window.editingCreditId is cleared in handleEditCredit after deletion to ensure an INSERT happens here.
-
-            // INSERT - 1. Create client
+            // 1. Create/Update client
             const { data: client, error: cError } = await _supabase
                 .from('clients')
-                .insert([{
+                .upsert([{
                     full_name: name,
-                    email: email,
+                    email: email || null,
                     phone1: phone1,
                     phone2: phone2,
                     activity: activity,
@@ -6444,16 +6628,16 @@ Suivant
                     total_portefeuille: amount,
                     health: 'Sain',
                     is_active: true
-                }])
+                }], { onConflict: 'full_name,phone1' })
                 .select()
                 .single();
 
             if (cError) return alert("Erreur client : " + cError.message);
 
-            // 2. Create credit
+            // 2. Create credit (Upsert to handle sequential ID generation and avoid duplicates)
             const { data: createdCredits, error: crError } = await _supabase
                 .from('credits')
-                .insert([{
+                .upsert([{
                     client_id: client.id,
                     client_name: name,
                     amount: amount,
@@ -6461,20 +6645,28 @@ Suivant
                     start_date: startDate,
                     end_date: endDate,
                     type: type,
-                    health: 'Sain',
-                    manager_id: getSessionUser().id
-                }])
+                    health: 'SAIN',
+                    manager_id: getSessionUser().id,
+                    phone: phone1,
+                    activity: activity,
+                    email: email || null
+                }], { onConflict: 'client_name,amount,start_date' })
                 .select();
 
             if (crError) {
                 alert("Erreur crédit : " + crError.message);
             } else {
-                showNotification("Dossier de crédit créé avec succès !", "success");
+                showNotification("Dossier de crédit enregistré !", "success");
                 closeModal();
                 
-                // 3. AUTO-GENERATE SCHEDULE (Request satisfies: automate and avoid duplicates)
+                // 3. AUTO-GENERATE SCHEDULE 
                 if (createdCredits && createdCredits.length > 0) {
-                    generateRepaymentsSilently(createdCredits[0]);
+                    const credit = createdCredits[0];
+                    
+                    // RE-CLEAN schedule if already exists for this credit (in case of update)
+                    await _supabase.from('repayments').delete().eq('credit_id', credit.id);
+                    
+                    generateRepaymentsSilently(credit);
                 }
 
                 if (currentScreen === 'credits_clients') fetchCredits();
@@ -6510,30 +6702,34 @@ Suivant
             let currentDate = new Date(start);
             let monthCount = 1;
 
-            const diffTime = Math.abs(end - start);
-            const diffMonths = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44)));
-            const installmentAmount = Math.round(credit.amount / diffMonths);
-            
             while (true) {
                 currentDate.setMonth(currentDate.getMonth() + 1);
-                if (currentDate > end && monthCount > 1) break;
+                
+                // Si on a dépassé la date de fin de plus de 15 jours, on arrête
                 if (currentDate > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
+
+                let adjustedDate = new Date(currentDate);
+                const dayOfWeek = adjustedDate.getDay();
+                if (dayOfWeek === 6) adjustedDate.setDate(adjustedDate.getDate() + 2);
+                else if (dayOfWeek === 0) adjustedDate.setDate(adjustedDate.getDate() + 1);
 
                 repayments.push({
                     credit_id: credit.id,
                     installment_number: monthCount,
-                    scheduled_date: currentDate.toISOString().split('T')[0],
-                    amount: installmentAmount,
+                    scheduled_date: adjustedDate.toISOString().split('T')[0],
+                    amount: null, // Pas de montant affiché selon demande
                     status: 'En attente',
                     is_paid: false
                 });
 
                 monthCount++;
-                if (monthCount > 60 || currentDate >= end) break;
+                if (monthCount > 120 || adjustedDate >= end) break;
             }
 
-            await _supabase.from('repayments').insert(repayments);
-            console.log("Auto-generated repayments for credit:", credit.id);
+            if (repayments.length > 0) {
+                await _supabase.from('repayments').insert(repayments);
+                console.log("Auto-generated repayments for credit:", credit.id);
+            }
         }
 
 
@@ -6603,11 +6799,19 @@ Suivant
         async function handleCall(id = null) {
             let phone = null;
             if (id) {
-                // Determine if it's a prospect or client/credit? Let's assume clientId for now if it's Credits module
-                const { data } = await _supabase.from('clients').select('phone1').eq('id', id).single();
-                if (data) phone = data.phone1;
+                // First try to find in clients, if it's a client ID
+                const { data: clientData } = await _supabase.from('clients').select('id, phone1').eq('id', id).single();
+                if (clientData) {
+                    phone = clientData.phone1;
+                } else {
+                    // Maybe it's a credit ID? Try fetching from credits with fallback
+                    const { data: creditData } = await _supabase.from('credits').select('id, phone, clients(phone1)').eq('id', id).single();
+                    if (creditData) {
+                        phone = creditData.clients?.phone1 || creditData.phone;
+                    }
+                }
             } else {
-                phone = currentCredit?.clients?.phone1 || currentProspect?.phone;
+                phone = currentCredit?.clients?.phone1 || currentCredit?.phone || currentProspect?.phone;
             }
 
             if (!phone) return showNotification("Aucun numéro disponible", "info");
@@ -6622,36 +6826,38 @@ Suivant
                 if (data) credit = data;
             }
 
-            if (!credit || !credit.clients?.phone1) return showNotification("Aucun numéro disponible", "info");
-            
+            const phone = credit.clients?.phone1 || credit.phone;
+            if (!credit || !phone) return showNotification("Aucun numéro disponible", "info");
+
             const p = credit.clients;
             const data = {
-                name: p.full_name,
+                name: p?.full_name || credit.client_name,
                 amount: credit.amount,
                 date: credit.end_date ? new Date(credit.end_date).toLocaleDateString('fr-FR') : '',
                 id: credit.id.substring(0,8)
             };
-            await sendWhatsAppMessage(p.phone1, data);
+            await sendWhatsAppMessage(phone, data);
         }
 
         async function handleSms(creditId = null) {
             let credit = currentCredit;
-            
+
             if (creditId) {
                 const { data } = await _supabase.from('credits').select('*, clients(*)').eq('id', creditId).single();
                 if (data) credit = data;
             }
 
-            if (!credit || !credit.clients?.phone1) return showNotification("Aucun numéro disponible", "info");
+            const smsPhone = credit?.clients?.phone1 || credit?.phone;
+            if (!credit || !smsPhone) return showNotification("Aucun numéro disponible", "info");
             
             const p = credit.clients;
             const data = {
-                name: p.full_name,
+                name: p?.full_name || credit.client_name,
                 amount: credit.amount,
                 date: credit.end_date ? new Date(credit.end_date).toLocaleDateString('fr-FR') : '',
                 id: credit.id.substring(0,8)
             };
-            await sendSmsMessage(p.phone1, data);
+            await sendSmsMessage(smsPhone, data);
         }
 
         async function handleDeleteCredit() {
@@ -6989,17 +7195,22 @@ Suivant
                 return;
             }
 
+            // Réinitialiser la sélection à chaque rechargement
+            selectedProspectIds.clear();
+            updateProspectSelectionBar();
+
             tbody.innerHTML = data.map(p => {
                 const date = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '-';
                 const statusName = p.status || 'Nouveau';
                 const statusObj = prospectStatuses.find(s => (s.label || s) === statusName) || { color: 'slate' };
                 const color = statusObj.color || 'slate';
-                
+
                 const isSelected = selectedProspectId === p.id;
-                const rowClass = isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer';
+                const rowClass = isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
 
                 return `
-                <tr onclick="showProspectDetails('${p.id}')" class="${rowClass}">
+                <tr id="prospect-row-${p.id}" class="${rowClass}" onclick="showProspectDetails('${p.id}')">
+                    <td class="px-4 py-3 w-8"><input type="checkbox" data-id="${p.id}" onchange="toggleProspectSelection('${p.id}', this)" onclick="event.stopPropagation()" class="w-4 h-4 accent-primary cursor-pointer rounded"></td>
                     <td class="px-4 py-3">
                         <p class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px]">${p.full_name}</p>
                         <p class="text-[10px] text-slate-400 font-medium">${date}</p>
@@ -7044,6 +7255,425 @@ Suivant
                     <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${n.content}</p>
                 </div>
             `).join('');
+        }
+
+        // --- IMPORT SYSTEM LOGIC ---
+        let currentImportData = [];
+        let currentImportModule = null;
+
+        // ═══════════ MENU ACTIONS DROPDOWN ═══════════
+        function toggleActionMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            // Fermer tous les menus ouverts
+            document.querySelectorAll('#prospect-action-menu, #credit-action-menu').forEach(m => {
+                m.classList.add('hidden');
+            });
+            if (isHidden) menu.classList.remove('hidden');
+        }
+
+        function closeActionMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            if (menu) menu.classList.add('hidden');
+        }
+
+        // Fermer menu si clic en dehors
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#prospect-action-menu') && !e.target.closest('#credit-action-menu') && !e.target.closest('[onclick*="toggleActionMenu"]')) {
+                document.querySelectorAll('#prospect-action-menu, #credit-action-menu').forEach(m => m.classList.add('hidden'));
+            }
+        });
+        // ═══════════ FIN MENU ACTIONS ═══════════
+
+        // ═══════════ SÉLECTION MULTIPLE & SUPPRESSION EN MASSE ═══════════
+
+        const selectedCreditIds = new Set();
+        const selectedProspectIds = new Set();
+
+        // --- CRÉDITS ---
+        function toggleCreditSelection(id, checkbox) {
+            if (checkbox.checked) {
+                selectedCreditIds.add(id);
+                document.getElementById('credit-row-' + id)?.classList.add('bg-red-50', 'dark:bg-red-900/10');
+            } else {
+                selectedCreditIds.delete(id);
+                document.getElementById('credit-row-' + id)?.classList.remove('bg-red-50', 'dark:bg-red-900/10');
+            }
+            updateCreditSelectionBar();
+        }
+
+        function toggleAllCredits(masterCheckbox) {
+            document.querySelectorAll('#credits-list-container input[type="checkbox"]').forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+                const id = cb.dataset.id;
+                if (masterCheckbox.checked) {
+                    selectedCreditIds.add(id);
+                    document.getElementById('credit-row-' + id)?.classList.add('bg-red-50', 'dark:bg-red-900/10');
+                } else {
+                    selectedCreditIds.delete(id);
+                    document.getElementById('credit-row-' + id)?.classList.remove('bg-red-50', 'dark:bg-red-900/10');
+                }
+            });
+            updateCreditSelectionBar();
+        }
+
+        function updateCreditSelectionBar() {
+            const btn = document.getElementById('credits-bulk-delete-btn');
+            const label = document.getElementById('credits-bulk-delete-label');
+            if (!btn) return;
+            if (selectedCreditIds.size > 0) {
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+                if (label) label.textContent = `Supprimer (${selectedCreditIds.size})`;
+            } else {
+                btn.classList.add('hidden');
+                btn.classList.remove('flex');
+                const masterCb = document.getElementById('credit-select-all');
+                if (masterCb) masterCb.checked = false;
+            }
+        }
+
+        function bulkDeleteCredits() {
+            const ids = [...selectedCreditIds];
+            if (ids.length === 0) return;
+            showBulkDeleteModal(
+                `Vous êtes sur le point de supprimer <strong>${ids.length} dossier(s) de crédit</strong> sélectionné(s).`,
+                ['Dossiers de crédit', 'Échéanciers de remboursement', 'Notes associées', 'Documents associés'],
+                async () => {
+                    showNotification('Suppression en cours...', 'info');
+                    let errors = 0;
+                    for (const id of ids) {
+                        try {
+                            await _supabase.from('repayments').delete().eq('credit_id', id);
+                            await _supabase.from('credit_notes').delete().eq('credit_id', id);
+                            await _supabase.from('credit_documents').delete().eq('credit_id', id);
+                            const { error } = await _supabase.from('credits').delete().eq('id', id);
+                            if (error) errors++;
+                        } catch (e) { errors++; }
+                    }
+                    if (errors === 0) {
+                        showNotification(`${ids.length} dossier(s) supprimé(s) avec succès.`, 'success');
+                    } else {
+                        showNotification(`Suppression partielle : ${errors} erreur(s).`, 'error');
+                    }
+                    selectedCreditIds.clear();
+                    updateCreditSelectionBar();
+                    const masterCbC = document.getElementById('credit-select-all');
+                    if (masterCbC) masterCbC.checked = false;
+                    if (document.getElementById('credit-details-container')) {
+                        document.getElementById('credit-details-container').classList.add('hidden');
+                    }
+                    if (document.getElementById('credit-details-placeholder')) {
+                        document.getElementById('credit-details-placeholder').classList.remove('hidden');
+                    }
+                    fetchCredits();
+                }
+            );
+        }
+
+        // --- PROSPECTS ---
+        function toggleProspectSelection(id, checkbox) {
+            if (checkbox.checked) {
+                selectedProspectIds.add(id);
+                document.getElementById('prospect-row-' + id)?.classList.add('bg-red-50', 'dark:bg-red-900/10');
+            } else {
+                selectedProspectIds.delete(id);
+                document.getElementById('prospect-row-' + id)?.classList.remove('bg-red-50', 'dark:bg-red-900/10');
+            }
+            updateProspectSelectionBar();
+        }
+
+        function toggleAllProspects(masterCheckbox) {
+            document.querySelectorAll('#prospect-list-body input[type="checkbox"]').forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+                const id = cb.dataset.id;
+                if (masterCheckbox.checked) {
+                    selectedProspectIds.add(id);
+                    document.getElementById('prospect-row-' + id)?.classList.add('bg-red-50', 'dark:bg-red-900/10');
+                } else {
+                    selectedProspectIds.delete(id);
+                    document.getElementById('prospect-row-' + id)?.classList.remove('bg-red-50', 'dark:bg-red-900/10');
+                }
+            });
+            updateProspectSelectionBar();
+        }
+
+        function updateProspectSelectionBar() {
+            const btn = document.getElementById('prospects-bulk-delete-btn');
+            const label = document.getElementById('prospects-bulk-delete-label');
+            if (!btn) return;
+            if (selectedProspectIds.size > 0) {
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+                if (label) label.textContent = `Supprimer (${selectedProspectIds.size})`;
+            } else {
+                btn.classList.add('hidden');
+                btn.classList.remove('flex');
+                const masterCb = document.getElementById('prospect-select-all');
+                if (masterCb) masterCb.checked = false;
+            }
+        }
+
+        function bulkDeleteProspects() {
+            const ids = [...selectedProspectIds];
+            if (ids.length === 0) return;
+            showBulkDeleteModal(
+                `Vous êtes sur le point de supprimer <strong>${ids.length} prospect(s)</strong> sélectionné(s).`,
+                ['Fiches prospects', 'Notes associées'],
+                async () => {
+                    showNotification('Suppression en cours...', 'info');
+                    let errors = 0;
+                    for (const id of ids) {
+                        try {
+                            await _supabase.from('prospect_notes').delete().eq('prospect_id', id);
+                            const { error } = await _supabase.from('prospects').delete().eq('id', id);
+                            if (error) errors++;
+                        } catch (e) { errors++; }
+                    }
+                    if (errors === 0) {
+                        showNotification(`${ids.length} prospect(s) supprimé(s) avec succès.`, 'success');
+                    } else {
+                        showNotification(`Suppression partielle : ${errors} erreur(s).`, 'error');
+                    }
+                    selectedProspectIds.clear();
+                    updateProspectSelectionBar();
+                    const masterCbP = document.getElementById('prospect-select-all');
+                    if (masterCbP) masterCbP.checked = false;
+                    const detailsView = document.getElementById('prospect-details-view');
+                    if (detailsView) detailsView.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 italic">Sélectionnez un prospect</div>';
+                    fetchProspects();
+                }
+            );
+        }
+
+        // --- MODAL CONFIRMATION BULK DELETE (2 étapes) ---
+        let _bulkDeleteCallback = null;
+
+        function showBulkDeleteModal(message, dataList, onConfirm) {
+            _bulkDeleteCallback = onConfirm;
+            document.getElementById('bulk-delete-message').innerHTML = message;
+            document.getElementById('bulk-delete-details').innerHTML = dataList.map(d => `<li>${d}</li>`).join('');
+            // Réinitialiser sur étape 1
+            bulkDeleteGoStep1();
+            const overlay = document.getElementById('bulk-delete-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function bulkDeleteGoStep2() {
+            document.getElementById('bulk-delete-step1').classList.add('hidden');
+            document.getElementById('bulk-delete-step2').classList.remove('hidden');
+            const input = document.getElementById('bulk-delete-type-input');
+            input.value = '';
+            input.focus();
+            const btn = document.getElementById('bulk-delete-confirm-btn');
+            btn.disabled = true;
+            btn.className = 'flex-1 py-3 px-4 rounded-xl text-sm font-black bg-red-200 text-red-300 cursor-not-allowed transition-all flex items-center justify-center gap-2';
+        }
+
+        function bulkDeleteGoStep1() {
+            document.getElementById('bulk-delete-step1').classList.remove('hidden');
+            document.getElementById('bulk-delete-step2').classList.add('hidden');
+            const input = document.getElementById('bulk-delete-type-input');
+            if (input) input.value = '';
+        }
+
+        function onBulkDeleteTypeInput(input) {
+            const btn = document.getElementById('bulk-delete-confirm-btn');
+            const hint = document.getElementById('bulk-delete-type-hint');
+            if (input.value.trim().toUpperCase() === 'SUPPRIMER') {
+                btn.disabled = false;
+                btn.className = 'flex-1 py-3 px-4 rounded-xl text-sm font-black bg-red-600 hover:bg-red-700 text-white cursor-pointer transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-2';
+                if (hint) { hint.textContent = '✓ Vous pouvez confirmer la suppression.'; hint.className = 'text-xs text-green-600 font-bold'; }
+            } else {
+                btn.disabled = true;
+                btn.className = 'flex-1 py-3 px-4 rounded-xl text-sm font-black bg-red-200 text-red-300 cursor-not-allowed transition-all flex items-center justify-center gap-2';
+                if (hint) { hint.textContent = 'Le bouton s\'activera une fois le mot correctement saisi.'; hint.className = 'text-xs text-slate-400 italic'; }
+            }
+        }
+
+        function bulkDeleteExecute() {
+            const cb = _bulkDeleteCallback;
+            closeBulkDeleteModal();
+            if (cb) cb();
+        }
+
+        function closeBulkDeleteModal() {
+            const overlay = document.getElementById('bulk-delete-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            _bulkDeleteCallback = null;
+            // Reset input for next time
+            const input = document.getElementById('bulk-delete-type-input');
+            if (input) input.value = '';
+        }
+
+        // ═══════════ FIN SÉLECTION MULTIPLE ═══════════
+
+        function downloadImportTemplate() {
+            // Force re-initialization to be sure we have latest module logic
+            let module;
+            if (currentModule === 'credits') {
+                console.log("Downloading Credit Template...");
+                module = new CreditModule();
+            } else {
+                console.log("Downloading Prospection Template...");
+                module = new ProspectionModule();
+            }
+            ImportEngine.downloadTemplate(module);
+        }
+
+        async function onImportFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const moduleLabel = document.getElementById('import-module-label');
+            const previewTable = document.getElementById('import-preview-table-container');
+            const emptyState = document.getElementById('import-empty-state');
+            const previewBody = document.getElementById('import-preview-body');
+            const statsContainer = document.getElementById('import-stats');
+            const statOk = document.getElementById('import-stat-ok');
+            const statErrors = document.getElementById('import-stat-errors');
+            const confirmBtn = document.getElementById('import-confirm-btn');
+
+            currentImportModule = currentModule === 'credits' ? new CreditModule() : new ProspectionModule();
+            moduleLabel.textContent = currentModule === 'credits' ? "Module : CRÉDITS (Données Strictes + Échéancier)" : "Module : PROSPECTION (Coordonnées & Activités)";
+            
+            showNotification("Analyse du fichier en cours...", "info");
+
+            try {
+                const results = await ImportEngine.processFile(file, currentImportModule);
+                currentImportData = results;
+
+                // Update UI
+                if (emptyState) emptyState.classList.add('hidden');
+                if (previewTable) previewTable.classList.remove('hidden');
+                if (statsContainer) statsContainer.classList.remove('hidden');
+
+                let validCount = 0;
+                let errorCount = 0;
+
+                if (previewBody) {
+                    previewBody.innerHTML = results.map((res, index) => {
+                        if (res.isValid) validCount++;
+                        else errorCount++;
+
+                        const statusClass = res.isValid ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200';
+                        const statusIcon = res.isValid ? 'check_circle' : 'error';
+                        const details = Object.entries(res.data)
+                            .filter(([k,v]) => v !== null && v !== undefined && v !== '')
+                            .map(([k, v]) => `<span class="opacity-50">${k}:</span> <span class="font-bold">${v}</span>`)
+                            .join(' <span class="text-slate-200 mx-1">•</span> ');
+
+                        return `
+                            <tr class="${res.isValid ? 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30' : 'bg-rose-50/30 dark:bg-rose-900/10'} transition-all">
+                                <td class="px-6 py-4 font-black text-slate-400">#${String(index + 1).padStart(2, '0')}</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium flex flex-wrap gap-y-1">${details}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="px-3 py-1.5 ${statusClass} rounded-lg border text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 shadow-sm">
+                                        <span class="material-symbols-outlined text-[14px]">${statusIcon}</span>
+                                        ${res.isValid ? 'VALIDE' : 'ERREUR'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        ${res.errors.map(err => `<p class="text-[9px] text-rose-500 font-bold flex items-center gap-1 uppercase tracking-tighter"><span class="material-symbols-outlined text-[12px]">warning</span> ${err}</p>`).join('')}
+                                        ${res.warnings.map(warn => `<p class="text-[9px] text-amber-500 font-bold flex items-center gap-1 uppercase tracking-tighter"><span class="material-symbols-outlined text-[12px]">info</span> ${warn}</p>`).join('')}
+                                        ${res.errors.length === 0 && res.warnings.length === 0 ? '<span class="text-[10px] text-emerald-500/30 font-black italic tracking-widest uppercase">Prêt à l\'import</span>' : ''}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                if (statOk) statOk.textContent = `${validCount} VALIDES`;
+                if (statErrors) statErrors.textContent = `${errorCount} ERREURS`;
+
+                if (confirmBtn) {
+                    if (validCount > 0) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    } else {
+                        confirmBtn.disabled = true;
+                        confirmBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    }
+                }
+
+                showNotification(`${results.length} lignes analysées`, "success");
+
+            } catch (err) {
+                console.error("Import Error:", err);
+                showNotification("Échec de la lecture du fichier", "error");
+            }
+        }
+
+        async function executeBatchImport() {
+            if (!currentImportData || currentImportData.length === 0) return;
+            
+            const validRows = currentImportData.filter(r => r.isValid);
+            if (validRows.length === 0) return showNotification("Aucune donnée valide à importer", "error");
+
+            if (!confirm(`Confirmer l'importation de ${validRows.length} entrées ?`)) return;
+
+            const confirmBtn = document.getElementById('import-confirm-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `<span class="size-4 border-2 border-white/20 border-t-white animate-spin rounded-full"></span> Importation...`;
+
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) throw new Error("Utilisateur non authentifié");
+
+                const result = await ImportEngine.saveToSupabase(validRows, currentImportModule, _supabase, user.id);
+                
+                if (result.success) {
+                    const summaryHtml = `
+                        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                                <div class="p-8 text-center space-y-4">
+                                    <div class="size-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <span class="material-symbols-outlined text-4xl">check_circle</span>
+                                    </div>
+                                    <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Importation Réussie</h3>
+                                    <div class="grid grid-cols-2 gap-4 py-4">
+                                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl text-center">
+                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nouveaux</p>
+                                            <p class="text-2xl font-black text-emerald-600">${result.inserted}</p>
+                                        </div>
+                                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl text-center">
+                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Doublons (MÀJ)</p>
+                                            <p class="text-2xl font-black text-orange-500">${result.updated}</p>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-[220px] overflow-y-auto space-y-2 text-left pr-2 custom-scrollbar">
+                                        ${result.report.map(r => `
+                                            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700">
+                                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]">${r.name}</span>
+                                                <span class="text-[8px] font-black px-1.5 py-0.5 rounded ${r.type === 'warning' ? 'bg-orange-100 text-orange-600' : (r.type === 'error' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600')} uppercase tracking-widest">
+                                                    ${r.status.split(' ')[0]}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <button onclick="this.closest('.fixed').remove(); currentModule === 'credits' ? (fetchCredits(), loadScreen('credits_clients')) : (fetchProspects(), loadScreen('prospection_list'))" class="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl uppercase tracking-[0.2em] text-[10px] shadow-xl transition-all hover:scale-[1.02] active:scale-95 mt-4">
+                                        Fermer & Actualiser
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.insertAdjacentHTML('beforeend', summaryHtml);
+                    showNotification(`Importation terminée: ${result.inserted} nouveaux, ${result.updated} mis à jour.`, "success");
+                }
+            } catch (err) {
+                console.error("Database Import Error:", err);
+                showNotification("Erreur lors de la sauvegarde : " + (err.message || "Erreur inconnue"), "error");
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Confirmer l'importation`;
+            }
         }
     </script>
 </body>

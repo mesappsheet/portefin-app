@@ -3,13 +3,13 @@
 
 [[redirects]]
   from = "/"
-  to = "/maquette-app/login.html"
-  status = 302
+  to = "/MAQUETTE_COMPLETE.html"
+  status = 200
 
 [[redirects]]
   from = "/app"
-  to = "/maquette-app/index.html"
-  status = 302
+  to = "/MAQUETTE_COMPLETE.html"
+  status = 200
 
 [[headers]]
   for = "/*"
