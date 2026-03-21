@@ -5,34 +5,34 @@
 <main class="flex-1 flex flex-col overflow-hidden" style="background:#f8f7f5">
 
 <!-- HEADER -->
-<header style="background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(242,127,13,0.12);backdrop-filter:blur(8px)" class="h-24 px-8 flex items-center justify-between sticky top-0 z-10 flex-shrink-0">
+<header style="background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(242,127,13,0.12);backdrop-filter:blur(8px)" class="h-auto min-h-16 lg:h-24 px-4 lg:px-8 py-3 lg:py-0 flex flex-wrap lg:flex-nowrap items-center justify-between sticky top-0 z-10 flex-shrink-0 gap-3">
   <div class="flex items-center gap-4">
     <div>
       <h2 class="text-xl font-bold text-slate-900 dark:text-white">Vue d'ensemble</h2>
       <p class="text-xs text-slate-500">Suivez l'activité de vos clients et prospects en temps réel.</p>
     </div>
   </div>
-  <div class="flex items-center gap-4">
-    <div class="flex flex-col items-center justify-center px-5 py-2 rounded-2xl border-2 min-w-[110px]" style="background:rgba(242,127,13,0.05);border-color:rgba(242,127,13,0.2)">
+  <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-4">
+    <div class="hidden lg:flex flex-col items-center justify-center px-5 py-2 rounded-2xl border-2 min-w-[110px]" style="background:rgba(242,127,13,0.05);border-color:rgba(242,127,13,0.2)">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-xl" style="color:#f27f0d">schedule</span>
         <span class="text-2xl font-extrabold tracking-tight leading-none text-slate-900 dark:text-white" id="db-clock">--:--</span>
       </div>
       <span class="text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:rgba(242,127,13,0.7)">Heure Locale</span>
     </div>
-    <div class="relative">
+    <div class="relative flex-1 lg:flex-none">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
-      <input class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm w-64 focus:outline-none focus:ring-2" style="--tw-ring-color:rgba(242,127,13,0.4)" placeholder="Rechercher..." type="text"/>
+      <input class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm w-full lg:w-64 focus:outline-none focus:ring-2" style="--tw-ring-color:rgba(242,127,13,0.4)" placeholder="Rechercher..." type="text"/>
     </div>
     <div class="flex items-center gap-2">
-      <button class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 relative hover:bg-slate-200 transition-colors">
+      <button class="w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 relative hover:bg-slate-200 transition-colors">
         <span class="material-symbols-outlined">notifications</span>
         <span id="db-notif" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full border-2 border-white hidden" style="background:#f27f0d"></span>
       </button>
-      <button onclick="loadDashboard()" class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Actualiser">
+      <button onclick="loadDashboard()" class="w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Actualiser">
         <span class="material-symbols-outlined" id="db-refresh-icon">refresh</span>
       </button>
-      <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm cursor-pointer transition-colors" style="background:rgba(242,127,13,0.1);color:#f27f0d">
+      <div class="hidden sm:flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl font-bold text-xs lg:text-sm cursor-pointer transition-colors" style="background:rgba(242,127,13,0.1);color:#f27f0d">
         <span class="material-symbols-outlined text-lg">calendar_today</span>
         <span>Ce mois</span>
         <span class="material-symbols-outlined text-lg">expand_more</span>
@@ -42,7 +42,7 @@
 </header>
 
 <!-- CONTENU -->
-<div class="flex-1 overflow-y-auto p-8 space-y-8 dark:bg-slate-900">
+<div class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-4 lg:space-y-8 dark:bg-slate-900">
 
   <!-- Erreur -->
   <div id="db-error" class="hidden p-4 rounded-xl text-sm flex items-center gap-3" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c">

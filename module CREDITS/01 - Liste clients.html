@@ -79,25 +79,25 @@
 </div>
 </aside>
 <main class="flex-1 flex flex-col overflow-hidden">
-<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 pt-6">
-<div class="flex items-center justify-between mb-6">
-<h2 class="text-2xl font-bold">Portefeuille Clients</h2>
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 pt-4 lg:pt-6">
+<div class="flex items-center justify-between mb-4 lg:mb-6 gap-3">
+<h2 class="text-lg lg:text-2xl font-bold">Portefeuille Clients</h2>
 <div class="flex gap-3">
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
+<button class="bg-primary text-white px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl text-xs lg:text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/10">
 <span class="material-symbols-outlined text-lg">add</span>
-                        Nouveau Client
+<span class="hidden sm:inline">Nouveau Client</span>
                     </button>
 </div>
 </div>
-<div class="flex gap-8 overflow-x-auto no-scrollbar">
+<div class="flex gap-4 lg:gap-8 overflow-x-auto no-scrollbar">
 <a class="pb-4 border-b-2 border-primary text-primary font-bold text-sm tracking-wide" href="#">CLIENTS</a>
 <a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">REMBOURSEMENTS</a>
 <a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">FIN ÉCHÉANCE</a>
 <a class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide" href="#">CRÉDITS SOLDÉS</a>
 </div>
 </header>
-<div class="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
-<section class="w-[500px] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+<div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-background-light dark:bg-background-dark">
+<section class="w-full lg:w-[500px] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 max-h-[40vh] lg:max-h-none">
 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
 <div class="relative">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
@@ -173,7 +173,7 @@
 <span class="text-slate-500 text-sm font-medium">Depuis Janvier 2023</span>
 </div>
 </div>
-<div class="grid grid-cols-6 gap-4">
+<div class="grid grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
 <button class="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-primary/5 transition-all">
 <span class="material-symbols-outlined text-primary text-xl">call</span>
 <span class="text-[10px] font-bold uppercase tracking-widest">Appeler</span>

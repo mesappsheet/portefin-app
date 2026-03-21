@@ -2,10 +2,62 @@ const SB_URL = "https://lkuwgggwdtbzjgplwylr.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo";
 window.supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-/**
- * Authentification : redirige vers login.html si aucune session active.
- * Met à jour la sidebar avec les infos de l'utilisateur connecté.
- */
+/* ═══════════════════════════════════════════
+   SERVICE WORKER REGISTRATION (PWA)
+   ═══════════════════════════════════════════ */
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+}
+
+/* ═══════════════════════════════════════════
+   PWA INSTALL PROMPT
+   ═══════════════════════════════════════════ */
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const banner = document.getElementById("pwa-install-banner");
+    if (banner && !localStorage.getItem("pwa-install-dismissed")) {
+        banner.classList.remove("hidden");
+        banner.classList.add("flex");
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const installBtn = document.getElementById("pwa-install-btn");
+    const dismissBtn = document.getElementById("pwa-install-dismiss");
+    const banner = document.getElementById("pwa-install-banner");
+
+    if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+        });
+    }
+    if (dismissBtn && banner) {
+        dismissBtn.addEventListener("click", () => {
+            banner.classList.add("hidden");
+            banner.classList.remove("flex");
+            localStorage.setItem("pwa-install-dismissed", "1");
+        });
+    }
+});
+
+window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    const banner = document.getElementById("pwa-install-banner");
+    if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+});
+
+/* ═══════════════════════════════════════════
+   AUTHENTICATION
+   ═══════════════════════════════════════════ */
 async function initAuth() {
     const { data: { session } } = await window.supabase.auth.getSession();
     if (!session) {
@@ -22,43 +74,52 @@ function updateUserSidebar(user) {
     const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
     const avatarUrl = meta.avatar_url || meta.picture || null;
 
-    const avatarEl = document.querySelector(".size-10.rounded-full");
-    const nameEl = avatarEl?.nextElementSibling?.querySelector(".text-sm.font-semibold");
-    const roleEl = avatarEl?.nextElementSibling?.querySelector(".text-xs.text-slate-500");
-
-    if (avatarEl) {
+    // Update both desktop sidebar and mobile drawer
+    document.querySelectorAll(".size-10.rounded-full").forEach(avatarEl => {
         if (avatarUrl) {
             avatarEl.innerHTML = `<img src="${avatarUrl}" alt="${name}" class="size-10 rounded-full object-cover"/>`;
             avatarEl.className = "size-10 rounded-full overflow-hidden";
         } else {
             avatarEl.textContent = initials;
         }
-    }
-    if (nameEl) nameEl.textContent = name;
-    if (roleEl) roleEl.textContent = user.email || "";
+        const container = avatarEl.closest(".flex.items-center.gap-3");
+        if (container) {
+            const nameEl = container.querySelector(".text-sm.font-semibold");
+            const roleEl = container.querySelector(".text-xs.text-slate-500");
+            if (nameEl) nameEl.textContent = name;
+            if (roleEl) roleEl.textContent = user.email || "";
+        }
+    });
 }
 
-// Bouton de déconnexion (injecté dans la sidebar après init)
 function addLogoutButton() {
+    // Add to desktop sidebar
     const sidebarFooter = document.querySelector("#app-root aside .p-4.border-t");
-    if (!sidebarFooter || sidebarFooter.querySelector("#btn-logout")) return;
+    if (sidebarFooter && !sidebarFooter.querySelector("#btn-logout")) {
+        sidebarFooter.appendChild(createLogoutBtn("btn-logout"));
+    }
+    // Add to mobile drawer
+    const mobileFooter = document.querySelector("#mobile-drawer .p-4.border-t");
+    if (mobileFooter && !mobileFooter.querySelector("#btn-logout-mobile")) {
+        mobileFooter.appendChild(createLogoutBtn("btn-logout-mobile"));
+    }
+}
+
+function createLogoutBtn(id) {
     const btn = document.createElement("button");
-    btn.id = "btn-logout";
+    btn.id = id;
     btn.className = "mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors font-medium";
     btn.innerHTML = `<span class="material-symbols-outlined text-base">logout</span> Se déconnecter`;
     btn.addEventListener("click", async () => {
         await window.supabase.auth.signOut();
         window.location.href = "login.html";
     });
-    sidebarFooter.appendChild(btn);
+    return btn;
 }
 
-/**
- * Logique de navigation pour la maquette fonctionnelle.
- * Cette version utilise 'fetch' pour charger dynamiquement les fichiers HTML
- * et injecter leur contenu dans le conteneur principal.
- */
-
+/* ═══════════════════════════════════════════
+   NAVIGATION CONFIG
+   ═══════════════════════════════════════════ */
 const CONFIG = {
     modules: {
         dashboard: {
@@ -102,7 +163,7 @@ const CONFIG = {
         },
         settings: {
             label: "Paramètres",
-            basePath: "../TABLEAU DE BORD/", // Réutilise certains écrans de config
+            basePath: "../TABLEAU DE BORD/",
             screens: [
                  { id: "01", name: "04 - Parametres generaux vues.html", label: "Paramètres Généraux" }
             ]
@@ -119,17 +180,27 @@ const dom = {
     subScreensList: document.getElementById("sub-screens-list"),
     modalOverlay: document.getElementById("modal-overlay"),
     modalContent: document.getElementById("modal-content"),
-    closeModalBtn: document.getElementById("close-modal")
+    closeModalBtn: document.getElementById("close-modal"),
+    // Mobile elements
+    mobileDrawer: document.getElementById("mobile-drawer"),
+    mobileDrawerOverlay: document.getElementById("mobile-drawer-overlay"),
+    mobileNav: document.getElementById("mobile-nav"),
+    mobileSubScreens: document.getElementById("mobile-sub-screens"),
+    btnOpenDrawer: document.getElementById("btn-open-drawer"),
+    btnCloseDrawer: document.getElementById("btn-close-drawer"),
+    bottomTabBar: document.getElementById("bottom-tab-bar")
 };
 
-/**
- * Initialisation
- */
+/* ═══════════════════════════════════════════
+   INITIALISATION
+   ═══════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", async () => {
     const authenticated = await initAuth();
-    if (!authenticated) return; // redirigé vers login.html
+    if (!authenticated) return;
 
     initNavigation();
+    initMobileDrawer();
+    initBottomTabs();
     loadScreen(currentModule, currentScreen);
     addLogoutButton();
 
@@ -139,9 +210,77 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 
-/**
- * Configure les écouteurs de la barre latérale
- */
+/* ═══════════════════════════════════════════
+   MOBILE DRAWER
+   ═══════════════════════════════════════════ */
+function initMobileDrawer() {
+    if (!dom.btnOpenDrawer) return;
+
+    dom.btnOpenDrawer.addEventListener("click", openDrawer);
+    dom.btnCloseDrawer.addEventListener("click", closeDrawer);
+    dom.mobileDrawerOverlay.addEventListener("click", closeDrawer);
+
+    // Mobile nav buttons
+    dom.mobileNav.querySelectorAll("button[data-module]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const module = btn.getAttribute("data-module");
+            if (module) {
+                switchModule(module);
+                closeDrawer();
+            }
+        });
+    });
+
+    // Swipe to close
+    let startX = 0;
+    dom.mobileDrawer.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+    }, { passive: true });
+    dom.mobileDrawer.addEventListener("touchend", (e) => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (diff > 60) closeDrawer();
+    }, { passive: true });
+}
+
+function openDrawer() {
+    dom.mobileDrawer.classList.add("open");
+    dom.mobileDrawerOverlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+}
+
+function closeDrawer() {
+    dom.mobileDrawer.classList.remove("open");
+    dom.mobileDrawerOverlay.classList.remove("active");
+    document.body.style.overflow = "";
+}
+
+/* ═══════════════════════════════════════════
+   BOTTOM TAB BAR
+   ═══════════════════════════════════════════ */
+function initBottomTabs() {
+    if (!dom.bottomTabBar) return;
+
+    dom.bottomTabBar.querySelectorAll("button[data-module]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const module = btn.getAttribute("data-module");
+            if (module) switchModule(module);
+        });
+    });
+}
+
+function updateBottomTabs(moduleKey) {
+    if (!dom.bottomTabBar) return;
+    dom.bottomTabBar.querySelectorAll(".bottom-tab").forEach(btn => {
+        const isActive = btn.getAttribute("data-module") === moduleKey;
+        btn.classList.toggle("active-tab", isActive);
+        if (!isActive) btn.classList.add("text-slate-400");
+        else btn.classList.remove("text-slate-400");
+    });
+}
+
+/* ═══════════════════════════════════════════
+   DESKTOP SIDEBAR NAVIGATION
+   ═══════════════════════════════════════════ */
 function initNavigation() {
     dom.mainNav.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -151,17 +290,25 @@ function initNavigation() {
     });
 }
 
-/**
- * Change de module et charge le premier écran
- */
 function switchModule(moduleKey) {
     if (currentModule === moduleKey) return;
-    
+
     currentModule = moduleKey;
     currentScreen = "01";
 
-    // Mise à jour de l'UI de la barre latérale
-    dom.mainNav.querySelectorAll("button").forEach(btn => {
+    // Update desktop sidebar
+    updateNavUI(dom.mainNav, moduleKey);
+    // Update mobile drawer
+    updateNavUI(dom.mobileNav, moduleKey);
+    // Update bottom tabs
+    updateBottomTabs(moduleKey);
+
+    loadScreen(currentModule, currentScreen);
+}
+
+function updateNavUI(navEl, moduleKey) {
+    if (!navEl) return;
+    navEl.querySelectorAll("button[data-module]").forEach(btn => {
         if (btn.getAttribute("data-module") === moduleKey) {
             btn.classList.add("active-nav");
             btn.classList.remove("text-slate-600", "dark:text-slate-400");
@@ -170,70 +317,71 @@ function switchModule(moduleKey) {
             btn.classList.add("text-slate-600", "dark:text-slate-400");
         }
     });
-
-    loadScreen(currentModule, currentScreen);
 }
 
-/**
- * Met à jour la liste des écrans secondaires dans la sidebar
- */
+/* ═══════════════════════════════════════════
+   SUB-SCREENS LIST
+   ═══════════════════════════════════════════ */
 function updateSubScreens(moduleKey) {
     const screens = CONFIG.modules[moduleKey].screens;
-    dom.subScreensList.innerHTML = "";
 
-    screens.forEach(s => {
-        const btn = document.createElement("button");
-        btn.className = `w-full text-left px-3 py-1.5 text-[11px] rounded transition-colors flex items-center gap-2 ${
-            s.id === currentScreen ? "bg-slate-100 dark:bg-slate-800 text-primary font-bold" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-        }`;
-        
-        const icon = s.isModal ? "open_in_new" : "chevron_right";
-        btn.innerHTML = `<span class="material-symbols-outlined text-[14px]">${icon}</span> ${s.label}`;
-        
-        btn.addEventListener("click", () => {
-            if (s.isModal) {
-                openModal(moduleKey, s.id);
-            } else {
-                currentScreen = s.id;
-                loadScreen(moduleKey, s.id);
-            }
+    // Update both desktop and mobile sub-screen lists
+    [dom.subScreensList, dom.mobileSubScreens].forEach(container => {
+        if (!container) return;
+        container.innerHTML = "";
+
+        screens.forEach(s => {
+            const btn = document.createElement("button");
+            btn.className = `w-full text-left px-3 py-1.5 text-[11px] rounded transition-colors flex items-center gap-2 ${
+                s.id === currentScreen ? "bg-slate-100 dark:bg-slate-800 text-primary font-bold" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            }`;
+
+            const icon = s.isModal ? "open_in_new" : "chevron_right";
+            btn.innerHTML = `<span class="material-symbols-outlined text-[14px]">${icon}</span> ${s.label}`;
+
+            btn.addEventListener("click", () => {
+                if (s.isModal) {
+                    openModal(moduleKey, s.id);
+                } else {
+                    currentScreen = s.id;
+                    loadScreen(moduleKey, s.id);
+                }
+                closeDrawer();
+            });
+            container.appendChild(btn);
         });
-        dom.subScreensList.appendChild(btn);
     });
 }
 
-/**
- * Charge un écran HTML spécifique
- */
+/* ═══════════════════════════════════════════
+   SCREEN LOADING
+   ═══════════════════════════════════════════ */
 async function loadScreen(moduleKey, screenId) {
     const config = CONFIG.modules[moduleKey];
     const screen = config.screens.find(s => s.id === screenId);
     if (!screen) return;
 
     dom.viewContainer.classList.add("view-loading");
-    
+
     try {
-        // Encode chaque segment du chemin pour supporter les espaces sur Netlify
         const encodedPath = config.basePath
             .split('/')
             .map(seg => (seg === '..' || seg === '') ? seg : encodeURIComponent(seg))
             .join('/');
         const url = encodedPath + encodeURIComponent(screen.name);
-        console.log(`Loading screen: ${url}`);
 
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Échec du chargement : ${response.statusText}`);
-        
+
         const htmlText = await response.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, "text/html");
 
-        // Extraction du <main>
         const mainContent = doc.querySelector("main");
         if (mainContent) {
             dom.viewContainer.innerHTML = mainContent.innerHTML;
-            
-            // Ré-injection des scripts s'il y en a dans le main (souvent nécessaire pour Tailwind ou Charts)
+
+            // Re-inject scripts
             mainContent.querySelectorAll("script").forEach(oldScript => {
                 const newScript = document.createElement("script");
                 Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -241,10 +389,10 @@ async function loadScreen(moduleKey, screenId) {
                 dom.viewContainer.appendChild(newScript);
             });
 
-            // On intercepte les clics internes sur les liens de navigation si possible
             hookInternalButtons();
+            applyMobileResponsiveFixes();
         } else {
-             dom.viewContainer.innerHTML = `<div class="p-8 text-red-500">Erreur: Élément &lt;main&gt; non trouvé dans le fichier : ${screen.name}</div>`;
+            dom.viewContainer.innerHTML = `<div class="p-8 text-red-500">Erreur: Élément &lt;main&gt; non trouvé dans le fichier : ${screen.name}</div>`;
         }
     } catch (error) {
         console.error(error);
@@ -253,7 +401,7 @@ async function loadScreen(moduleKey, screenId) {
                 <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">error</span>
                 <h3 class="text-xl font-bold mb-2">Impossible de charger l'écran</h3>
                 <p class="text-slate-500 max-w-sm mb-6">${error.message}</p>
-                <button onclick="location.reload()" class="px-4 py-2 bg-primary text-white rounded-lg">Ressayer</button>
+                <button onclick="location.reload()" class="px-4 py-2 bg-primary text-white rounded-lg">Réessayer</button>
             </div>
         `;
     } finally {
@@ -262,13 +410,67 @@ async function loadScreen(moduleKey, screenId) {
     }
 }
 
-/**
- * Ouvre une modale avec le contenu d'un fichier HTML
- */
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE FIXES (post-injection)
+   ═══════════════════════════════════════════ */
+function applyMobileResponsiveFixes() {
+    if (window.innerWidth >= 1024) return;
+
+    // Hide internal sidebars (they're redundant - the app shell has its own)
+    dom.viewContainer.querySelectorAll("aside").forEach(aside => {
+        aside.style.display = "none";
+    });
+
+    // Hide internal resizers
+    dom.viewContainer.querySelectorAll(".resizer-v").forEach(r => {
+        r.style.display = "none";
+    });
+
+    // Make fixed-width sections full-width on mobile
+    dom.viewContainer.querySelectorAll("section").forEach(sec => {
+        const style = sec.getAttribute("style") || "";
+        const cls = sec.className || "";
+        if (cls.includes("w-[") || style.includes("width:")) {
+            sec.style.width = "100%";
+            sec.style.maxWidth = "100%";
+            sec.style.maxHeight = window.innerWidth < 480 ? "35vh" : "45vh";
+            sec.style.borderRight = "none";
+            sec.style.borderBottom = "1px solid rgba(148,163,184,0.2)";
+        }
+    });
+
+    // Make flex master-detail layouts stack vertically
+    const masterDetailContainers = dom.viewContainer.querySelectorAll(".flex-1.flex.overflow-hidden");
+    masterDetailContainers.forEach(container => {
+        if (container.children.length > 1) {
+            container.style.flexDirection = "column";
+        }
+    });
+
+    // Make grid-cols-6 responsive
+    dom.viewContainer.querySelectorAll("[class*='grid-cols-6']").forEach(grid => {
+        grid.style.gridTemplateColumns = window.innerWidth < 480
+            ? "repeat(2, 1fr)"
+            : "repeat(3, 1fr)";
+    });
+}
+
+// Re-apply on resize
+let resizeTimeout;
+window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        applyMobileResponsiveFixes();
+    }, 150);
+});
+
+/* ═══════════════════════════════════════════
+   MODALS
+   ═══════════════════════════════════════════ */
 async function openModal(moduleKey, screenId) {
     const config = CONFIG.modules[moduleKey];
     const screen = config.screens.find(s => s.id === screenId);
-    
+
     dom.modalContent.innerHTML = '<div class="p-12 flex justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>';
     dom.modalOverlay.classList.add("active");
 
@@ -278,19 +480,17 @@ async function openModal(moduleKey, screenId) {
         const htmlText = await response.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, "text/html");
-        
-        // Pour les modales, on prend souvent tout le body ou le conteneur principal
+
         const content = doc.querySelector(".modal-content") || doc.querySelector("main") || doc.body;
         dom.modalContent.innerHTML = content.innerHTML;
 
-        // ✅ Ré-injection des scripts (nécessaire car innerHTML ne les exécute pas)
         content.querySelectorAll("script").forEach(oldScript => {
             const newScript = document.createElement("script");
             Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
             newScript.appendChild(document.createTextNode(oldScript.innerHTML));
             dom.modalContent.appendChild(newScript);
         });
-        
+
     } catch (error) {
         dom.modalContent.innerHTML = `<div class="p-12 text-red-500">Erreur : ${error.message}</div>`;
     }
@@ -300,21 +500,20 @@ function closeModal() {
     dom.modalOverlay.classList.remove("active");
 }
 
-// ✅ Exposer une fonction de navigation globale pour les scripts injectés (modales, écrans)
-//    Usage depuis un modal : window.naviguerVers('credits', '02')
+/* ═══════════════════════════════════════════
+   GLOBAL NAV HELPER + INTERNAL BUTTON HOOKS
+   ═══════════════════════════════════════════ */
 window.naviguerVers = function(moduleKey, screenId) {
     closeModal();
     currentModule = moduleKey;
     currentScreen = screenId;
+    updateNavUI(dom.mainNav, moduleKey);
+    updateNavUI(dom.mobileNav, moduleKey);
+    updateBottomTabs(moduleKey);
     setTimeout(function() { loadScreen(moduleKey, screenId); }, 150);
 };
 
-/**
- * Intercepte les clics sur les boutons des maquettes pour les rendre fonctionnels
- * (ex: liens vers Prospection, Crédits, etc.)
- */
 function hookInternalButtons() {
-    // Boutons "Dashboard / Vue principale" -> Accéder à
     const prospectionCards = dom.viewContainer.querySelectorAll('[id*="prospection"], [href*="prospection"]');
     prospectionCards.forEach(c => {
         c.onclick = (e) => {
@@ -330,10 +529,4 @@ function hookInternalButtons() {
             switchModule("credits");
         };
     });
-
-    // Bouton de conversion client
-    const convertBtn = dom.viewContainer.querySelector('[class*="CONVERTIR EN CLIENT"]');
-    if (convertBtn) {
-        convertBtn.onclick = () => alert("Logic de conversion : Le prospect sera transféré dans le module CRÉDITS.");
-    }
 }
