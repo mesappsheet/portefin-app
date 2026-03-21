@@ -320,8 +320,7 @@
     const APP_URL    = "./MAQUETTE_COMPLETE.html";
 
     // ── Vérifie si déjà connecté ─────────────────────────────────────────────
-    const existingSession = localStorage.getItem("portefin_session");
-    if (existingSession) { window.location.href = APP_URL; }
+    // Pas de redirection auto — login obligatoire à chaque ouverture
 
     // ── Tab switcher ─────────────────────────────────────────────────────────
     function switchTab(tab) {
@@ -427,7 +426,7 @@
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     function saveSession(user) {
-        localStorage.setItem("portefin_session", JSON.stringify(user));
+        sessionStorage.setItem("portefin_session", JSON.stringify(user));
     }
 
     function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }

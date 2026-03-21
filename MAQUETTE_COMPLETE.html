@@ -8,7 +8,7 @@
     <script>
         (function() {
             try {
-                const raw = localStorage.getItem("portefin_session");
+                const raw = sessionStorage.getItem("portefin_session");
                 if (!raw) { window.location.replace("./login.html"); }
             } catch(e) { window.location.replace("./login.html"); }
         })();
@@ -7702,41 +7702,60 @@ Suivant
         }
     </script>
 
-    <!-- ── AUTH SESSION ─────────────────────────────────────────────────── -->
+    <!-- ── AUTH SESSION + INACTIVITÉ ───────────────────────────────────── -->
     <script>
     (function() {
-        const raw = localStorage.getItem("portefin_session");
-        if (!raw) {
-            window.location.href = "./login.html";
-            return;
-        }
+        const raw = sessionStorage.getItem("portefin_session");
+        if (!raw) { window.location.replace("./login.html"); return; }
+
         try {
             const user = JSON.parse(raw);
 
-            // Nom dans la sidebar
+            // Sidebar
             const nameEl   = document.getElementById("sidebar-user-name");
             const roleEl   = document.getElementById("sidebar-user-role");
             const avatarEl = document.getElementById("sidebar-avatar");
-
             if (nameEl)   nameEl.textContent   = user.name  || user.email || "Utilisateur";
             if (roleEl)   roleEl.textContent   = user.role  || "Utilisateur";
             if (avatarEl) avatarEl.textContent = (user.name || "U")[0].toUpperCase();
 
-            // Accueil personnalisé
+            // Accueil
             const welcomeEl = document.getElementById("dashboard-welcome-name");
             if (welcomeEl) {
                 const first = (user.name || "").split(" ")[0] || "vous";
                 welcomeEl.textContent = first + ".";
             }
         } catch(e) {
-            localStorage.removeItem("portefin_session");
-            window.location.href = "./login.html";
+            porteFinLogout(); return;
         }
+
+        // ── Effacer session au refresh/fermeture ────────────────────────
+        window.addEventListener("beforeunload", function() {
+            sessionStorage.removeItem("portefin_session");
+        });
+
+        // ── Timer d'inactivité : 1 minute ───────────────────────────────
+        const INACTIVITY_MS = 60 * 1000; // 1 minute
+        let inactivityTimer = null;
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(function() {
+                sessionStorage.removeItem("portefin_session");
+                window.location.replace("./login.html");
+            }, INACTIVITY_MS);
+        }
+
+        ["mousemove","mousedown","keydown","touchstart","scroll","click"].forEach(function(evt) {
+            document.addEventListener(evt, resetInactivityTimer, { passive: true, capture: true });
+        });
+
+        resetInactivityTimer(); // démarrer le timer
     })();
 
     function porteFinLogout() {
-        localStorage.removeItem("portefin_session");
-        window.location.href = "./login.html";
+        sessionStorage.removeItem("portefin_session");
+        window.location.replace("./login.html");
     }
     </script>
 </body>
