@@ -1,559 +1,389 @@
 <!DOCTYPE html>
-<html class="light" lang="fr">
+<html lang="fr">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Dashboard - Control Center Overview</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-    tailwind.config = {
-        darkMode: "class",
-        theme: {
-            extend: {
-                colors: { "primary": "#1763cf", "background-light": "#f6f7f8", "background-dark": "#111821" },
-                fontFamily: { "display": ["Inter", "sans-serif"] },
-                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-            },
-        },
-    }
-</script>
-<style type="text/tailwindcss">
-    body { font-family: 'Inter', sans-serif; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-    .dark .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .bar-fill { transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-</style>
+<title>Dashboard</title>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-display">
-
-<main class="flex-1 flex flex-col overflow-y-auto">
+<body>
+<main class="flex-1 flex flex-col overflow-hidden">
 
   <!-- HEADER -->
-  <header class="h-20 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+  <header class="flex-shrink-0 h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between">
     <div>
-      <h2 class="text-xl font-bold">Vue d'ensemble</h2>
-      <p class="text-xs text-slate-500">Activité en temps réel de votre portefeuille</p>
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white">Vue d'ensemble</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Données en temps réel de votre portefeuille</p>
     </div>
-    <div class="flex items-center gap-4">
-      <!-- Horloge -->
-      <div class="flex items-center gap-2 px-4 py-2 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/15">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-xl">
         <span class="material-symbols-outlined text-primary text-lg">schedule</span>
-        <span class="text-lg font-extrabold tracking-tight" id="db-clock">--:--</span>
-        <span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest">Heure locale</span>
+        <span class="font-extrabold text-slate-900 dark:text-white text-base tracking-tight" id="db-clock">--:--</span>
       </div>
-      <!-- Barre de recherche -->
-      <div class="relative hidden md:block">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-        <input class="pl-9 pr-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl text-sm w-56 focus:outline-none focus:ring-2 focus:ring-primary/40 border-none" placeholder="Rechercher..." type="text"/>
-      </div>
-      <!-- Notif -->
-      <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition relative">
-        <span class="material-symbols-outlined">notifications</span>
-        <span id="db-notif-dot" class="absolute top-2 right-2 size-2 bg-primary rounded-full hidden"></span>
+      <button onclick="loadDashboard()" title="Actualiser" class="size-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-primary/10 transition">
+        <span class="material-symbols-outlined text-lg" id="refresh-icon">refresh</span>
       </button>
-      <!-- Période -->
-      <div id="db-period-btn" class="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-xl text-primary font-bold text-sm cursor-pointer hover:bg-primary/20 transition select-none">
-        <span class="material-symbols-outlined text-base">calendar_today</span>
-        <span id="db-period-label">Ce mois</span>
-        <span class="material-symbols-outlined text-base">expand_more</span>
-      </div>
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
-  <div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
+  <!-- SCROLL ZONE -->
+  <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 dark:bg-background-dark">
 
-    <!-- Alerte d'erreur globale -->
-    <div id="db-error" class="hidden items-center gap-3 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl text-red-700 dark:text-red-400 text-sm font-medium">
+    <!-- Erreur -->
+    <div id="db-error" class="hidden p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400 flex items-center gap-3">
       <span class="material-symbols-outlined text-xl">error</span>
-      <span id="db-error-msg">Erreur de chargement des données.</span>
-      <button onclick="loadDashboard()" class="ml-auto text-xs underline">Réessayer</button>
+      <span id="db-error-msg">Erreur</span>
+      <button onclick="loadDashboard()" class="ml-auto text-xs underline font-semibold">Réessayer</button>
     </div>
 
-    <!-- LIGNE 1 : KPIs principaux -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+    <!-- LIGNE 1 : 4 KPIs -->
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
-      <!-- Remboursements du jour -->
-      <div class="relative group overflow-hidden bg-white dark:bg-white/[0.04] p-6 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-emerald-100 dark:border-emerald-500/15 col-span-1 md:col-span-2 xl:col-span-1">
-        <div class="absolute top-0 right-0 w-28 h-28 bg-emerald-400/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-emerald-400/20 transition-all"></div>
-        <div class="flex justify-between items-start mb-3">
-          <div class="p-2.5 bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-xl">
-            <span class="material-symbols-outlined">payments</span>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="size-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-xl">payments</span>
           </div>
-          <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Aujourd'hui</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Aujourd'hui</span>
         </div>
-        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Remboursements du Jour</p>
-        <div class="flex items-baseline gap-2 mb-3">
-          <span id="kpi-remb-amount" class="text-2xl font-black text-slate-900 dark:text-white skeleton min-w-[100px] h-8 rounded"></span>
-          <span class="text-xs font-bold text-slate-400 uppercase">FCFA</span>
-        </div>
-        <p id="kpi-remb-count" class="text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 skeleton min-w-[80px] h-4 rounded"></p>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Remboursements</p>
+        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-remb-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
+        <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium" id="k-remb-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
       </div>
 
-      <!-- Fins d'échéance du mois -->
-      <div class="relative group overflow-hidden bg-white dark:bg-white/[0.04] p-6 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-orange-100 dark:border-orange-500/15 col-span-1 md:col-span-2 xl:col-span-1">
-        <div class="absolute top-0 right-0 w-28 h-28 bg-orange-400/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-orange-400/20 transition-all"></div>
-        <div class="flex justify-between items-start mb-3">
-          <div class="p-2.5 bg-orange-100 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 rounded-xl">
-            <span class="material-symbols-outlined">event_busy</span>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="size-10 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-orange-500 text-xl">event_busy</span>
           </div>
-          <span class="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Échéances</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">Ce mois</span>
         </div>
-        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Fins d'Échéance du Mois</p>
-        <div class="flex items-baseline gap-2 mb-3">
-          <span id="kpi-echeance-amount" class="text-2xl font-black text-slate-900 dark:text-white skeleton min-w-[100px] h-8 rounded"></span>
-          <span class="text-xs font-bold text-slate-400 uppercase">FCFA</span>
-        </div>
-        <p id="kpi-echeance-count" class="text-sm text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1 skeleton min-w-[80px] h-4 rounded"></p>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Fins d'échéance</p>
+        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-ech-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
+        <p class="text-xs text-orange-500 font-medium" id="k-ech-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
       </div>
 
-      <!-- Total Portefeuille -->
-      <div class="relative group overflow-hidden bg-white dark:bg-white/[0.04] p-6 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-blue-100 dark:border-blue-500/15 col-span-1 md:col-span-2 xl:col-span-1">
-        <div class="absolute top-0 right-0 w-28 h-28 bg-blue-400/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-blue-400/20 transition-all"></div>
-        <div class="flex justify-between items-start mb-3">
-          <div class="p-2.5 bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-xl">
-            <span class="material-symbols-outlined">account_balance_wallet</span>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="size-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-xl">account_balance_wallet</span>
           </div>
-          <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Total</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">Encours</span>
         </div>
-        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Encours Total</p>
-        <div class="flex items-baseline gap-2 mb-3">
-          <span id="kpi-encours-amount" class="text-2xl font-black text-slate-900 dark:text-white skeleton min-w-[100px] h-8 rounded"></span>
-          <span class="text-xs font-bold text-slate-400 uppercase">FCFA</span>
-        </div>
-        <p id="kpi-encours-count" class="text-sm text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 skeleton min-w-[80px] h-4 rounded"></p>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Portefeuille</p>
+        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-enc-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
+        <p class="text-xs text-primary font-medium" id="k-enc-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
       </div>
 
-      <!-- Clients actifs -->
-      <div class="relative group overflow-hidden bg-white dark:bg-white/[0.04] p-6 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-violet-100 dark:border-violet-500/15 col-span-1 md:col-span-2 xl:col-span-1">
-        <div class="absolute top-0 right-0 w-28 h-28 bg-violet-400/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-violet-400/20 transition-all"></div>
-        <div class="flex justify-between items-start mb-3">
-          <div class="p-2.5 bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 rounded-xl">
-            <span class="material-symbols-outlined">groups</span>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="size-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-violet-600 dark:text-violet-400 text-xl">groups</span>
           </div>
-          <span class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Clients</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">Clients</span>
         </div>
-        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Clients Actifs</p>
-        <div class="flex items-baseline gap-2 mb-3">
-          <span id="kpi-clients-count" class="text-2xl font-black text-slate-900 dark:text-white skeleton min-w-[60px] h-8 rounded"></span>
-        </div>
-        <p id="kpi-prospects-count" class="text-sm text-violet-600 dark:text-violet-400 font-medium flex items-center gap-1 skeleton min-w-[80px] h-4 rounded"></p>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Clients actifs</p>
+        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-cli-cnt"><span class="db-skel inline-block w-10 h-5 rounded"></span></p>
+        <p class="text-xs text-violet-600 dark:text-violet-400 font-medium" id="k-pros-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
       </div>
     </div>
 
-    <!-- LIGNE 2 : Modules + Stats -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-3xl text-white shadow-2xl shadow-indigo-200/40 dark:shadow-none relative group cursor-pointer overflow-hidden">
-        <div class="absolute -bottom-10 -right-10 opacity-10 group-hover:opacity-20 transition-opacity">
-          <span class="material-symbols-outlined text-[160px]">hub</span>
+    <!-- LIGNE 2 : Modules + Santé portefeuille -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- Module Prospection -->
+      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer">
+        <div class="absolute -bottom-6 -right-6 opacity-10 group-hover:opacity-20 transition-opacity">
+          <span class="material-symbols-outlined" style="font-size:100px">hub</span>
         </div>
-        <div class="relative z-10 flex flex-col h-full justify-between gap-10">
+        <div class="relative z-10">
+          <div class="size-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+            <span class="material-symbols-outlined text-xl">share_reviews</span>
+          </div>
+          <h3 class="text-xl font-black mb-1">Prospection</h3>
+          <p class="text-indigo-200 text-xs mb-4">Convertissez vos prospects en clients</p>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-black" id="mod-pros">—</span>
+            <span class="text-indigo-300 text-sm">prospects</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Crédits -->
+      <div class="bg-gradient-to-br from-primary to-blue-700 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer">
+        <div class="absolute -bottom-6 -right-6 opacity-10 group-hover:opacity-20 transition-opacity">
+          <span class="material-symbols-outlined" style="font-size:100px">account_balance</span>
+        </div>
+        <div class="relative z-10">
+          <div class="size-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+            <span class="material-symbols-outlined text-xl">savings</span>
+          </div>
+          <h3 class="text-xl font-black mb-1">Crédits</h3>
+          <p class="text-blue-200 text-xs mb-4">Suivi complet des encours</p>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-black" id="mod-cred">—</span>
+            <span class="text-blue-200 text-sm">crédits actifs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Santé portefeuille -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4">Santé du Portefeuille</h3>
+        <div class="space-y-4">
           <div>
-            <span class="inline-block p-3.5 bg-white/20 rounded-2xl backdrop-blur-md mb-5">
-              <span class="material-symbols-outlined text-3xl">share_reviews</span>
-            </span>
-            <h3 class="text-3xl font-black mb-2 leading-tight">Module<br/>Prospection</h3>
-            <p class="text-indigo-100/80">Gérez votre réseau et convertissez vos prospects en clients performants.</p>
-            <div class="mt-3 flex items-center gap-3">
-              <span class="text-2xl font-black" id="mod-prospects-total">—</span>
-              <span class="text-indigo-200 text-sm">prospects actifs</span>
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Crédits sains</span>
+              <span class="text-sm font-black text-emerald-600 dark:text-emerald-400" id="k-sains-pct">—</span>
+            </div>
+            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div id="k-sains-bar" class="h-full bg-emerald-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
             </div>
           </div>
-          <div class="flex items-center gap-2 font-bold group-hover:gap-4 transition-all">
-            Accéder au module <span class="material-symbols-outlined">arrow_forward</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-gradient-to-br from-primary to-blue-700 p-8 rounded-3xl text-white shadow-2xl shadow-primary/20 dark:shadow-none relative group cursor-pointer overflow-hidden">
-        <div class="absolute -bottom-10 -right-10 opacity-10 group-hover:opacity-20 transition-opacity">
-          <span class="material-symbols-outlined text-[160px]">account_balance</span>
-        </div>
-        <div class="relative z-10 flex flex-col h-full justify-between gap-10">
           <div>
-            <span class="inline-block p-3.5 bg-white/20 rounded-2xl backdrop-blur-md mb-5">
-              <span class="material-symbols-outlined text-3xl">savings</span>
-            </span>
-            <h3 class="text-3xl font-black mb-2 leading-tight">Module Crédits<br/>(Portefeuille)</h3>
-            <p class="text-blue-100/80">Suivi complet des encours, remboursements et performance globale.</p>
-            <div class="mt-3 flex items-center gap-3">
-              <span class="text-2xl font-black" id="mod-credits-total">—</span>
-              <span class="text-blue-200 text-sm">crédits actifs</span>
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">En souffrance</span>
+              <span class="text-sm font-black text-rose-600 dark:text-rose-400" id="k-souf-pct">—</span>
+            </div>
+            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div id="k-souf-bar" class="h-full bg-rose-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
             </div>
           </div>
-          <div class="flex items-center gap-2 font-bold group-hover:gap-4 transition-all">
-            Accéder au module <span class="material-symbols-outlined">arrow_forward</span>
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Échéances en retard</span>
+              <span class="text-sm font-black text-amber-600 dark:text-amber-400" id="k-retard">—</span>
+            </div>
+            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div id="k-retard-bar" class="h-full bg-amber-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Nouveaux prospects / semaine</span>
+              <span class="text-sm font-black text-indigo-600 dark:text-indigo-400" id="k-new-pros">—</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- LIGNE 3 : Graphique + Indicateurs qualité -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-
-      <!-- Graphique mensuel -->
-      <div class="xl:col-span-2 bg-white dark:bg-white/[0.04] p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/[0.06]">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h3 class="text-base font-bold">Remboursements Mensuels</h3>
-            <p class="text-xs text-slate-500 mt-0.5" id="chart-subtitle">Montants encaissés (en FCFA)</p>
-          </div>
-          <div class="flex gap-2">
-            <span class="flex items-center gap-1 text-xs font-bold px-3 py-1 bg-primary/10 text-primary rounded-lg">MENSUEL</span>
-          </div>
+    <!-- LIGNE 3 : Graphique remboursements -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Remboursements Encaissés — 6 derniers mois</h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="chart-legend">en FCFA</p>
         </div>
-        <!-- Barres dynamiques -->
-        <div class="h-52 flex items-end justify-between gap-2 px-2 border-b border-slate-100 dark:border-white/10 pb-3" id="chart-bars">
-          <!-- Skeletons initiaux -->
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:40%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:55%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:70%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:50%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:80%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-          <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="w-full skeleton rounded-t-lg" style="height:90%"></div>
-            <span class="text-[10px] font-bold text-slate-300">···</span>
-          </div>
-        </div>
-        <p class="text-center text-xs text-slate-400 mt-2" id="chart-empty-msg" style="display:none">Aucun remboursement enregistré.</p>
       </div>
-
-      <!-- Indicateurs qualité portefeuille -->
-      <div class="space-y-4">
-
-        <!-- Nouveaux prospects semaine -->
-        <div class="bg-white dark:bg-white/[0.04] p-5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-indigo-500/10 flex items-center gap-4">
-          <div class="size-12 bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined">person_add</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Nouveaux Prospects (Semaine)</p>
-            <p class="text-xl font-black mt-0.5">
-              <span id="kpi-new-prospects" class="skeleton inline-block min-w-[40px] h-6 rounded">—</span>
-              <span id="kpi-new-prospects-pct" class="text-xs font-normal text-emerald-500 ml-1"></span>
-            </p>
-          </div>
-        </div>
-
-        <!-- Crédits sains -->
-        <div class="bg-white dark:bg-white/[0.04] p-5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-emerald-500/10 flex items-center gap-4">
-          <div class="size-12 bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined">verified</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Crédits Performants (Sains)</p>
-            <div class="flex items-center gap-2 mt-0.5">
-              <p class="text-xl font-black"><span id="kpi-sains-pct">—</span></p>
-              <div class="flex-1 h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                <div id="kpi-sains-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width:0%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crédits en souffrance -->
-        <div class="bg-white dark:bg-white/[0.04] p-5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-rose-500/10 flex items-center gap-4">
-          <div class="size-12 bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined">trending_down</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Crédits en Souffrance</p>
-            <div class="flex items-center gap-2 mt-0.5">
-              <p class="text-xl font-black"><span id="kpi-souffrance-pct">—</span></p>
-              <div class="flex-1 h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                <div id="kpi-souffrance-bar" class="h-full bg-rose-500 rounded-full transition-all duration-700" style="width:0%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Remboursements en retard -->
-        <div class="bg-white dark:bg-white/[0.04] p-5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-amber-500/10 flex items-center gap-4">
-          <div class="size-12 bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined">schedule_send</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Échéances en Retard</p>
-            <p class="text-xl font-black mt-0.5"><span id="kpi-retard">—</span> <span class="text-xs font-normal text-slate-400">paiements</span></p>
-          </div>
-        </div>
+      <div class="h-44 flex items-end gap-2" id="chart-bars">
+        <!-- Rempli par JS -->
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:60%"></div><span class="text-[10px] text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:40%"></div><span class="text-[10px] text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:75%"></div><span class="text-[10px] text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:55%"></div><span class="text-[10px] text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:80%"></div><span class="text-[10px] text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:90%"></div><span class="text-[10px] text-slate-300">···</span></div>
       </div>
     </div>
 
-    <!-- Dernière mise à jour -->
-    <p class="text-center text-xs text-slate-400" id="db-last-update">Chargement des données…</p>
+    <!-- Footer -->
+    <p class="text-center text-xs text-slate-400 dark:text-slate-600 pb-2" id="db-ts">Chargement…</p>
   </div>
 </main>
 
+<style>
+.db-skel {
+  background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: dbshim 1.4s infinite;
+}
+.dark .db-skel {
+  background: linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.12) 50%,rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: dbshim 1.4s infinite;
+}
+@keyframes dbshim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+
 <script>
-(function() {
-  // ── Supabase client (déjà initialisé dans app.js) ────────────────────
-  const sb = window.supabase;
-
-  // ── Horloge temps réel ────────────────────────────────────────────────
-  function updateClock() {
-    const el = document.getElementById('db-clock');
-    if (!el) return;
-    el.textContent = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-  updateClock();
-  const clockInterval = setInterval(updateClock, 1000);
-
-  // ── Formatage FCFA ────────────────────────────────────────────────────
-  function fmtFCFA(n) {
-    if (n == null || isNaN(n)) return '0';
-    return Math.round(n).toLocaleString('fr-FR');
-  }
-
-  // ── Effacer skeleton d'un élément ────────────────────────────────────
-  function clearSkeleton(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.remove('skeleton', 'min-w-[100px]', 'min-w-[80px]', 'min-w-[60px]', 'min-w-[40px]', 'h-8', 'h-6', 'h-4', 'rounded');
-    el.textContent = value;
-  }
-
-  // ── Mois et semaine actuels ───────────────────────────────────────────
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-  const weekAgo = new Date(now - 7 * 24 * 3600 * 1000).toISOString().split('T')[0];
-  const twoWeeksAgo = new Date(now - 14 * 24 * 3600 * 1000).toISOString().split('T')[0];
-
-  // ── Noms des mois ─────────────────────────────────────────────────────
+(function dashboardInit() {
+  // ── Config Supabase REST API ─────────────────────────────────────────
+  const URL  = 'https://lkuwgggwdtbzjgplwylr.supabase.co/rest/v1';
+  const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
+  const HDR  = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
   const MOIS = ['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
 
-  // ── Affichage erreur ──────────────────────────────────────────────────
-  function showError(msg) {
-    const el = document.getElementById('db-error');
-    if (el) {
-      el.classList.remove('hidden');
-      el.classList.add('flex');
-      document.getElementById('db-error-msg').textContent = msg;
-    }
+  // ── Requête REST générique ───────────────────────────────────────────
+  async function q(table, params) {
+    const r = await fetch(`${URL}/${table}?${params}`, { headers: HDR });
+    if (!r.ok) throw new Error(`${table}: ${r.status}`);
+    return r.json();
   }
 
-  // ── Chargement principal ──────────────────────────────────────────────
+  // ── Utilitaires ──────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  function fmt(n) {
+    if (!n || isNaN(n)) return '0';
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.', ',') + ' M';
+    if (n >= 1_000)     return Math.round(n / 1_000) + ' k';
+    return Math.round(n).toLocaleString('fr-FR');
+  }
+  function fmtFull(n) {
+    return Math.round(n || 0).toLocaleString('fr-FR');
+  }
+  function set(id, val) {
+    const el = $(id); if (!el) return;
+    el.querySelectorAll('.db-skel').forEach(s => s.replaceWith(document.createTextNode('')));
+    el.textContent = val;
+  }
+  function showErr(msg) {
+    const el = $('db-error'); if (!el) return;
+    el.classList.remove('hidden'); el.classList.add('flex');
+    $('db-error-msg').textContent = msg;
+  }
+
+  // ── Horloge ──────────────────────────────────────────────────────────
+  const clockEl = $('db-clock');
+  function tick() { if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+  tick();
+  const _clock = setInterval(tick, 1000);
+
+  // ── Dates utiles ─────────────────────────────────────────────────────
+  const now    = new Date();
+  const today  = now.toISOString().split('T')[0];
+  const m1     = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const m2     = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+  const w1     = new Date(now - 7*86400000).toISOString().split('T')[0];
+  const chart6 = new Date(now.getFullYear(), now.getMonth()-5, 1).toISOString().split('T')[0];
+
+  // ── Chargement principal ─────────────────────────────────────────────
   window.loadDashboard = async function() {
-    document.getElementById('db-error')?.classList.add('hidden');
-    document.getElementById('db-error')?.classList.remove('flex');
+    const icon = $('refresh-icon');
+    if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+    $('db-error')?.classList.add('hidden');
 
     try {
-      // Requêtes parallèles
-      const [
-        rembToday,
-        echeanceMois,
-        allCredits,
-        allClients,
-        prospectsTotal,
-        prospectsWeek,
-        prospectsLastWeek,
-        rembMensuels,
-        retards
-      ] = await Promise.all([
-
-        // 1. Remboursements du jour (non payés dus aujourd'hui)
-        sb.from('repayments')
-          .select('amount, is_paid')
-          .eq('scheduled_date', todayStr),
-
-        // 2. Crédits se terminant ce mois
-        sb.from('credits')
-          .select('amount, id, status')
-          .gte('end_date', firstOfMonth)
-          .lte('end_date', lastOfMonth)
-          .neq('status', 'solde'),
-
-        // 3. Tous les crédits actifs
-        sb.from('credits')
-          .select('id, amount, health, status'),
-
-        // 4. Clients actifs
-        sb.from('clients')
-          .select('id, total_portefeuille, is_active'),
-
-        // 5. Total prospects
-        sb.from('prospects').select('id, status'),
-
-        // 6. Prospects cette semaine
-        sb.from('prospects')
-          .select('id')
-          .gte('created_at', weekAgo),
-
-        // 7. Prospects semaine précédente (pour évolution %)
-        sb.from('prospects')
-          .select('id')
-          .gte('created_at', twoWeeksAgo)
-          .lt('created_at', weekAgo),
-
-        // 8. Remboursements des 6 derniers mois (payés) pour le graphique
-        sb.from('repayments')
-          .select('amount, actual_payment_date, scheduled_date, is_paid')
-          .eq('is_paid', true)
-          .gte('actual_payment_date', new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split('T')[0]),
-
-        // 9. Remboursements en retard (non payés, date passée)
-        sb.from('repayments')
-          .select('id')
-          .eq('is_paid', false)
-          .lt('scheduled_date', todayStr)
+      const [remb, ech, credits, clients, prospects, newPros, rembChart, retards] = await Promise.all([
+        // Remboursements aujourd'hui
+        q('repayments', `scheduled_date=eq.${today}&select=amount,is_paid`),
+        // Fins d'échéance ce mois
+        q('credits', `end_date=gte.${m1}&end_date=lte.${m2}&status=neq.solde&select=amount,id`),
+        // Tous crédits
+        q('credits', 'select=id,amount,health,status'),
+        // Clients actifs
+        q('clients', 'select=id,is_active,total_portefeuille'),
+        // Total prospects
+        q('prospects', 'select=id'),
+        // Prospects cette semaine
+        q('prospects', `created_at=gte.${w1}&select=id`),
+        // Remboursements encaissés 6 mois
+        q('repayments', `is_paid=eq.true&actual_payment_date=gte.${chart6}&select=amount,actual_payment_date`),
+        // Retards
+        q('repayments', `is_paid=eq.false&scheduled_date=lt.${today}&select=id`)
       ]);
 
-      // ── KPI 1 : Remboursements du jour ─────────────────────────────
-      const rembData = rembToday.data || [];
-      const rembPending = rembData.filter(r => !r.is_paid);
-      const rembTotal = rembPending.reduce((s, r) => s + Number(r.amount || 0), 0);
-      clearSkeleton('kpi-remb-amount', fmtFCFA(rembTotal));
-      clearSkeleton('kpi-remb-count', `${rembPending.length} à percevoir`);
-      // dot notification si remboursements en attente
-      if (rembPending.length > 0) document.getElementById('db-notif-dot')?.classList.remove('hidden');
+      // KPI 1 — Remboursements jour
+      const pendingToday = remb.filter(r => !r.is_paid);
+      const totalRemb = pendingToday.reduce((s, r) => s + +r.amount, 0);
+      set('k-remb-amt', fmtFull(totalRemb) + ' FCFA');
+      set('k-remb-cnt', pendingToday.length + ' à percevoir');
 
-      // ── KPI 2 : Fins d'échéance du mois ──────────────────────────
-      const echData = echeanceMois.data || [];
-      const echTotal = echData.reduce((s, c) => s + Number(c.amount || 0), 0);
-      clearSkeleton('kpi-echeance-amount', fmtFCFA(echTotal));
-      clearSkeleton('kpi-echeance-count', `${echData.length} crédit${echData.length > 1 ? 's' : ''} à terme`);
+      // KPI 2 — Échéances mois
+      const totalEch = ech.reduce((s, c) => s + +c.amount, 0);
+      set('k-ech-amt', fmtFull(totalEch) + ' FCFA');
+      set('k-ech-cnt', ech.length + ' crédit(s) à terme');
 
-      // ── KPI 3 : Encours total ─────────────────────────────────────
-      const credData = allCredits.data || [];
-      const credActifs = credData.filter(c => c.status !== 'solde');
-      const encours = credActifs.reduce((s, c) => s + Number(c.amount || 0), 0);
-      clearSkeleton('kpi-encours-amount', fmtFCFA(encours));
-      clearSkeleton('kpi-encours-count', `${credActifs.length} crédit${credActifs.length > 1 ? 's' : ''} actif${credActifs.length > 1 ? 's' : ''}`);
+      // KPI 3 — Encours
+      const actifs = credits.filter(c => c.status !== 'solde');
+      const encours = actifs.reduce((s, c) => s + +c.amount, 0);
+      set('k-enc-amt', fmtFull(encours) + ' FCFA');
+      set('k-enc-cnt', actifs.length + ' crédit(s) actif(s)');
 
-      // ── KPI 4 : Clients actifs ────────────────────────────────────
-      const clientData = allClients.data || [];
-      const clientsActifs = clientData.filter(c => c.is_active);
-      clearSkeleton('kpi-clients-count', clientsActifs.length);
-      const prospData = prospectsTotal.data || [];
-      clearSkeleton('kpi-prospects-count', `+ ${prospData.length} prospect${prospData.length > 1 ? 's' : ''}`);
+      // KPI 4 — Clients
+      const cliActifs = clients.filter(c => c.is_active);
+      set('k-cli-cnt', cliActifs.length + ' client(s)');
+      set('k-pros-cnt', '+ ' + prospects.length + ' prospect(s)');
 
-      // ── Modules ───────────────────────────────────────────────────
-      document.getElementById('mod-prospects-total').textContent = prospData.length;
-      document.getElementById('mod-credits-total').textContent = credActifs.length;
+      // Modules
+      const modPros = $('mod-pros'); if (modPros) modPros.textContent = prospects.length;
+      const modCred = $('mod-cred'); if (modCred) modCred.textContent = actifs.length;
 
-      // ── KPI Qualité : Nouveaux prospects semaine ──────────────────
-      const newW = (prospectsWeek.data || []).length;
-      const prevW = (prospectsLastWeek.data || []).length;
-      const pctEvo = prevW > 0 ? Math.round(((newW - prevW) / prevW) * 100) : null;
-      const pctLabel = pctEvo !== null ? (pctEvo >= 0 ? `↑ ${pctEvo}%` : `↓ ${Math.abs(pctEvo)}%`) : '';
-      const pctColor = pctEvo !== null && pctEvo >= 0 ? 'text-emerald-500' : 'text-rose-500';
-      clearSkeleton('kpi-new-prospects', `+${newW}`);
-      const pctEl = document.getElementById('kpi-new-prospects-pct');
-      if (pctEl) { pctEl.textContent = pctLabel; pctEl.className = `text-xs font-normal ml-1 ${pctColor}`; }
-
-      // ── KPI Qualité : Sains / Souffrance ─────────────────────────
-      const total = credActifs.length || 1;
-      const sains = credActifs.filter(c => c.health && c.health.toLowerCase().includes('sain')).length;
-      const souffrance = credActifs.filter(c => c.health && (c.health.toLowerCase().includes('souffrance') || c.health.toLowerCase().includes('impay'))).length;
-      const sainsPct = Math.round((sains / total) * 100);
-      const souffrancePct = Math.round((souffrance / total) * 100);
-      document.getElementById('kpi-sains-pct').textContent = `${sainsPct}%`;
-      document.getElementById('kpi-souffrance-pct').textContent = `${souffrancePct}%`;
+      // Santé portefeuille
+      const total = actifs.length || 1;
+      const sains = actifs.filter(c => c.health && c.health.toLowerCase().includes('sain')).length;
+      const souf  = actifs.filter(c => c.health && (c.health.toLowerCase().includes('souffrance') || c.health.toLowerCase().includes('impay'))).length;
+      const sainsPct = Math.round(sains/total*100);
+      const soufPct  = Math.round(souf/total*100);
+      const retardPct = Math.min(Math.round(retards.length/total*100), 100);
+      set('k-sains-pct', sainsPct + '%');
+      set('k-souf-pct',  soufPct  + '%');
+      set('k-retard',    retards.length + ' paiement(s)');
+      set('k-new-pros',  '+' + newPros.length);
       setTimeout(() => {
-        document.getElementById('kpi-sains-bar').style.width = `${sainsPct}%`;
-        document.getElementById('kpi-souffrance-bar').style.width = `${souffrancePct}%`;
-      }, 100);
+        const b1 = $('k-sains-bar'); if (b1) b1.style.width = sainsPct + '%';
+        const b2 = $('k-souf-bar');  if (b2) b2.style.width = soufPct  + '%';
+        const b3 = $('k-retard-bar');if (b3) b3.style.width = retardPct + '%';
+      }, 80);
 
-      // ── KPI Retards ───────────────────────────────────────────────
-      document.getElementById('kpi-retard').textContent = (retards.data || []).length;
-
-      // ── Graphique mensuel ─────────────────────────────────────────
-      const rembMois = rembMensuels.data || [];
-      // Construire tableau des 6 derniers mois
-      const months = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        months.push({ year: d.getFullYear(), month: d.getMonth(), label: MOIS[d.getMonth()], total: 0 });
-      }
-      // Agréger les remboursements par mois
-      rembMois.forEach(r => {
-        const dateStr = r.actual_payment_date || r.scheduled_date;
-        if (!dateStr) return;
-        const d = new Date(dateStr);
-        const m = months.find(mo => mo.year === d.getFullYear() && mo.month === d.getMonth());
-        if (m) m.total += Number(r.amount || 0);
+      // Graphique 6 mois
+      const months = Array.from({length:6}, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
+        return { y: d.getFullYear(), m: d.getMonth(), lbl: MOIS[d.getMonth()], total: 0 };
       });
-      renderChart(months);
+      rembChart.forEach(r => {
+        if (!r.actual_payment_date) return;
+        const d = new Date(r.actual_payment_date);
+        const mo = months.find(x => x.y===d.getFullYear() && x.m===d.getMonth());
+        if (mo) mo.total += +r.amount;
+      });
+      const maxV = Math.max(...months.map(x=>x.total), 1);
+      const chartEl = $('chart-bars');
+      if (chartEl) {
+        chartEl.innerHTML = months.map(mo => {
+          const h   = Math.max(mo.total/maxV*100, 2).toFixed(1);
+          const cur = mo.m===now.getMonth() && mo.y===now.getFullYear();
+          const lbl = fmt(mo.total);
+          return `<div class="flex-1 flex flex-col items-center gap-1" title="${lbl} FCFA">
+            <div class="w-full flex flex-col justify-end rounded-t-lg ${cur?'bg-primary':'bg-primary/25 dark:bg-primary/20'} relative group" style="height:${h}%">
+              <div class="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary bg-white dark:bg-slate-800 px-1 rounded shadow whitespace-nowrap opacity-0 group-hover:opacity-100 transition">${lbl}</div>
+            </div>
+            <span class="text-[9px] font-bold ${cur?'text-primary':'text-slate-400'}">${mo.lbl}</span>
+          </div>`;
+        }).join('');
+      }
 
-      // ── Mise à jour timestamp ─────────────────────────────────────
-      const upd = document.getElementById('db-last-update');
-      if (upd) upd.textContent = `Données actualisées le ${new Date().toLocaleString('fr-FR')}`;
+      // Timestamp
+      const ts = $('db-ts');
+      if (ts) ts.textContent = 'Actualisé le ' + new Date().toLocaleString('fr-FR');
 
-    } catch (err) {
-      console.error('Dashboard error:', err);
-      showError('Impossible de charger les données : ' + (err.message || 'erreur inconnue'));
+    } catch(e) {
+      console.error('Dashboard:', e);
+      showErr('Erreur : ' + e.message);
+    } finally {
+      if (icon) icon.style.animation = '';
     }
   };
 
-  // ── Rendu graphique barres ────────────────────────────────────────────
-  function renderChart(months) {
-    const container = document.getElementById('chart-bars');
-    if (!container) return;
-    const maxVal = Math.max(...months.map(m => m.total), 1);
-    const currentMonth = now.getMonth();
-
-    if (months.every(m => m.total === 0)) {
-      container.innerHTML = '';
-      document.getElementById('chart-empty-msg').style.display = 'block';
-      return;
-    }
-
-    container.innerHTML = months.map((m, i) => {
-      const heightPct = Math.max((m.total / maxVal) * 100, 2);
-      const isCurrent = m.month === currentMonth && m.year === now.getFullYear();
-      const barColor = isCurrent ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20';
-      const labelColor = isCurrent ? 'text-primary font-bold' : 'text-slate-400';
-      const valM = m.total >= 1_000_000 ? `${(m.total / 1_000_000).toFixed(1)}M` :
-                   m.total >= 1_000 ? `${Math.round(m.total / 1_000)}k` :
-                   Math.round(m.total);
-      return `
-        <div class="flex-1 flex flex-col items-center gap-1.5">
-          <div class="w-full flex flex-col justify-end" style="height:100%">
-            <div class="relative group w-full ${barColor} rounded-t-lg bar-fill" style="height:${heightPct}%">
-              <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 px-1 rounded shadow">${valM}</div>
-            </div>
-          </div>
-          <span class="text-[10px] font-bold ${labelColor}">${m.label}</span>
-        </div>`;
-    }).join('');
-  }
-
-  // ── Auto-refresh toutes les 60 secondes ──────────────────────────────
+  // ── Lancement + auto-refresh 60s ────────────────────────────────────
   loadDashboard();
-  const refreshInterval = setInterval(loadDashboard, 60000);
+  const _refresh = setInterval(loadDashboard, 60000);
 
-  // ── Nettoyage quand le DOM change (navigation vers autre écran) ───────
-  const observer = new MutationObserver(() => {
+  // ── Nettoyage si on quitte cet écran ────────────────────────────────
+  const obs = new MutationObserver(() => {
     if (!document.getElementById('db-clock')) {
-      clearInterval(clockInterval);
-      clearInterval(refreshInterval);
-      observer.disconnect();
+      clearInterval(_clock);
+      clearInterval(_refresh);
+      obs.disconnect();
     }
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  obs.observe(document.getElementById('view-container') || document.body, { childList: true });
 
+  // CSS spin
+  if (!document.getElementById('db-spin-style')) {
+    const s = document.createElement('style');
+    s.id = 'db-spin-style';
+    s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
 })();
 </script>
 </body>
