@@ -1,389 +1,386 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-<meta charset="utf-8"/>
-<title>Dashboard</title>
-</head>
+<head><meta charset="utf-8"/></head>
 <body>
-<main class="flex-1 flex flex-col overflow-hidden">
+<main class="flex-1 flex flex-col overflow-hidden" style="background:#f8f7f5">
 
-  <!-- HEADER -->
-  <header class="flex-shrink-0 h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between">
+<!-- HEADER -->
+<header style="background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(242,127,13,0.12);backdrop-filter:blur(8px)" class="h-24 px-8 flex items-center justify-between sticky top-0 z-10 flex-shrink-0">
+  <div class="flex items-center gap-4">
     <div>
-      <h2 class="text-lg font-bold text-slate-900 dark:text-white">Vue d'ensemble</h2>
-      <p class="text-xs text-slate-500 dark:text-slate-400">Données en temps réel de votre portefeuille</p>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Vue d'ensemble</h2>
+      <p class="text-xs text-slate-500">Suivez l'activité de vos clients et prospects en temps réel.</p>
     </div>
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-xl">
-        <span class="material-symbols-outlined text-primary text-lg">schedule</span>
-        <span class="font-extrabold text-slate-900 dark:text-white text-base tracking-tight" id="db-clock">--:--</span>
-      </div>
-      <button onclick="loadDashboard()" title="Actualiser" class="size-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-primary/10 transition">
-        <span class="material-symbols-outlined text-lg" id="refresh-icon">refresh</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- SCROLL ZONE -->
-  <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 dark:bg-background-dark">
-
-    <!-- Erreur -->
-    <div id="db-error" class="hidden p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400 flex items-center gap-3">
-      <span class="material-symbols-outlined text-xl">error</span>
-      <span id="db-error-msg">Erreur</span>
-      <button onclick="loadDashboard()" class="ml-auto text-xs underline font-semibold">Réessayer</button>
-    </div>
-
-    <!-- LIGNE 1 : 4 KPIs -->
-    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
-
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <div class="size-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-            <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-xl">payments</span>
-          </div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Aujourd'hui</span>
-        </div>
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Remboursements</p>
-        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-remb-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
-        <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium" id="k-remb-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
-      </div>
-
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <div class="size-10 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
-            <span class="material-symbols-outlined text-orange-500 text-xl">event_busy</span>
-          </div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">Ce mois</span>
-        </div>
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Fins d'échéance</p>
-        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-ech-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
-        <p class="text-xs text-orange-500 font-medium" id="k-ech-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
-      </div>
-
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <div class="size-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-            <span class="material-symbols-outlined text-primary text-xl">account_balance_wallet</span>
-          </div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">Encours</span>
-        </div>
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Portefeuille</p>
-        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-enc-amt"><span class="db-skel inline-block w-20 h-5 rounded"></span></p>
-        <p class="text-xs text-primary font-medium" id="k-enc-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
-      </div>
-
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <div class="size-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
-            <span class="material-symbols-outlined text-violet-600 dark:text-violet-400 text-xl">groups</span>
-          </div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">Clients</span>
-        </div>
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Clients actifs</p>
-        <p class="text-xl font-black text-slate-900 dark:text-white leading-none mb-1" id="k-cli-cnt"><span class="db-skel inline-block w-10 h-5 rounded"></span></p>
-        <p class="text-xs text-violet-600 dark:text-violet-400 font-medium" id="k-pros-cnt"><span class="db-skel inline-block w-16 h-3 rounded"></span></p>
-      </div>
-    </div>
-
-    <!-- LIGNE 2 : Modules + Santé portefeuille -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-      <!-- Module Prospection -->
-      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer">
-        <div class="absolute -bottom-6 -right-6 opacity-10 group-hover:opacity-20 transition-opacity">
-          <span class="material-symbols-outlined" style="font-size:100px">hub</span>
-        </div>
-        <div class="relative z-10">
-          <div class="size-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-            <span class="material-symbols-outlined text-xl">share_reviews</span>
-          </div>
-          <h3 class="text-xl font-black mb-1">Prospection</h3>
-          <p class="text-indigo-200 text-xs mb-4">Convertissez vos prospects en clients</p>
-          <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-black" id="mod-pros">—</span>
-            <span class="text-indigo-300 text-sm">prospects</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Module Crédits -->
-      <div class="bg-gradient-to-br from-primary to-blue-700 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer">
-        <div class="absolute -bottom-6 -right-6 opacity-10 group-hover:opacity-20 transition-opacity">
-          <span class="material-symbols-outlined" style="font-size:100px">account_balance</span>
-        </div>
-        <div class="relative z-10">
-          <div class="size-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-            <span class="material-symbols-outlined text-xl">savings</span>
-          </div>
-          <h3 class="text-xl font-black mb-1">Crédits</h3>
-          <p class="text-blue-200 text-xs mb-4">Suivi complet des encours</p>
-          <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-black" id="mod-cred">—</span>
-            <span class="text-blue-200 text-sm">crédits actifs</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Santé portefeuille -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4">Santé du Portefeuille</h3>
-        <div class="space-y-4">
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Crédits sains</span>
-              <span class="text-sm font-black text-emerald-600 dark:text-emerald-400" id="k-sains-pct">—</span>
-            </div>
-            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div id="k-sains-bar" class="h-full bg-emerald-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">En souffrance</span>
-              <span class="text-sm font-black text-rose-600 dark:text-rose-400" id="k-souf-pct">—</span>
-            </div>
-            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div id="k-souf-bar" class="h-full bg-rose-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Échéances en retard</span>
-              <span class="text-sm font-black text-amber-600 dark:text-amber-400" id="k-retard">—</span>
-            </div>
-            <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div id="k-retard-bar" class="h-full bg-amber-500 rounded-full" style="width:0%;transition:width 1s ease"></div>
-            </div>
-          </div>
-          <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Nouveaux prospects / semaine</span>
-              <span class="text-sm font-black text-indigo-600 dark:text-indigo-400" id="k-new-pros">—</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- LIGNE 3 : Graphique remboursements -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-5">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Remboursements Encaissés — 6 derniers mois</h3>
-          <p class="text-xs text-slate-400 mt-0.5" id="chart-legend">en FCFA</p>
-        </div>
-      </div>
-      <div class="h-44 flex items-end gap-2" id="chart-bars">
-        <!-- Rempli par JS -->
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:60%"></div><span class="text-[10px] text-slate-300">···</span></div>
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:40%"></div><span class="text-[10px] text-slate-300">···</span></div>
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:75%"></div><span class="text-[10px] text-slate-300">···</span></div>
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:55%"></div><span class="text-[10px] text-slate-300">···</span></div>
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:80%"></div><span class="text-[10px] text-slate-300">···</span></div>
-        <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full db-skel rounded-t-lg" style="height:90%"></div><span class="text-[10px] text-slate-300">···</span></div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <p class="text-center text-xs text-slate-400 dark:text-slate-600 pb-2" id="db-ts">Chargement…</p>
   </div>
+  <div class="flex items-center gap-4">
+    <div class="flex flex-col items-center justify-center px-5 py-2 rounded-2xl border-2 min-w-[110px]" style="background:rgba(242,127,13,0.05);border-color:rgba(242,127,13,0.2)">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-xl" style="color:#f27f0d">schedule</span>
+        <span class="text-2xl font-extrabold tracking-tight leading-none text-slate-900 dark:text-white" id="db-clock">--:--</span>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:rgba(242,127,13,0.7)">Heure Locale</span>
+    </div>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+      <input class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm w-64 focus:outline-none focus:ring-2" style="--tw-ring-color:rgba(242,127,13,0.4)" placeholder="Rechercher..." type="text"/>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 relative hover:bg-slate-200 transition-colors">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="db-notif" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full border-2 border-white hidden" style="background:#f27f0d"></span>
+      </button>
+      <button onclick="loadDashboard()" class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Actualiser">
+        <span class="material-symbols-outlined" id="db-refresh-icon">refresh</span>
+      </button>
+      <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm cursor-pointer transition-colors" style="background:rgba(242,127,13,0.1);color:#f27f0d">
+        <span class="material-symbols-outlined text-lg">calendar_today</span>
+        <span>Ce mois</span>
+        <span class="material-symbols-outlined text-lg">expand_more</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- CONTENU -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 dark:bg-slate-900">
+
+  <!-- Erreur -->
+  <div id="db-error" class="hidden p-4 rounded-xl text-sm flex items-center gap-3" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c">
+    <span class="material-symbols-outlined">error</span>
+    <span id="db-error-msg">Erreur de chargement</span>
+    <button onclick="loadDashboard()" class="ml-auto text-xs underline font-semibold">Réessayer</button>
+  </div>
+
+  <!-- ROW 1 : 2 grandes KPI cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Remboursements du Jour -->
+    <div class="relative group overflow-hidden bg-white dark:bg-white/5 p-6 rounded-2xl shadow-xl border" style="border-color:#d1fae5">
+      <div class="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 blur-3xl transition-all" style="background:rgba(16,185,129,0.1)"></div>
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 rounded-xl" style="background:#d1fae5;color:#059669">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <span class="text-xs font-bold px-2 py-1 rounded" style="color:#059669;background:#d1fae5">AUJOURD'HUI</span>
+      </div>
+      <h3 class="text-lg font-bold mb-1 text-slate-900 dark:text-white">Remboursements du Jour</h3>
+      <div class="flex items-baseline gap-2 mb-4">
+        <span id="stat-repayments-day-control-val" class="text-3xl font-black text-slate-900 dark:text-white leading-none">
+          <span class="db-skel inline-block w-28 h-8 rounded"></span>
+        </span>
+        <span class="text-sm font-bold text-slate-500 uppercase">FCFA</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium flex items-center gap-1" style="color:#059669">
+          <span class="material-symbols-outlined text-sm">info</span>
+          <span id="stat-repayments-day-control-count" class="db-skel inline-block w-8 h-3 rounded"></span>
+          <span id="db-remb-label"> à percevoir</span>
+        </p>
+        <button class="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg" style="background:#059669">
+          Voir les remboursements
+        </button>
+      </div>
+    </div>
+
+    <!-- Fins d'Échéance du Mois -->
+    <div class="relative group overflow-hidden bg-white dark:bg-white/5 p-6 rounded-2xl shadow-xl border" style="border-color:#fed7aa">
+      <div class="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 blur-3xl transition-all" style="background:rgba(242,127,13,0.1)"></div>
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 rounded-xl" style="background:rgba(242,127,13,0.1);color:#f27f0d">
+          <span class="material-symbols-outlined">event_busy</span>
+        </div>
+        <span class="text-xs font-bold px-2 py-1 rounded" style="color:#f27f0d;background:rgba(242,127,13,0.1)">ÉCHÉANCES</span>
+      </div>
+      <h3 class="text-lg font-bold mb-1 text-slate-900 dark:text-white">Fins d'Échéance du Mois</h3>
+      <div class="flex items-baseline gap-2 mb-4">
+        <span id="stat-endterm-month-control-val" class="text-3xl font-black text-slate-900 dark:text-white leading-none">
+          <span class="db-skel inline-block w-28 h-8 rounded"></span>
+        </span>
+        <span class="text-sm font-bold text-slate-500 uppercase">FCFA</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium flex items-center gap-1" style="color:#f27f0d">
+          <span class="material-symbols-outlined text-sm">warning</span>
+          <span id="stat-endterm-month-control-count" class="db-skel inline-block w-8 h-3 rounded"></span>
+          <span id="db-ech-label"> crédits à terme</span>
+        </p>
+        <a class="text-sm font-bold hover:underline flex items-center gap-1 cursor-pointer" style="color:#f27f0d">
+          Voir les échéances <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2 : 2 modules cards -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="p-8 rounded-3xl text-white shadow-2xl relative group cursor-pointer overflow-hidden" style="background:linear-gradient(135deg,#4f46e5,#3730a3)">
+      <div class="absolute -bottom-10 -right-10 opacity-10 group-hover:opacity-20 transition-opacity">
+        <span class="material-symbols-outlined" style="font-size:180px">hub</span>
+      </div>
+      <div class="relative z-10 flex flex-col h-full justify-between gap-12">
+        <div>
+          <span class="inline-block p-4 rounded-2xl mb-6" style="background:rgba(255,255,255,0.2);backdrop-filter:blur(8px)">
+            <span class="material-symbols-outlined text-3xl">share_reviews</span>
+          </span>
+          <h3 class="text-3xl font-black mb-2 leading-tight">Module<br/>Prospection</h3>
+          <p style="color:rgba(199,210,254,0.8)" class="max-w-xs">Gérez votre réseau et convertissez vos prospects en clients performants.</p>
+        </div>
+        <div class="flex items-center gap-2 font-bold group-hover:gap-4 transition-all">
+          Accéder au module <span class="material-symbols-outlined">arrow_forward</span>
+        </div>
+      </div>
+    </div>
+    <div class="p-8 rounded-3xl text-white shadow-2xl relative group cursor-pointer overflow-hidden" style="background:linear-gradient(135deg,#f27f0d,#f9a03f)">
+      <div class="absolute -bottom-10 -right-10 opacity-10 group-hover:opacity-20 transition-opacity">
+        <span class="material-symbols-outlined" style="font-size:180px">account_balance</span>
+      </div>
+      <div class="relative z-10 flex flex-col h-full justify-between gap-12">
+        <div>
+          <span class="inline-block p-4 rounded-2xl mb-6" style="background:rgba(255,255,255,0.2);backdrop-filter:blur(8px)">
+            <span class="material-symbols-outlined text-3xl">savings</span>
+          </span>
+          <h3 class="text-3xl font-black mb-2 leading-tight">Module Crédits<br/>(Portefeuille)</h3>
+          <p style="color:rgba(255,255,255,0.8)" class="max-w-xs">Suivi complet des encours, remboursements et performance globale.</p>
+        </div>
+        <div class="flex items-center gap-2 font-bold group-hover:gap-4 transition-all">
+          Accéder au module <span class="material-symbols-outlined">arrow_forward</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3 : Graphique + Stats qualité -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-8">
+
+    <!-- Graphique -->
+    <div class="xl:col-span-2 bg-white dark:bg-white/5 p-8 rounded-2xl shadow-xl border" style="border-color:rgba(242,127,13,0.05)">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Progression des Crédits en Cours</h3>
+          <p class="text-xs text-slate-500">Évolution des 6 derniers mois (encaissements FCFA)</p>
+        </div>
+        <span class="text-xs font-bold px-2 py-1 rounded" style="background:rgba(242,127,13,0.1);color:#f27f0d">MENSUEL</span>
+      </div>
+      <div class="h-64 flex items-end justify-between gap-4 px-4 pb-4" style="border-bottom:1px solid #f1f5f9" id="db-chart">
+        <!-- Skeletons -->
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:40%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:55%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:70%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:65%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:85%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+        <div class="flex-1 flex flex-col items-center gap-2"><div class="w-full db-skel rounded-t-lg" style="height:95%"></div><span class="text-xs font-bold text-slate-300">···</span></div>
+      </div>
+    </div>
+
+    <!-- Stats qualité -->
+    <div class="space-y-4">
+
+      <!-- Nouveaux prospects semaine -->
+      <div class="bg-white dark:bg-white/5 p-5 rounded-2xl shadow-lg border flex items-center gap-4" style="border-color:rgba(242,127,13,0.05)">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#e0e7ff;color:#4f46e5">
+          <span class="material-symbols-outlined">person_add</span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Nouveaux Prospects (Semaine)</p>
+          <p id="stat-new-prospects-week" class="text-xl font-black text-slate-900 dark:text-white">
+            <span class="db-skel inline-block w-12 h-6 rounded"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Crédits sains -->
+      <div class="bg-white dark:bg-white/5 p-5 rounded-2xl shadow-lg border flex items-center gap-4" style="border-color:rgba(16,185,129,0.1)">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#d1fae5;color:#059669">
+          <span class="material-symbols-outlined">verified</span>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Crédits Performants (Sains)</p>
+          <div class="flex items-center gap-2 mt-1">
+            <p id="stat-health-sain-pct" class="text-xl font-black text-slate-900 dark:text-white">
+              <span class="db-skel inline-block w-10 h-6 rounded"></span>
+            </p>
+            <div class="flex-1 h-2 rounded-full overflow-hidden" style="background:#f1f5f9">
+              <div id="stat-health-sain-bar" class="h-full rounded-full" style="width:0%;background:#10b981;transition:width 0.8s ease"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crédits souffrance -->
+      <div class="bg-white dark:bg-white/5 p-5 rounded-2xl shadow-lg border flex items-center gap-4" style="border-color:rgba(239,68,68,0.1)">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#fee2e2;color:#dc2626">
+          <span class="material-symbols-outlined">trending_down</span>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Crédits en Souffrance</p>
+          <div class="flex items-center gap-2 mt-1">
+            <p id="stat-health-souffrance-pct" class="text-xl font-black text-slate-900 dark:text-white">
+              <span class="db-skel inline-block w-10 h-6 rounded"></span>
+            </p>
+            <div class="flex-1 h-2 rounded-full overflow-hidden" style="background:#f1f5f9">
+              <div id="stat-health-souffrance-bar" class="h-full rounded-full" style="width:0%;background:#ef4444;transition:width 0.8s ease"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 pb-4" id="db-ts">Chargement des données…</p>
+</div>
 </main>
 
 <style>
-.db-skel {
-  background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
-  background-size: 200% 100%;
-  animation: dbshim 1.4s infinite;
-}
-.dark .db-skel {
-  background: linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.12) 50%,rgba(255,255,255,0.06) 75%);
-  background-size: 200% 100%;
-  animation: dbshim 1.4s infinite;
-}
-@keyframes dbshim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.db-skel{background:linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);background-size:200% 100%;animation:dbshim 1.4s infinite}
+@keyframes dbshim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes db-spin{to{transform:rotate(360deg)}}
 </style>
 
 <script>
-(function dashboardInit() {
-  // ── Config Supabase REST API ─────────────────────────────────────────
-  const URL  = 'https://lkuwgggwdtbzjgplwylr.supabase.co/rest/v1';
-  const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
-  const HDR  = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
-  const MOIS = ['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
+(function(){
+  // ── API REST Supabase (aucune dépendance externe) ────────────────────
+  const API = 'https://lkuwgggwdtbzjgplwylr.supabase.co/rest/v1';
+  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo';
+  const H   = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Prefer':'count=exact'};
+  const MOIS= ['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
 
-  // ── Requête REST générique ───────────────────────────────────────────
-  async function q(table, params) {
-    const r = await fetch(`${URL}/${table}?${params}`, { headers: HDR });
+  async function q(table, params, needCount) {
+    const headers = needCount ? {...H} : {'apikey':KEY,'Authorization':'Bearer '+KEY};
+    const r = await fetch(`${API}/${table}?${params}`, {headers});
     if (!r.ok) throw new Error(`${table}: ${r.status}`);
-    return r.json();
+    const data = await r.json();
+    const count = needCount ? parseInt(r.headers.get('Content-Range')?.split('/')[1] || data.length) : data.length;
+    return {data, count};
   }
 
-  // ── Utilitaires ──────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
-  function fmt(n) {
-    if (!n || isNaN(n)) return '0';
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.', ',') + ' M';
-    if (n >= 1_000)     return Math.round(n / 1_000) + ' k';
-    return Math.round(n).toLocaleString('fr-FR');
-  }
-  function fmtFull(n) {
-    return Math.round(n || 0).toLocaleString('fr-FR');
-  }
-  function set(id, val) {
+  const fmtN = n => Math.round(n||0).toLocaleString('fr-FR');
+
+  function setText(id, val) {
     const el = $(id); if (!el) return;
-    el.querySelectorAll('.db-skel').forEach(s => s.replaceWith(document.createTextNode('')));
-    el.textContent = val;
-  }
-  function showErr(msg) {
-    const el = $('db-error'); if (!el) return;
-    el.classList.remove('hidden'); el.classList.add('flex');
-    $('db-error-msg').textContent = msg;
+    el.querySelectorAll('.db-skel').forEach(s => s.remove());
+    el.childNodes.forEach(n => { if (n.nodeType === 3) n.remove(); });
+    el.insertAdjacentText('afterbegin', val);
   }
 
   // ── Horloge ──────────────────────────────────────────────────────────
   const clockEl = $('db-clock');
   function tick() { if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
   tick();
-  const _clock = setInterval(tick, 1000);
+  const _c = setInterval(tick, 1000);
 
-  // ── Dates utiles ─────────────────────────────────────────────────────
-  const now    = new Date();
-  const today  = now.toISOString().split('T')[0];
-  const m1     = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const m2     = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
-  const w1     = new Date(now - 7*86400000).toISOString().split('T')[0];
-  const chart6 = new Date(now.getFullYear(), now.getMonth()-5, 1).toISOString().split('T')[0];
+  // ── Dates ─────────────────────────────────────────────────────────────
+  const now   = new Date();
+  const today = now.toISOString().split('T')[0];
+  const m1    = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const m2    = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+  const w1    = new Date(now - 7*86400000).toISOString().split('T')[0];
+  const c6    = new Date(now.getFullYear(), now.getMonth()-5, 1).toISOString().split('T')[0];
 
-  // ── Chargement principal ─────────────────────────────────────────────
+  // ── Dashboard ─────────────────────────────────────────────────────────
   window.loadDashboard = async function() {
-    const icon = $('refresh-icon');
-    if (icon) icon.style.animation = 'spin 0.8s linear infinite';
-    $('db-error')?.classList.add('hidden');
+    const icon = $('db-refresh-icon');
+    if (icon) icon.style.animation = 'db-spin 0.8s linear infinite';
+    const errEl = $('db-error');
+    if (errEl) { errEl.classList.add('hidden'); errEl.classList.remove('flex'); }
 
     try {
-      const [remb, ech, credits, clients, prospects, newPros, rembChart, retards] = await Promise.all([
-        // Remboursements aujourd'hui
-        q('repayments', `scheduled_date=eq.${today}&select=amount,is_paid`),
-        // Fins d'échéance ce mois
-        q('credits', `end_date=gte.${m1}&end_date=lte.${m2}&status=neq.solde&select=amount,id`),
-        // Tous crédits
-        q('credits', 'select=id,amount,health,status'),
-        // Clients actifs
-        q('clients', 'select=id,is_active,total_portefeuille'),
-        // Total prospects
-        q('prospects', 'select=id'),
-        // Prospects cette semaine
-        q('prospects', `created_at=gte.${w1}&select=id`),
-        // Remboursements encaissés 6 mois
-        q('repayments', `is_paid=eq.true&actual_payment_date=gte.${chart6}&select=amount,actual_payment_date`),
-        // Retards
-        q('repayments', `is_paid=eq.false&scheduled_date=lt.${today}&select=id`)
+      const [payDay, endTerm, credits, newProsW, rembChart] = await Promise.all([
+        // 1. Remboursements encaissés aujourd'hui
+        q('repayments', `actual_payment_date=eq.${today}&is_paid=eq.true&select=amount`),
+        // 2. Crédits se terminant ce mois
+        q('credits', `end_date=gte.${m1}&end_date=lte.${m2}&select=amount`),
+        // 3. Crédits actifs (type + health)
+        q('credits', `status=ilike.En cours*&select=amount,type,health`),
+        // 4. Nouveaux prospects semaine
+        q('prospects', `created_at=gte.${w1}&select=id`, true),
+        // 5. Remboursements 6 mois pour graphique
+        q('repayments', `is_paid=eq.true&actual_payment_date=gte.${c6}&select=amount,actual_payment_date`)
       ]);
 
-      // KPI 1 — Remboursements jour
-      const pendingToday = remb.filter(r => !r.is_paid);
-      const totalRemb = pendingToday.reduce((s, r) => s + +r.amount, 0);
-      set('k-remb-amt', fmtFull(totalRemb) + ' FCFA');
-      set('k-remb-cnt', pendingToday.length + ' à percevoir');
+      // ── KPI 1 : Remboursements du jour ────────────────────────────
+      const totalCollected = payDay.data.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+      const countCollected = payDay.data.length;
+      setText('stat-repayments-day-control-val', fmtN(totalCollected));
+      setText('stat-repayments-day-control-count', countCollected);
+      const rLabel = $('db-remb-label'); if (rLabel) rLabel.textContent = ' encaissé(s)';
+      if (countCollected > 0) { const d = $('db-notif'); if (d) d.classList.remove('hidden'); }
 
-      // KPI 2 — Échéances mois
-      const totalEch = ech.reduce((s, c) => s + +c.amount, 0);
-      set('k-ech-amt', fmtFull(totalEch) + ' FCFA');
-      set('k-ech-cnt', ech.length + ' crédit(s) à terme');
+      // ── KPI 2 : Fins d'échéance du mois ──────────────────────────
+      const totalEch = endTerm.data.reduce((s,c) => s + parseFloat(c.amount||0), 0);
+      const countEch = endTerm.data.length;
+      setText('stat-endterm-month-control-val', fmtN(totalEch));
+      setText('stat-endterm-month-control-count', countEch);
 
-      // KPI 3 — Encours
-      const actifs = credits.filter(c => c.status !== 'solde');
-      const encours = actifs.reduce((s, c) => s + +c.amount, 0);
-      set('k-enc-amt', fmtFull(encours) + ' FCFA');
-      set('k-enc-cnt', actifs.length + ' crédit(s) actif(s)');
+      // ── Qualité portefeuille ──────────────────────────────────────
+      const creds = credits.data;
+      const total = creds.length || 1;
+      const sains = creds.filter(c => (c.health||'').toUpperCase() === 'SAIN').length;
+      const souf  = creds.filter(c => (c.health||'').toUpperCase() === 'SOUFFRANCE').length;
+      const sainPct = Math.round(sains/total*100);
+      const soufPct = Math.round(souf/total*100);
 
-      // KPI 4 — Clients
-      const cliActifs = clients.filter(c => c.is_active);
-      set('k-cli-cnt', cliActifs.length + ' client(s)');
-      set('k-pros-cnt', '+ ' + prospects.length + ' prospect(s)');
-
-      // Modules
-      const modPros = $('mod-pros'); if (modPros) modPros.textContent = prospects.length;
-      const modCred = $('mod-cred'); if (modCred) modCred.textContent = actifs.length;
-
-      // Santé portefeuille
-      const total = actifs.length || 1;
-      const sains = actifs.filter(c => c.health && c.health.toLowerCase().includes('sain')).length;
-      const souf  = actifs.filter(c => c.health && (c.health.toLowerCase().includes('souffrance') || c.health.toLowerCase().includes('impay'))).length;
-      const sainsPct = Math.round(sains/total*100);
-      const soufPct  = Math.round(souf/total*100);
-      const retardPct = Math.min(Math.round(retards.length/total*100), 100);
-      set('k-sains-pct', sainsPct + '%');
-      set('k-souf-pct',  soufPct  + '%');
-      set('k-retard',    retards.length + ' paiement(s)');
-      set('k-new-pros',  '+' + newPros.length);
+      setText('stat-health-sain-pct',        sainPct + '%');
+      setText('stat-health-souffrance-pct',  soufPct + '%');
       setTimeout(() => {
-        const b1 = $('k-sains-bar'); if (b1) b1.style.width = sainsPct + '%';
-        const b2 = $('k-souf-bar');  if (b2) b2.style.width = soufPct  + '%';
-        const b3 = $('k-retard-bar');if (b3) b3.style.width = retardPct + '%';
-      }, 80);
+        const b1 = $('stat-health-sain-bar');       if (b1) b1.style.width = sainPct + '%';
+        const b2 = $('stat-health-souffrance-bar'); if (b2) b2.style.width = soufPct + '%';
+      }, 100);
 
-      // Graphique 6 mois
-      const months = Array.from({length:6}, (_, i) => {
+      // ── Nouveaux prospects semaine ────────────────────────────────
+      setText('stat-new-prospects-week', '+' + newProsW.count);
+
+      // ── Graphique 6 mois ──────────────────────────────────────────
+      const months = Array.from({length:6}, (_,i) => {
         const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
-        return { y: d.getFullYear(), m: d.getMonth(), lbl: MOIS[d.getMonth()], total: 0 };
+        return {y:d.getFullYear(), m:d.getMonth(), lbl:MOIS[d.getMonth()], total:0};
       });
-      rembChart.forEach(r => {
+      rembChart.data.forEach(r => {
         if (!r.actual_payment_date) return;
         const d = new Date(r.actual_payment_date);
         const mo = months.find(x => x.y===d.getFullYear() && x.m===d.getMonth());
-        if (mo) mo.total += +r.amount;
+        if (mo) mo.total += parseFloat(r.amount||0);
       });
       const maxV = Math.max(...months.map(x=>x.total), 1);
-      const chartEl = $('chart-bars');
-      if (chartEl) {
-        chartEl.innerHTML = months.map(mo => {
-          const h   = Math.max(mo.total/maxV*100, 2).toFixed(1);
-          const cur = mo.m===now.getMonth() && mo.y===now.getFullYear();
-          const lbl = fmt(mo.total);
-          return `<div class="flex-1 flex flex-col items-center gap-1" title="${lbl} FCFA">
-            <div class="w-full flex flex-col justify-end rounded-t-lg ${cur?'bg-primary':'bg-primary/25 dark:bg-primary/20'} relative group" style="height:${h}%">
-              <div class="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary bg-white dark:bg-slate-800 px-1 rounded shadow whitespace-nowrap opacity-0 group-hover:opacity-100 transition">${lbl}</div>
+      const chart = $('db-chart');
+      if (chart) {
+        chart.innerHTML = months.map(mo => {
+          const h   = Math.max((mo.total/maxV)*100, 2).toFixed(1);
+          const cur = mo.m === now.getMonth() && mo.y === now.getFullYear();
+          const lbl = mo.total >= 1e6 ? (mo.total/1e6).toFixed(1)+'M' : mo.total >= 1e3 ? Math.round(mo.total/1e3)+'k' : Math.round(mo.total);
+          const bg  = cur ? '#f27f0d' : 'rgba(242,127,13,0.2)';
+          const col = cur ? '#f27f0d' : '#94a3b8';
+          return `<div class="flex-1 flex flex-col items-center gap-2">
+            <div class="w-full rounded-t-lg relative group" style="height:${h}%;background:${bg}">
+              <div class="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 rounded shadow bg-white dark:bg-slate-800" style="color:#f27f0d">${lbl}</div>
             </div>
-            <span class="text-[9px] font-bold ${cur?'text-primary':'text-slate-400'}">${mo.lbl}</span>
+            <span class="text-xs font-bold" style="color:${col}">${mo.lbl}</span>
           </div>`;
         }).join('');
       }
 
-      // Timestamp
+      // ── Timestamp ────────────────────────────────────────────────
       const ts = $('db-ts');
-      if (ts) ts.textContent = 'Actualisé le ' + new Date().toLocaleString('fr-FR');
+      if (ts) ts.textContent = 'Données actualisées le ' + new Date().toLocaleString('fr-FR');
 
     } catch(e) {
       console.error('Dashboard:', e);
-      showErr('Erreur : ' + e.message);
+      const errEl = $('db-error');
+      if (errEl) { errEl.classList.remove('hidden'); errEl.classList.add('flex'); $('db-error-msg').textContent = 'Erreur : ' + e.message; }
     } finally {
       if (icon) icon.style.animation = '';
     }
   };
 
-  // ── Lancement + auto-refresh 60s ────────────────────────────────────
   loadDashboard();
-  const _refresh = setInterval(loadDashboard, 60000);
+  const _r = setInterval(loadDashboard, 60000);
 
-  // ── Nettoyage si on quitte cet écran ────────────────────────────────
+  // Nettoyage si on quitte l'écran
   const obs = new MutationObserver(() => {
-    if (!document.getElementById('db-clock')) {
-      clearInterval(_clock);
-      clearInterval(_refresh);
-      obs.disconnect();
-    }
+    if (!document.getElementById('db-clock')) { clearInterval(_c); clearInterval(_r); obs.disconnect(); }
   });
-  obs.observe(document.getElementById('view-container') || document.body, { childList: true });
-
-  // CSS spin
-  if (!document.getElementById('db-spin-style')) {
-    const s = document.createElement('style');
-    s.id = 'db-spin-style';
-    s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
-    document.head.appendChild(s);
-  }
+  const vc = document.getElementById('view-container') || document.body;
+  obs.observe(vc, {childList:true});
 })();
 </script>
 </body>
