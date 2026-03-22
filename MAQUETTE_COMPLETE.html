@@ -3371,7 +3371,7 @@ Reporter
                         <select id="progress-period-select" onchange="handlePeriodChange(this.value)" class="appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none cursor-pointer min-w-[180px] shadow-sm">
                             <option value="day">Aujourd'hui</option>
                             <option value="week">Cette Semaine</option>
-                            <option value="month">Ce Mois</option>
+                            <option value="month" selected>Ce Mois</option>
                             <option value="custom">Période Personnalisée</option>
                         </select>
                         <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
@@ -5604,70 +5604,10 @@ Suivant
         }
 
         async function fetchSettledCredits(search = '') {
-            const tbody = document.getElementById('credits-settled-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Chargement...</td></tr>';
-
-            let query = _supabase
-                .from('credits')
-                .select('*, clients(*)')
-                .eq('status', 'Soldé')
-                .order('end_date', { ascending: false });
-
-            if (search) {
-                query = query.or(`client_name.ilike.%${search}%,phone.ilike.%${search}%`);
-            }
-
-            const { data, error } = await query;
-
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">${error.message}</td></tr>`;
-                return;
-            }
-
-            if (document.getElementById('credits-settled-total')) {
-                document.getElementById('credits-settled-total').textContent = `${data.length} Dossiers`;
-            }
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 italic">Aucun dossier soldé trouvé.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(c => `
-                <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold uppercase">${(c.clients?.full_name || c.client_name || 'U')[0]}</div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-slate-900">${c.clients?.full_name || c.client_name || 'Client Inconnu'}</span>
-                                <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-medium text-slate-700">${new Date(c.end_date).toLocaleDateString()}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5 text-right">
-                        <span class="text-sm font-bold text-slate-900">${parseInt(c.amount).toLocaleString()} FCFA</span>
-                    </td>
-                    <td class="px-6 py-5">
-                        <div class="flex justify-center">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-500 border border-emerald-200">Soldé</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5 text-right">
-                        <div class="flex justify-end gap-2">
-                            <button onclick="handleCall('${c.clients.id}')" class="size-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><span class="material-symbols-outlined text-sm">call</span></button>
-                            <button onclick="handleWhatsapp('${c.id}')" class="size-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all"><span class="material-symbols-outlined text-sm">chat</span></button>
-                            <button onclick="handleSms('${c.id}')" class="size-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"><span class="material-symbols-outlined text-sm">sms</span></button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            // Délégue à la version complète définie plus bas
+            settledSearch = search || settledSearch;
+            const fullFn = window._fetchSettledCreditsFull;
+            if (fullFn) return fullFn();
         }
 
         function handleSearchSettled(val) { settledSearch = val; fetchSettledCredits(val); }
@@ -6326,7 +6266,7 @@ Suivant
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400">Chargement...</td></tr>';
 
-            const period = document.getElementById('progress-period-select')?.value || 'day';
+            const period = document.getElementById('progress-period-select')?.value || 'month';
             let startDate, endDate;
 
             const now = new Date();
@@ -6966,22 +6906,20 @@ Suivant
                     amount,
                     end_date,
                     status,
+                    client_name,
+                    phone,
                     clients (
                         full_name,
                         phone1
                     )
                 `, { count: 'exact' })
-                .eq('status', 'Soldé');
+                .or('status.eq.Soldé,status.eq.SOLDÉ,status.eq.soldé');
 
             if (startDate) {
                 query = query.gte('end_date', startDate);
             }
 
-            if (settledSearch) {
-                query = query.ilike('clients.full_name', `%${settledSearch}%`);
-            }
-
-            const { data, error, count } = await query
+            const { data: rawData, error, count } = await query
                 .order('end_date', { ascending: false });
 
             if (error) {
@@ -6989,7 +6927,17 @@ Suivant
                 return;
             }
 
-            if (totalEl) totalEl.textContent = `${count || 0} Dossiers`;
+            // Filtre local si recherche (couvre crédits importés sans FK)
+            let data = (rawData || []);
+            if (settledSearch) {
+                const q = settledSearch.toLowerCase();
+                data = data.filter(c => {
+                    const name = (c.clients?.full_name || c.client_name || '').toLowerCase();
+                    return name.includes(q);
+                });
+            }
+
+            if (totalEl) totalEl.textContent = `${count || data.length} Dossiers`;
 
             if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400">Aucun crédit soldé trouvé pour cette période.</td></tr>';
