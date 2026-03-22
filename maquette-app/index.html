@@ -889,7 +889,9 @@ async function loadCredits(){
   try{
     let q=sb.from('credits')
       .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
-      .order('created_at',{ascending:false});
+      .order('status', { ascending: true })
+      .order('health', { ascending: false })
+      .order('created_at', { ascending: false });
     if(credFilter==='solde'){
       q=q.in('status',['Soldé','SOLDÉ','soldé']);
     } else {
@@ -937,8 +939,8 @@ function credRow(c,reps){
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px">${c.health||'Sain'}</span>
-          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px">${c.status||'EN COURS'}</span>
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;cursor:pointer" onclick="toggleCreditHealth('${c.id}','${c.health||'Sain'}')" title="Changer santé">${c.health||'Sain'}</span>
+          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px;cursor:pointer" onclick="toggleCreditStatus('${c.id}','${c.status||'En cours'}')" title="Changer statut">${c.status||'EN COURS'}</span>
         </div>
         <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(c.amount)} FCFA · ${c.type||'—'}</p>
         <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
@@ -1986,6 +1988,26 @@ async function setCreditStatus(creditId, status, health){
   loadCredits();
 }
 
+async function toggleCreditHealth(id, current){
+  const next = (current||'Sain').toLowerCase() === 'souffrance' ? 'Sain' : 'Souffrance';
+  const{error}=await sb.from('credits').update({health:next}).eq('id',id);
+  if(error)toast('Erreur','err');
+  else{toast(`Santé → ${next}`,'ok');loadCredits();}
+}
+
+async function toggleCreditStatus(id, current){
+  const isS = (current||'En cours').toLowerCase() === 'soldé';
+  const next = isS ? 'En cours' : 'Soldé';
+  
+  if(next === 'Soldé'){
+     await setCreditStatus(id, 'Soldé', _credCache[id]?.health || 'Sain');
+  } else {
+     const{error}=await sb.from('credits').update({status:next, end_date:null}).eq('id',id);
+     if(error)toast('Erreur','err');
+     else{toast(`Statut → ${next}`,'ok');loadCredits();}
+  }
+}
+
 // ═══════════════════════════════════════════════
 //  REPORTER UNE ÉCHÉANCE
 // ═══════════════════════════════════════════════
@@ -2097,9 +2119,14 @@ async function viewModels(){
                     <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:${m.active?'#4ade80':'var(--text3)'}">${m.active?'ACTIF':'inactif'}</span>
                   </div>
                 </div>
-                <button onclick="previewModel('${m.id}')" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
-                  <span class="material-symbols-outlined" style="font-size:14px">visibility</span> Voir le message complet
-                </button>
+                <div style="display:flex;gap:6px;margin-top:10px">
+                  <button onclick="previewModel('${m.id}')" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span class="material-symbols-outlined" style="font-size:14px">visibility</span> Aperçu
+                  </button>
+                  <button onclick="editModel('${m.id}')" style="flex:1;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:6px 10px;color:#818cf8;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span class="material-symbols-outlined" style="font-size:14px">edit</span> Modifier
+                  </button>
+                </div>
               </div>`;
             }).join('')}
           </div>
@@ -2114,11 +2141,12 @@ async function viewModels(){
           <span class="material-symbols-outlined filled" style="color:#25d366;font-size:22px;flex-shrink:0">info</span>
           <div>
             <p style="font-size:12px;font-weight:700;margin:0 0 2px;color:var(--text)">Modèles actifs WhatsApp : ${activeWa.length}</p>
-            <p style="font-size:11px;color:var(--text2);margin:0">Le modèle actif est utilisé lors des envois WhatsApp. Activez/désactivez ici, modifiez sur le PC.</p>
+            <p style="font-size:11px;color:var(--text2);margin:0">Le modèle actif est utilisé lors des envois WhatsApp. Activez/désactivez et modifiez directement ici.</p>
           </div>
         </div>
         ${html||`<div class="empty"><span class="material-symbols-outlined">text_snippet</span><p>Aucun modèle</p></div>`}
       </div>`;
+    showFab(()=>editModel(null));
   }catch(e){
     document.getElementById('view').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
   }
@@ -2162,8 +2190,100 @@ async function previewModel(id){
         <p style="font-size:10px;color:#f27f0d;font-weight:700;margin:0 0 4px;text-transform:uppercase;letter-spacing:.08em">Balises disponibles</p>
         <p style="font-size:10px;color:var(--text2);margin:0;line-height:1.7">{{Nom}} · {{Nom du Client}} · {{Nom du Prospect}} · {{Capital}} · {{Montant}} · {{Montant à Payer}} · {{Date}} · {{Date d'Échéance}} · {{Activité}} · {{Id_Dossier}}</p>
       </div>
-      <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:14px">Fermer</button>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-ghost" onclick="closeModal()" style="flex:1">Fermer</button>
+        <button class="m-btn btn-p" onclick="closeModal();editModel('${data.id}')" style="flex:1">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span> Modifier
+        </button>
+      </div>
     </div>`);
+}
+
+// ─── EDIT MODEL ───────────────────────────────
+const BALISES=[
+  "{{Nom}}","{{Nom du Client}}","{{Nom du Prospect}}","{{Capital}}",
+  "{{Montant}}","{{Montant à Payer}}","{{Date}}","{{Date d'Échéance}}",
+  "{{Activité}}","{{Id_Dossier}}"
+];
+
+function insertBalise(taId,b){
+  const ta=document.getElementById(taId);
+  if(!ta)return;
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  ta.value=ta.value.substring(0,s)+b+ta.value.substring(e);
+  ta.selectionStart=ta.selectionEnd=s+b.length;
+  ta.focus();
+}
+
+async function editModel(id){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  const isNew=!id;
+  let d={title:'',type:'WhatsApp',category:'Crédit',body:'',active:false};
+  if(!isNew){
+    const{data,error}=await sb.from('communication_models').select('*').eq('id',id).single();
+    if(error||!data){toast('Erreur chargement','err');return;}
+    d=data;
+  }
+  const cats=['Crédit','Prospection','Échéance','Suivi'];
+  document.getElementById('modal-content').innerHTML=`
+    <div style="padding:0 20px 24px">
+      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">${isNew?'Nouveau modèle':'Modifier le modèle'}</p>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Titre</label>
+      <input id="m-title" class="m-input" type="text" value="${(d.title||'').replace(/"/g,'&quot;')}" placeholder="Nom du modèle" style="margin-top:6px;margin-bottom:14px"/>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Type</label>
+          <select id="m-type" class="m-input" style="margin-top:6px">
+            <option value="WhatsApp" ${d.type==='WhatsApp'?'selected':''}>WhatsApp</option>
+            <option value="SMS" ${d.type==='SMS'?'selected':''}>SMS</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Catégorie</label>
+          <select id="m-cat" class="m-input" style="margin-top:6px">
+            ${cats.map(c=>`<option value="${c}" ${d.category===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Message</label>
+      <textarea id="m-body" class="m-input" rows="7" placeholder="Rédigez votre message…" style="margin-top:6px;margin-bottom:10px;resize:none;line-height:1.6;font-family:inherit">${(d.body||'').replace(/</g,'&lt;')}</textarea>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Balises — appuyez pour insérer</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:18px">
+        ${BALISES.map(b=>`<button type="button" onclick="insertBalise('m-body','${b.replace(/'/g,"\\'")}')" style="padding:5px 11px;border-radius:20px;border:1px solid rgba(242,127,13,.4);background:rgba(242,127,13,.1);color:#f27f0d;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" ontouchstart="this.style.background='rgba(242,127,13,.25)'" ontouchend="this.style.background='rgba(242,127,13,.1)'">${b}</button>`).join('')}
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+        <button class="m-btn btn-p" onclick="saveModel('${id||''}',${isNew})" style="flex:2">
+          <span class="material-symbols-outlined" style="font-size:16px">save</span> Enregistrer
+        </button>
+      </div>
+    </div>`;
+}
+
+async function saveModel(id,isNew){
+  const title=(document.getElementById('m-title').value||'').trim();
+  const type=document.getElementById('m-type').value;
+  const category=document.getElementById('m-cat').value;
+  const body=(document.getElementById('m-body').value||'').trim();
+  if(!title){toast('Titre requis','err');return;}
+  if(!body){toast('Message requis','err');return;}
+  const payload={title,type,category,body};
+  let error;
+  if(isNew){
+    payload.active=false;
+    ({error}=await sb.from('communication_models').insert(payload));
+  }else{
+    ({error}=await sb.from('communication_models').update(payload).eq('id',id));
+  }
+  if(error){toast('Erreur sauvegarde','err');return;}
+  toast(isNew?'Modèle créé ✓':'Modèle mis à jour ✓','ok');
+  closeModal();
+  viewModels();
 }
 
 // ─── LOGOUT ───────────────────────────────────
