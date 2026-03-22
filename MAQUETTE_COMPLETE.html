@@ -5559,10 +5559,7 @@ Suivant
                     <td class="px-6 py-4 text-center text-xs font-medium text-slate-500">${new Date(r.scheduled_date).toLocaleDateString()}</td>
                     <td class="px-6 py-4">
                         <div class="flex justify-center">
-                            <select onchange="updateRepaymentStatus('${r.id}', this.value, this)" class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-black uppercase tracking-wider ${r.is_paid ? 'text-emerald-600' : 'text-orange-600'}">
-                                <option value="En attente" ${!r.is_paid ? 'selected' : ''}>En attente</option>
-                                <option value="Payé" ${r.is_paid ? 'selected' : ''}>Payé</option>
-                            </select>
+                            ${buildStatusBadge(r, 'progress')}
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -5770,25 +5767,17 @@ Suivant
                 return;
             }
 
-            // Show first 5 or all if few? Let's show all for now if it's not too many
-            tbody.innerHTML = data.map(r => {
-                const statusColor = r.is_paid ? 'text-emerald-600 bg-emerald-100/50' : 'text-slate-400 bg-slate-100';
-                const statusText = r.is_paid ? 'PAYÉ' : 'EN ATTENTE';
-                
-                return `
+            tbody.innerHTML = data.map(r => `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <td class="px-6 py-3 text-xs font-bold text-slate-400">${String(r.installment_number).padStart(2, '0')}</td>
                     <td class="px-6 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
                         ${new Date(r.scheduled_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}
                     </td>
                     <td class="px-6 py-3 text-right">
-                        <select onchange="updateRepaymentStatus('${r.id}', this.value, this)" class="status-badge-select px-2 py-0.5 rounded text-[9px] font-black cursor-pointer shadow-sm ${r.is_paid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">
-                            <option value="En attente" ${r.status === 'En attente' ? 'selected' : ''}>En attente</option>
-                            <option value="Payé" ${r.status === 'Payé' ? 'selected' : ''}>Payé</option>
-                        </select>
+                        ${buildStatusBadge(r, 'mini')}
                     </td>
-                </tr>`;
-            }).join('');
+                </tr>`
+            ).join('');
         }
 
         async function populateScheduleView(credit) {
@@ -5822,21 +5811,14 @@ Suivant
                         ${new Date(r.scheduled_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                         ${r.is_reported ? '<span class="ml-2 text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold uppercase">Reporté</span>' : ''}
                     </td>
-                    <td class="px-6 py-5 text-right flex items-center justify-end gap-2">
-                        ${r.is_paid ? 
-                            `<div class="text-right">
-                                <span class="text-emerald-600 font-bold text-xs flex items-center justify-end gap-1"><span class="material-symbols-outlined text-sm">check_circle</span> PAYÉ</span>
-                                <p class="text-[9px] text-slate-400 mt-0.5">le ${new Date(r.actual_payment_date).toLocaleDateString()}</p>
-                             </div>` : 
-                            `
-                             <button onclick="handleMarkAsPaid('${r.id}')" class="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 transition-all shadow-sm">
-                                <span class="material-symbols-outlined text-[16px]">payments</span> Encaisser
-                             </button>
-                             <button onclick="openReportModal('${r.id}', '${r.scheduled_date}', ${r.installment_number})" class="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                <span class="material-symbols-outlined text-[16px]">calendar_month</span> ${r.is_reported ? 'Modifier Report' : 'Reporter'}
-                             </button>
-                            `
-                        }
+                    <td class="px-6 py-5">
+                        <div class="flex items-center justify-end gap-2">
+                            ${buildStatusBadge(r, 'full')}
+                            <button onclick="openReportModal('${r.id}', '${r.scheduled_date}', ${r.installment_number})" class="inline-flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                <span class="material-symbols-outlined text-[15px]">calendar_month</span> ${r.is_reported ? 'Modifier' : 'Reporter'}
+                            </button>
+                        </div>
+                        ${r.is_paid && r.actual_payment_date ? `<p class="text-[9px] text-slate-400 mt-1 text-right">Payé le ${new Date(r.actual_payment_date).toLocaleDateString('fr-FR')}</p>` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -6305,6 +6287,51 @@ Suivant
                 customDiv.classList.add('hidden');
                 fetchProgressCredits();
             }
+        }
+
+        // ── Badge statut cliquable EN ATTENTE / PAYÉ ────────────────────────
+        function buildStatusBadge(r, context) {
+            if (r.is_paid) {
+                // PAYÉ → clic = annuler (remettre en attente)
+                return `<button onclick="toggleRepaymentPaid('${r.id}', true)"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-600 transition-all group" title="Cliquer pour annuler le paiement">
+                    <span class="material-symbols-outlined text-[13px] group-hover:hidden">check_circle</span>
+                    <span class="material-symbols-outlined text-[13px] hidden group-hover:inline">undo</span>
+                    <span class="group-hover:hidden">PAYÉ</span>
+                    <span class="hidden group-hover:inline">ANNULER</span>
+                </button>`;
+            } else {
+                // EN ATTENTE → clic = marquer payé
+                return `<button onclick="toggleRepaymentPaid('${r.id}', false)"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-emerald-100 hover:text-emerald-700 transition-all group" title="Cliquer pour marquer comme payé">
+                    <span class="material-symbols-outlined text-[13px]">schedule</span>
+                    EN ATTENTE
+                </button>`;
+            }
+        }
+
+        async function toggleRepaymentPaid(id, currentlyPaid) {
+            if (currentlyPaid) {
+                if (!confirm("Annuler ce paiement et remettre l'échéance EN ATTENTE ?")) return;
+            }
+            const nowPaid = !currentlyPaid;
+            const now = new Date().toISOString().split('T')[0];
+
+            const { error } = await _supabase.from('repayments').update({
+                is_paid: nowPaid,
+                status: nowPaid ? 'Payé' : 'En attente',
+                actual_payment_date: nowPaid ? now : null
+            }).eq('id', id);
+
+            if (error) {
+                alert("Erreur : " + error.message);
+                return;
+            }
+
+            // Rafraîchissement de toutes les vues concernées
+            if (currentCredit) populateScheduleView(currentCredit);
+            if (typeof fetchProgressCredits === 'function' && document.getElementById('credits-progress-body')) fetchProgressCredits();
+            if (typeof fetchDashboardStats === 'function' && document.getElementById('stat-repayments-day')) fetchDashboardStats();
         }
 
         async function updateRepaymentStatus(id, newStatus, el) {
