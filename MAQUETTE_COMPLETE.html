@@ -6365,9 +6365,14 @@ Suivant
                     is_paid,
                     actual_payment_date,
                     amount,
-                    credits!inner (
+                    status,
+                    credits (
+                        id,
                         end_date,
-                        clients!inner (
+                        client_name,
+                        phone,
+                        type,
+                        clients (
                             full_name,
                             phone1
                         )
@@ -6376,10 +6381,6 @@ Suivant
                 .gte('scheduled_date', startDate)
                 .lte('scheduled_date', endDate);
 
-            if (repaymentSearch) {
-                query = query.ilike('credits.clients.full_name', `%${repaymentSearch}%`);
-            }
-
             const { data, error } = await query.order('scheduled_date', { ascending: true });
 
             if (error) {
@@ -6387,9 +6388,19 @@ Suivant
                 return;
             }
 
+            // Filtre local si recherche (couvre crédits FK et crédits importés)
+            let filtered = data;
+            if (repaymentSearch) {
+                const q = repaymentSearch.toLowerCase();
+                filtered = data.filter(r => {
+                    const name = (r.credits?.clients?.full_name || r.credits?.client_name || '').toLowerCase();
+                    return name.includes(q);
+                });
+            }
+
             // --- CALCULATE STATS ---
-            const totalCount = data.length;
-            const paidCount = data.filter(r => r.is_paid).length;
+            const totalCount = filtered.length;
+            const paidCount = filtered.filter(r => r.is_paid).length;
             const percent = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
             const remaining = totalCount - paidCount;
 
@@ -6402,19 +6413,21 @@ Suivant
             else if (percent > 70) document.getElementById('progress-period-subtitle').textContent = "Excellent ! Presque au bout de l'objectif.";
             else document.getElementById('progress-period-subtitle').textContent = "Collecte en cours...";
 
-            if (data.length === 0) {
+            if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400">Aucun remboursement prévu pour cette période.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = data.map(r => {
-                const client = r.credits.clients;
-                const initials = client.full_name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-                
+            tbody.innerHTML = filtered.map(r => {
+                const displayName = r.credits?.clients?.full_name || r.credits?.client_name || 'Client Inconnu';
+                const displayPhone = r.credits?.clients?.phone1 || r.credits?.phone || '';
+                const safeName = displayName.replace(/'/g, "\\'");
+                const initials = displayName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0,2).toUpperCase() || '?';
+                const creditType = r.credits?.type || 'Consommation';
+                const scheduledDate = new Date(r.scheduled_date + 'T12:00:00');
+                const endDate = r.credits?.end_date ? new Date(r.credits.end_date + 'T12:00:00') : null;
+
                 let rowBg = r.is_paid ? 'bg-emerald-50/20 dark:bg-emerald-900/5' : 'bg-white dark:bg-slate-900';
-                let statusBadge = r.is_paid 
-                    ? '<span class="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-100/50 dark:bg-emerald-500/10 px-2 py-1 rounded-full uppercase tracking-tighter"><span class="material-symbols-outlined text-[14px]">check_circle</span> PAYÉ</span>'
-                    : '<span class="flex items-center gap-1.5 text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full uppercase tracking-tighter"><span class="material-symbols-outlined text-[14px]">pending</span> EN ATTENTE</span>';
 
                 return `
                 <tr class="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all border-b border-slate-100 dark:border-slate-800/50 ${rowBg}">
@@ -6422,52 +6435,46 @@ Suivant
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-black text-sm shadow-sm group-hover:scale-105 transition-transform">${initials}</div>
                             <div class="flex flex-col">
-                                <span class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">${client.full_name}</span>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${r.credits.type || 'Crédit Direct'}</span>
+                                <span class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">${displayName}</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${creditType}</span>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex flex-col">
-                            <span class="font-black text-slate-900 dark:text-white text-base">${parseInt(r.amount).toLocaleString('fr-FR')} <span class="text-[10px] text-slate-400">FCFA</span></span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">${r.amount ? parseInt(r.amount).toLocaleString('fr-FR') : '—'} <span class="text-[10px] text-slate-400">FCFA</span></span>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="material-symbols-outlined text-[14px] text-slate-400">event</span>
-                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">${new Date(r.scheduled_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' })}</span>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">${scheduledDate.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</span>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-5 text-center">
                         <div class="inline-flex flex-col items-center">
-                            <span class="text-[11px] font-black text-slate-700 dark:text-slate-300">${new Date(r.credits.end_date).toLocaleDateString('fr-FR')}</span>
+                            <span class="text-[11px] font-black text-slate-700 dark:text-slate-300">${endDate ? endDate.toLocaleDateString('fr-FR') : '—'}</span>
                             <span class="text-[9px] text-slate-400 font-bold uppercase mt-1">Échéance finale</span>
                         </div>
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex flex-col items-center gap-2">
-                             <select onchange="updateRepaymentStatus('${r.id}', this.value, this)" class="status-badge-select px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all shadow-sm outline-none border-none ${r.is_paid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">
-                                <option value="En attente" ${r.status === 'En attente' ? 'selected' : ''}>En attente</option>
-                                <option value="Payé" ${r.status === 'Payé' ? 'selected' : ''}>Payé</option>
-                            </select>
+                            <button onclick="togglePayment('${r.id}', ${r.is_paid})" class="px-4 py-1.5 rounded-full text-[11px] font-black uppercase transition-all shadow-sm ${r.is_paid ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-primary hover:text-white'}">
+                                ${r.is_paid ? '✓ PAYÉ' : 'EN ATTENTE'}
+                            </button>
                         </div>
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex justify-center items-center gap-1.5">
-                            <a href="tel:${client.phone1}" class="w-8 h-8 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100/50 dark:border-blue-800/30" title="Appeler">
-                                <span class="material-symbols-outlined text-[18px]">call</span>
-                            </a>
-                            <button onclick="sendWhatsAppMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${r.amount}', date: '${new Date(r.scheduled_date).toLocaleDateString('fr-FR')}', activity: '${(r.credits?.type || '').replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-800/30" title="WhatsApp">
-                                <span class="material-symbols-outlined text-[18px]">chat</span>
-                            </button>
-                            <button onclick="sendSmsMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${r.amount}', date: '${new Date(r.scheduled_date).toLocaleDateString('fr-FR')}', activity: '${(r.credits?.type || '').replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg hover:bg-sky-500 hover:text-white transition-all shadow-sm border border-sky-100/50 dark:border-sky-800/30" title="SMS">
-                                <span class="material-symbols-outlined text-[18px]">sms</span>
-                            </button>
+                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100/50 dark:border-blue-800/30" title="Appeler"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-800/30" title="WhatsApp"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
+                            ${displayPhone ? `<button onclick="sendSmsMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg hover:bg-sky-500 hover:text-white transition-all shadow-sm border border-sky-100/50 dark:border-sky-800/30" title="SMS"><span class="material-symbols-outlined text-[18px]">sms</span></button>` : ''}
                         </div>
                     </td>
                 </tr>`;
             }).join('');
 
             // Update range counters
-            document.getElementById('progress-range').textContent = `1-${data.length}`;
+            document.getElementById('progress-range').textContent = `1-${filtered.length}`;
+            document.getElementById('progress-total').textContent = `${filtered.length}`;
         }
 
 
