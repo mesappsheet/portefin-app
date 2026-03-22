@@ -2,6 +2,17 @@
  * Module Crédit : Règles ajustées pour l'import simplifié.
  */
 /**
+ * Convertit un objet Date en chaîne AAAA-MM-JJ en heure locale (évite le décalage UTC).
+ */
+function toLocalDateStr(date) {
+    if (!date || isNaN(date.getTime())) return null;
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
  * Interprète une date au format J-MM-AAAA, JJ-MM-AAAA, J/MM/AAAA, ou AAAA-MM-JJ.
  * Retourne un objet Date valide, ou null.
  */
@@ -77,8 +88,8 @@ class CreditModule {
         return {
             client_name: data.client_name,
             amount: data.amount,
-            start_date: data.start_date.toISOString().split('T')[0],
-            end_date: data.end_date.toISOString().split('T')[0],
+            start_date: toLocalDateStr(data.start_date),
+            end_date: toLocalDateStr(data.end_date),
             status: 'EN COURS',
             health: 'SAIN',
             manager_id: userId,
@@ -120,7 +131,7 @@ class CreditModule {
 
             schedule.push({
                 installment_number: monthCount,
-                scheduled_date: adjustedDate.toISOString().split('T')[0],
+                scheduled_date: toLocalDateStr(adjustedDate),
                 amount: null, // Pas de montant affiché
                 status: "En attente"
             });
