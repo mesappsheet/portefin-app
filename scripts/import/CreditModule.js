@@ -1,6 +1,37 @@
 /**
  * Module Crédit : Règles ajustées pour l'import simplifié.
  */
+/**
+ * Interprète une date au format J-MM-AAAA, JJ-MM-AAAA, J/MM/AAAA, ou AAAA-MM-JJ.
+ * Retourne un objet Date valide, ou null.
+ */
+function parseImportDate(value) {
+    if (!value) return null;
+
+    // Si c'est déjà un objet Date (Excel sériel converti par SheetJS)
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+
+    const str = String(value).trim();
+
+    // Format JJ-MM-AAAA ou J-MM-AAAA (séparateur - ou /)
+    const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+    if (dmyMatch) {
+        const [, d, m, y] = dmyMatch;
+        const date = new Date(Number(y), Number(m) - 1, Number(d));
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    // Format ISO AAAA-MM-JJ
+    const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+        const [, y, m, d] = isoMatch;
+        const date = new Date(Number(y), Number(m) - 1, Number(d));
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
+}
+
 class CreditModule {
     getTableName() { return 'credits'; }
 
@@ -15,8 +46,8 @@ class CreditModule {
         return {
             client_name: row["Nom du Client"] || row["Nom"] || "",
             amount: parseFloat(row["Montant Total"] || row["Montant"] || 0),
-            start_date: row["Date de Déblocage"] ? new Date(row["Date de Déblocage"]) : new Date(),
-            end_date: row["Fin Échéance"] ? new Date(row["Fin Échéance"]) : null,
+            start_date: parseImportDate(row["Date de Déblocage"]) || new Date(),
+            end_date: parseImportDate(row["Fin Échéance"]),
             address: row["Adresse domicile"] || "",
             loan_type: row["Type de Prêt"] || "Consommation",
             phone: row["Téléphone"] || row["Mobile"] || "",
