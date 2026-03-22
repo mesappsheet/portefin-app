@@ -241,6 +241,13 @@ let currentScreen='dashboard';
 
 // ─── AUTH GUARD ───────────────────────────────
 (async()=>{
+  // Session admin locale (bypass Supabase)
+  const local=sessionStorage.getItem('portefin_session');
+  if(local){
+    try{currentUser=JSON.parse(local);}catch(e){}
+    init();return;
+  }
+  // Session Supabase
   const{data:{session}}=await sb.auth.getSession();
   if(!session){window.location.replace('./login.html');return;}
   currentUser=session.user;
@@ -939,7 +946,8 @@ async function deleteProspect(id,name){
 // ─── LOGOUT ───────────────────────────────────
 function confirmLogout(){
   openConfirm('Se déconnecter ?','Vous serez redirigé vers la page de connexion.',async()=>{
-    await sb.auth.signOut();
+    sessionStorage.removeItem('portefin_session');
+    await sb.auth.signOut().catch(()=>{});
     window.location.replace('./login.html');
   });
 }

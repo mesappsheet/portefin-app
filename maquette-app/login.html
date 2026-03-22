@@ -79,8 +79,8 @@ body{font-family:'Inter',sans-serif;margin:0;min-height:100vh;min-height:100dvh;
 
   <div class="fw">
     <span class="material-symbols-outlined fi">mail</span>
-    <input id="inp-email" class="inp" type="email" placeholder="Adresse e-mail"
-      autocomplete="email" autocapitalize="none" inputmode="email"
+    <input id="inp-email" class="inp" type="text" placeholder="Identifiant ou e-mail"
+      autocomplete="username" autocapitalize="none"
       onkeydown="if(event.key==='Enter')document.getElementById('inp-pw').focus()"/>
     <div id="err-email" class="ferr">E-mail invalide</div>
   </div>
@@ -113,8 +113,11 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 (async()=>{
-  try{const{data:{session}}=await sb.auth.getSession();
-  if(session)window.location.replace('./index.html');}catch(e){}
+  try{
+    if(sessionStorage.getItem('portefin_session'))return window.location.replace('./index.html');
+    const{data:{session}}=await sb.auth.getSession();
+    if(session)window.location.replace('./index.html');
+  }catch(e){}
 })();
 
 let pwv=false;
@@ -133,13 +136,16 @@ function toast(msg,type='error'){
   clearTimeout(_tt);_tt=setTimeout(()=>{t.className='';},3500);
 }
 
+const ADMIN_ID='Administrateur';
+const ADMIN_PASS='Codjo@1989';
+
 async function doLogin(){
-  const email=document.getElementById('inp-email').value.trim();
+  const id=document.getElementById('inp-email').value.trim();
   const pw=document.getElementById('inp-pw').value;
   document.getElementById('err-email').classList.remove('show');
   document.getElementById('err-pw').classList.remove('show');
   let ok=true;
-  if(!email||!/\S+@\S+\.\S+/.test(email)){document.getElementById('err-email').classList.add('show');ok=false;}
+  if(!id){document.getElementById('err-email').classList.add('show');ok=false;}
   if(!pw){document.getElementById('err-pw').classList.add('show');ok=false;}
   if(!ok)return;
 
@@ -147,9 +153,27 @@ async function doLogin(){
   btn.disabled=true;
   btn.innerHTML='<div class="spinner"></div> Connexion…';
 
+  // Bypass admin (même identifiant que le SaaS PC)
+  if(id===ADMIN_ID){
+    if(pw!==ADMIN_PASS){
+      btn.disabled=false;
+      btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">login</span> Se connecter';
+      toast('Mot de passe administrateur incorrect');
+      return;
+    }
+    sessionStorage.setItem('portefin_session',JSON.stringify({name:'Administrateur',email:'admin@portefin.app',role:'Administrateur',id:'admin'}));
+    toast('Bienvenue, Administrateur !','success');
+    setTimeout(()=>window.location.replace('./index.html'),600);
+    return;
+  }
+
+  // Connexion Supabase standard
   try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+    const{data,error}=await sb.auth.signInWithPassword({email:id,password:pw});
     if(error)throw error;
+    const user=data.user;
+    const name=user.user_metadata?.full_name||user.email.split('@')[0];
+    sessionStorage.setItem('portefin_session',JSON.stringify({name,email:user.email,role:'Utilisateur',id:user.id}));
     toast('Connexion réussie !','success');
     setTimeout(()=>window.location.replace('./index.html'),600);
   }catch(e){
