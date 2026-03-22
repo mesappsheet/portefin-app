@@ -1,373 +1,951 @@
 <!DOCTYPE html>
-<html class="dark" lang="fr">
+<html lang="fr">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-    <title>PorteFin - Gestion de Portefeuille</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>PorteFin Mobile</title>
+<meta name="theme-color" content="#0c1425"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="./manifest.json"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;font-family:'Inter',sans-serif;background:#0c1425;color:white;overscroll-behavior:none}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none}
+.filled{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
 
-    <!-- PWA Meta -->
-    <meta name="theme-color" content="#1763cf"/>
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-    <meta name="apple-mobile-web-app-title" content="PorteFin"/>
-    <meta name="description" content="Plateforme SaaS de gestion de portefeuille microfinance."/>
-    <link rel="manifest" href="./manifest.json"/>
-    <link rel="apple-touch-icon" href="./icons/icon-192.svg"/>
+/* Layout */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;position:relative}
+#topbar{flex-shrink:0;padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));background:rgba(12,20,37,.95);border-bottom:1px solid rgba(255,255,255,.07);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;z-index:50}
+#view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#0c1425;position:relative}
+#bottomnav{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);background:rgba(10,16,30,.97);border-top:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px);display:flex;z-index:50}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;transition:all .2s;gap:3px;min-height:56px}
+.nav-item .ni{font-size:22px;color:rgba(255,255,255,.35);transition:all .2s}
+.nav-item .nl{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);transition:all .2s;letter-spacing:.02em}
+.nav-item.active .ni{color:#f27f0d}
+.nav-item.active .nl{color:#f27f0d}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#f27f0d;opacity:0;transition:all .2s;margin-top:2px}
+.nav-item.active .nav-dot{opacity:1}
 
-    <!-- Tailwind & Google Fonts -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+/* Fond décoratif */
+.bg-orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+.orb-a{width:300px;height:300px;background:radial-gradient(circle,rgba(242,127,13,.12),transparent 70%);top:-60px;right:-60px}
+.orb-b{width:250px;height:250px;background:radial-gradient(circle,rgba(23,99,207,.1),transparent 70%);bottom:80px;left:-60px}
 
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#1763cf",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#111821",
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
+/* Cards glass */
+.glass{background:rgba(255,255,255,.05);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.glass-sm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px}
 
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .active-nav { @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-100 font-bold; }
+/* Stat cards */
+.stat-card{padding:16px;display:flex;flex-direction:column;gap:4px}
+.stat-val{font-size:22px;font-weight:800;line-height:1}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,.45);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.stat-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
 
-        /* Transition pour le chargement des vues */
-        #view-container {
-            transition: opacity 0.2s ease-in-out;
-        }
-        .view-loading {
-            opacity: 0.5;
-        }
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.badge-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.25)}
+.badge-red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.badge-orange{background:rgba(242,127,13,.15);color:#fb923c;border:1px solid rgba(242,127,13,.25)}
+.badge-blue{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.badge-gray{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
 
-        /* Styles pour les modales */
-        #modal-overlay {
-            display: none;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
-        #modal-overlay.active {
-            display: flex;
-        }
+/* Boutons action */
+.btn-primary{padding:12px 20px;background:linear-gradient(135deg,#f27f0d,#c96a00);border:none;border-radius:10px;color:white;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;box-shadow:0 4px 15px rgba(242,127,13,.3)}
+.btn-primary:active{transform:scale(.97)}
+.btn-ghost{padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.btn-ghost:active{background:rgba(255,255,255,.12)}
 
-        /* ── Mobile Drawer ── */
-        #mobile-drawer-overlay {
-            display: none;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(2px);
-        }
-        #mobile-drawer-overlay.active { display: block; }
+/* Repayment item */
+.rep-item{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:12px;transition:background .15s}
+.rep-item:active{background:rgba(255,255,255,.04)}
+.rep-item:last-child{border-bottom:none}
+.rep-avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(242,127,13,.2),rgba(242,127,13,.1));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:#f27f0d;text-transform:uppercase}
 
-        #mobile-drawer {
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #mobile-drawer.open {
-            transform: translateX(0);
-        }
+/* Toggle payé */
+.toggle-paid{padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.toggle-paid.paid{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.toggle-paid.pending{background:rgba(242,127,13,.12);color:#fb923c;border:1px solid rgba(242,127,13,.25)}
+.toggle-paid:active{transform:scale(.95)}
 
-        /* ── Bottom Tab Bar (mobile) ── */
-        #bottom-tab-bar {
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-        }
-        .bottom-tab.active-tab {
-            color: #1763cf;
-        }
-        .bottom-tab.active-tab .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
+/* Action buttons */
+.action-btn{width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:18px;flex-shrink:0}
+.action-btn:active{transform:scale(.92)}
+.ab-wa{background:rgba(37,211,102,.15);color:#25D366}
+.ab-call{background:rgba(99,102,241,.15);color:#818cf8}
+.ab-edit{background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
+.ab-del{background:rgba(239,68,68,.12);color:#f87171}
 
-        /* ── Responsive overrides for injected views ── */
-        /* Dashboard header */
-        @media (max-width: 768px) {
-            #view-container header {
-                height: auto !important;
-                padding: 12px 16px !important;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            #view-container header .flex.items-center.gap-4:last-child {
-                flex-wrap: wrap;
-                gap: 6px;
-            }
-            #view-container header input[type="text"] {
-                width: 100% !important;
-                min-width: 0 !important;
-            }
-            /* Dashboard clock - hide on very small screens */
-            #view-container header .min-w-\\[110px\\] {
-                display: none;
-            }
-            /* Main content padding */
-            #view-container > .flex-1.overflow-y-auto {
-                padding: 16px !important;
-            }
-            #view-container .p-8 {
-                padding: 16px !important;
-            }
-            #view-container .space-y-8 > * + * {
-                margin-top: 16px !important;
-            }
+/* Prospect item */
+.pros-item{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:12px}
+.pros-item:last-child{border-bottom:none}
+.pros-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(99,102,241,.15));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:#818cf8;text-transform:uppercase}
 
-            /* Master-detail: stack vertically on mobile */
-            #view-container .flex-1.flex.overflow-hidden {
-                flex-direction: column !important;
-            }
-            /* Fixed-width list panels become full width */
-            #view-container section[class*="w-[450px]"],
-            #view-container section[class*="w-[500px]"],
-            #view-container section[id="list-sidebar"] {
-                width: 100% !important;
-                max-height: 45vh !important;
-                border-right: none !important;
-                border-bottom: 1px solid rgba(148,163,184,0.2) !important;
-            }
-            /* Resizer hidden on mobile */
-            #view-container .resizer-v {
-                display: none !important;
-            }
-            /* Grid cols-6 -> cols-3 on mobile */
-            #view-container .grid-cols-6 {
-                grid-template-columns: repeat(3, 1fr) !important;
-            }
-            /* Table horizontal scroll */
-            #view-container table {
-                display: block;
-                overflow-x: auto;
-            }
-            /* Module cards text */
-            #view-container .text-3xl {
-                font-size: 1.5rem !important;
-            }
-            /* Header buttons smaller */
-            #view-container header button .text-lg,
-            #view-container header .text-lg {
-                font-size: 0.875rem !important;
-            }
-        }
+/* Credit item */
+.cred-item{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cred-item:last-child{border-bottom:none}
+.progress-bar-bg{height:5px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-top:8px}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,#f27f0d,#c96a00);border-radius:10px;transition:width .5s ease}
 
-        @media (max-width: 480px) {
-            #view-container .grid-cols-6 {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-            #view-container section[class*="w-[450px]"],
-            #view-container section[class*="w-[500px]"],
-            #view-container section[id="list-sidebar"] {
-                max-height: 35vh !important;
-            }
-        }
+/* FAB */
+.fab{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom) + 12px);right:16px;width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#f27f0d,#c96a00);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(242,127,13,.5);z-index:100;transition:all .2s;color:white}
+.fab:active{transform:scale(.93)}
 
-        /* Add bottom padding when bottom bar is visible */
-        @media (max-width: 1023px) {
-            #view-container {
-                padding-bottom: 64px;
-            }
-            /* Android: single scrollable view for list + details */
-            .android-device #view-container .flex-1.flex.overflow-hidden {
-                overflow: auto !important;
-                height: auto !important;
-            }
-            .android-device #view-container section[class*="w-[450px]"],
-            .android-device #view-container section[class*="w-[500px]"],
-            .android-device #view-container section[id="list-sidebar"] {
-                max-height: none !important;
-                overflow: visible !important;
-            }
-        }
-    </style>
+/* Input mobile */
+.m-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:all .2s;-webkit-appearance:none;appearance:none}
+.m-input::placeholder{color:rgba(255,255,255,.3)}
+.m-input:focus{border-color:#f27f0d;background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(242,127,13,.12)}
+.m-select{background-color:rgba(255,255,255,.07);color:white}
+.m-select option{background:#1a2540;color:white}
+
+/* Tabs */
+.tab-bar{display:flex;gap:8px;padding:0 16px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);transition:all .2s;white-space:nowrap;flex-shrink:0}
+.tab-btn.active{background:#f27f0d;border-color:#f27f0d;color:white}
+
+/* Search bar */
+.search-wrap{position:relative;margin:0 16px 12px}
+.search-wrap .material-symbols-outlined{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.35);font-size:18px;pointer-events:none}
+.search-inp{width:100%;padding:10px 12px 10px 38px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-size:14px;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;appearance:none}
+.search-inp::placeholder{color:rgba(255,255,255,.3)}
+.search-inp:focus{border-color:rgba(242,127,13,.5);background:rgba(255,255,255,.09)}
+
+/* Modal bottom sheet */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+#modal-overlay.open{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#modal-sheet{background:#111f3a;border-radius:24px 24px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:0 0 calc(20px + env(safe-area-inset-bottom));animation:slideSheet .3s ease-out}
+@keyframes slideSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:12px auto 20px}
+.sheet-title{font-size:17px;font-weight:700;padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+
+/* Toast */
+#toast{position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-10px);z-index:999;display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;color:white;min-width:240px;max-width:90vw;transition:all .3s;opacity:0;pointer-events:none;backdrop-filter:blur(16px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{background:rgba(239,68,68,.9);border:1px solid rgba(239,68,68,.5)}
+#toast.ok{background:rgba(34,197,94,.9);border:1px solid rgba(34,197,94,.5)}
+#toast.info{background:rgba(99,102,241,.9);border:1px solid rgba(99,102,241,.5)}
+
+/* Loader */
+.loader{display:flex;align-items:center;justify-content:center;padding:60px 20px;gap:12px;color:rgba(255,255,255,.4);font-size:14px}
+.spin{width:20px;height:20px;border:2px solid rgba(255,255,255,.15);border-top-color:#f27f0d;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:rgba(255,255,255,.3)}
+.empty .material-symbols-outlined{font-size:48px;display:block;margin-bottom:12px;opacity:.4}
+.empty p{font-size:14px;margin:0}
+
+/* Confirm dialog */
+#confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+#confirm-overlay.open{display:flex}
+#confirm-box{background:#1a2a48;border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px;width:100%;max-width:340px}
+
+/* Section header */
+.section-h{padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+.section-h h2{font-size:15px;font-weight:700;margin:0;color:white}
+.section-h span{font-size:12px;color:rgba(255,255,255,.4)}
+</style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden flex flex-col" style="height:100dvh;height:100vh">
+<body>
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
 
-    <!-- Mobile Top Bar (visible < lg) -->
-    <header id="mobile-topbar" class="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 z-30 relative flex-shrink-0">
-        <button id="btn-open-drawer" class="p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Ouvrir le menu">
-            <span class="material-symbols-outlined text-2xl">menu</span>
-        </button>
-        <div class="flex items-center gap-2">
-            <div class="size-8 rounded-lg bg-primary flex items-center justify-center text-white">
-                <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
-            </div>
-            <h1 class="text-sm font-bold tracking-tight uppercase">PorteFin</h1>
-        </div>
-        <div class="w-10"></div><!-- spacer for centering -->
-    </header>
+<!-- Toast -->
+<div id="toast"><span id="t-icon" class="material-symbols-outlined filled" style="font-size:18px"></span><span id="t-msg"></span></div>
 
-    <!-- Mobile Drawer Overlay -->
-    <div id="mobile-drawer-overlay" class="fixed inset-0 z-40 lg:hidden"></div>
-
-    <!-- Mobile Drawer -->
-    <aside id="mobile-drawer" class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-background-dark z-50 flex flex-col shadow-2xl lg:hidden">
-        <div class="p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined">account_balance_wallet</span>
-                </div>
-                <div>
-                    <h1 class="text-sm font-bold tracking-tight uppercase">PorteFin</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Client Management</p>
-                </div>
-            </div>
-            <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fermer le menu">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-
-        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto" id="mobile-nav">
-            <button data-module="dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav text-left">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="text-sm font-semibold uppercase tracking-wide">Tableau de Bord</span>
-            </button>
-            <button data-module="prospection" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                <span class="material-symbols-outlined">person_search</span>
-                <span class="text-sm font-semibold tracking-wide">Prospection</span>
-            </button>
-            <button data-module="credits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                <span class="material-symbols-outlined">payments</span>
-                <span class="text-sm font-semibold tracking-wide">Crédits</span>
-            </button>
-            <button data-module="settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                <span class="material-symbols-outlined">settings</span>
-                <span class="text-sm font-semibold tracking-wide">Paramètres</span>
-            </button>
-
-            <!-- Sub-screens mobile -->
-            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Écrans disponibles</p>
-                <div id="mobile-sub-screens" class="space-y-1 max-h-48 overflow-y-auto">
-                    <!-- Injecté par JS -->
-                </div>
-            </div>
-        </nav>
-
-        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-3 p-2" id="mobile-user-info">
-                <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-primary">JK</div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold truncate">Jean Kouassi</p>
-                    <p class="text-xs text-slate-500 truncate">Superviseur</p>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <div id="app-root" class="flex flex-col lg:flex-row flex-1 w-full min-h-0">
-        <!-- Sidebar (desktop only) -->
-        <aside class="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark hidden lg:flex flex-col">
-            <div class="p-6 flex items-center gap-3">
-                <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined">account_balance_wallet</span>
-                </div>
-                <div>
-                    <h1 class="text-sm font-bold tracking-tight uppercase">Portefeuille</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Client Management</p>
-                </div>
-            </div>
-
-            <nav class="flex-1 px-4 py-4 space-y-1" id="main-nav">
-                <button data-module="dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav text-left">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span class="text-sm font-semibold uppercase tracking-wide">Tableau de Bord</span>
-                </button>
-                <button data-module="prospection" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                    <span class="material-symbols-outlined">person_search</span>
-                    <span class="text-sm font-semibold tracking-wide">Prospection</span>
-                </button>
-                <button data-module="credits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                    <span class="material-symbols-outlined">payments</span>
-                    <span class="text-sm font-semibold tracking-wide">Crédits</span>
-                </button>
-                <button data-module="settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left uppercase">
-                    <span class="material-symbols-outlined">settings</span>
-                    <span class="text-sm font-semibold tracking-wide">Paramètres</span>
-                </button>
-            </nav>
-
-            <!-- Liste des écrans du module actif -->
-            <div class="px-4 py-4 border-t border-slate-100 dark:border-slate-800">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Écrans disponibles</p>
-                <div id="sub-screens-list" class="space-y-1 max-h-48 overflow-y-auto">
-                    <!-- Injecté par JS -->
-                </div>
-            </div>
-
-            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-                <div class="flex items-center gap-3 p-2">
-                    <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-primary">JK</div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold truncate">Jean Kouassi</p>
-                        <p class="text-xs text-slate-500 truncate">Superviseur</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <div id="view-container" class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            <!-- Les vues sont injectées ici -->
-             <div class="flex items-center justify-center h-full">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-             </div>
-        </div>
+<!-- Confirm dialog -->
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <p id="confirm-msg" style="color:white;font-weight:600;font-size:15px;margin:0 0 6px"></p>
+    <p id="confirm-sub" style="color:rgba(255,255,255,.4);font-size:13px;margin:0 0 20px"></p>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeConfirm()" class="btn-ghost" style="flex:1;padding:11px">Annuler</button>
+      <button id="confirm-ok" style="flex:1;padding:11px;background:rgba(239,68,68,.85);border:1px solid rgba(239,68,68,.4);border-radius:10px;color:white;font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Supprimer</button>
     </div>
+  </div>
+</div>
 
-    <!-- Bottom Tab Bar (mobile only) -->
-    <nav id="bottom-tab-bar" class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-30 flex items-stretch justify-around">
-        <button data-module="dashboard" class="bottom-tab active-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors">
-            <span class="material-symbols-outlined text-xl">dashboard</span>
-            <span class="text-[10px] font-semibold">Bord</span>
-        </button>
-        <button data-module="prospection" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
-            <span class="material-symbols-outlined text-xl">person_search</span>
-            <span class="text-[10px] font-semibold">Prospects</span>
-        </button>
-        <button data-module="credits" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
-            <span class="material-symbols-outlined text-xl">payments</span>
-            <span class="text-[10px] font-semibold">Crédits</span>
-        </button>
-        <button data-module="settings" class="bottom-tab flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-slate-400 transition-colors">
-            <span class="material-symbols-outlined text-xl">settings</span>
-            <span class="text-[10px] font-semibold">Réglages</span>
-        </button>
-    </nav>
+<!-- Modal bottom sheet -->
+<div id="modal-overlay" onclick="e=>{ if(e.target===this)closeModal(); }">
+  <div id="modal-sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
 
-    <!-- Overlay pour les modales -->
-    <div id="modal-overlay" class="fixed inset-0 z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative border border-slate-200 dark:border-slate-800">
-            <button id="close-modal" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 z-10">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-            <div id="modal-content">
-                <!-- Contenu de la modale injecté ici -->
+<!-- App -->
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#f27f0d,#c96a00);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined filled" style="font-size:18px;color:white">account_balance_wallet</span>
+      </div>
+      <div>
+        <p style="font-size:14px;font-weight:800;margin:0;color:white;line-height:1">PorteFin</p>
+        <p id="top-date" style="font-size:10px;color:rgba(255,255,255,.4);margin:0;line-height:1.4"></p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="top-user" style="width:30px;height:30px;border-radius:50%;background:rgba(242,127,13,.2);border:1px solid rgba(242,127,13,.4);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="confirmLogout()">
+        <span class="material-symbols-outlined" style="font-size:16px;color:#f27f0d">person</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue principale -->
+  <div id="view"></div>
+
+  <!-- Nav bas -->
+  <nav id="bottomnav">
+    <div class="nav-item active" onclick="navTo('dashboard')" id="nav-dashboard">
+      <span class="material-symbols-outlined ni filled">dashboard</span>
+      <span class="nl">Accueil</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="navTo('repayments')" id="nav-repayments">
+      <span class="material-symbols-outlined ni">payments</span>
+      <span class="nl">Remb.</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="navTo('credits')" id="nav-credits">
+      <span class="material-symbols-outlined ni">account_balance</span>
+      <span class="nl">Crédits</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="navTo('prospects')" id="nav-prospects">
+      <span class="material-symbols-outlined ni">person_search</span>
+      <span class="nl">Prospects</span>
+      <div class="nav-dot"></div>
+    </div>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG SUPABASE
+// ═══════════════════════════════════════════════
+const SB_URL="https://lkuwgggwdtbzjgplwylr.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo";
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+let currentUser=null;
+let currentScreen='dashboard';
+
+// ─── AUTH GUARD ───────────────────────────────
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.replace('./login.html');return;}
+  currentUser=session.user;
+  init();
+})();
+
+function init(){
+  // Date dans topbar
+  const now=new Date();
+  document.getElementById('top-date').textContent=now.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
+  navTo('dashboard');
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ─── NAVIGATION ───────────────────────────────
+function navTo(screen){
+  currentScreen=screen;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nav=document.getElementById('nav-'+screen);
+  if(nav)nav.classList.add('active');
+  const icons={'dashboard':'dashboard','repayments':'payments','credits':'account_balance','prospects':'person_search'};
+  document.querySelectorAll('.nav-item .ni').forEach((ic,i)=>{
+    const screens=['dashboard','repayments','credits','prospects'];
+    ic.classList.toggle('filled',screens[i]===screen);
+  });
+  hideFab();
+  const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects};
+  if(views[screen])views[screen]();
+}
+
+// ─── TOAST ────────────────────────────────────
+let _tt;
+function toast(msg,type='info'){
+  const t=document.getElementById('toast');
+  document.getElementById('t-msg').textContent=msg;
+  const icons={ok:'check_circle',err:'error',info:'info'};
+  document.getElementById('t-icon').textContent=icons[type]||'info';
+  t.className=`show ${type}`;
+  clearTimeout(_tt);_tt=setTimeout(()=>{t.className='';},3000);
+}
+
+// ─── MODAL ────────────────────────────────────
+function openModal(html){
+  document.getElementById('modal-content').innerHTML=html;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('modal-overlay').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+
+// ─── CONFIRM ──────────────────────────────────
+let _confirmCb=null;
+function openConfirm(msg,sub,cb){
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-sub').textContent=sub||'';
+  _confirmCb=cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('open');_confirmCb=null;}
+document.getElementById('confirm-ok').onclick=()=>{if(_confirmCb)_confirmCb();closeConfirm();};
+
+// ─── FAB ──────────────────────────────────────
+let _fab=null;
+function showFab(cb){
+  if(_fab)_fab.remove();
+  _fab=document.createElement('button');
+  _fab.className='fab';
+  _fab.innerHTML='<span class="material-symbols-outlined filled" style="font-size:26px">add</span>';
+  _fab.onclick=cb;
+  document.body.appendChild(_fab);
+}
+function hideFab(){if(_fab){_fab.remove();_fab=null;}}
+
+// ─── HELPERS ──────────────────────────────────
+function fmt(n){if(!n&&n!==0)return'—';return Number(n).toLocaleString('fr-FR');}
+function fmtDate(d){if(!d)return'—';const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+function today(){return new Date().toISOString().split('T')[0];}
+function initials(name){if(!name)return'?';return name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function getName(r){return r?.clients?.full_name||r?.client_name||r?.full_name||'Inconnu';}
+function getPhone(r){return r?.clients?.phone1||r?.phone||r?.phone1||'';}
+
+function wa(phone,name=''){
+  const p=(phone||'').replace(/\D/g,'');
+  if(!p){toast('Numéro introuvable','err');return;}
+  const msg=encodeURIComponent(`Bonjour ${name},`);
+  window.open(`https://wa.me/${p}?text=${msg}`,'_blank');
+}
+function call(phone){
+  const p=(phone||'').replace(/[\s\-]/g,'');
+  if(!p){toast('Numéro introuvable','err');return;}
+  window.location.href=`tel:${p}`;
+}
+
+// ═══════════════════════════════════════════════
+//  ÉCRAN 1 : DASHBOARD
+// ═══════════════════════════════════════════════
+async function viewDashboard(){
+  document.getElementById('view').innerHTML=`<div class="loader"><div class="spin"></div> Chargement…</div>`;
+  const t=today();
+  try{
+    const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff}]=await Promise.all([
+      sb.from('repayments').select('id,amount,is_paid,credits(client_name,clients(full_name,phone1))').eq('scheduled_date',t),
+      sb.from('credits').select('amount').in('status',['En cours','en cours','ENCOURS']),
+      sb.from('repayments').select('id').lt('scheduled_date',t).eq('is_paid',false),
+      sb.from('credits').select('id').eq('health','Souffrance')
+    ]);
+    const reps=todayReps||[];
+    const paid=reps.filter(r=>r.is_paid).length;
+    const pending=reps.length-paid;
+    const encours=(activeC||[]).reduce((s,c)=>s+(c.amount||0),0);
+
+    const topReps=reps.filter(r=>!r.is_paid).slice(0,5);
+    const repsHtml=topReps.length?topReps.map(r=>`
+      <div class="rep-item" style="padding:12px 16px">
+        <div class="rep-avatar" style="width:36px;height:36px;font-size:13px">${initials(getName(r))}</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${getName(r)}</p>
+          <p style="font-size:11px;color:rgba(255,255,255,.4);margin:0">${fmt(r.amount)} FCFA</p>
+        </div>
+        <button class="toggle-paid pending" onclick="quickToggle('${r.id}',false,this)" style="font-size:10px;padding:5px 9px">
+          <span class="material-symbols-outlined" style="font-size:13px">radio_button_unchecked</span> En attente
+        </button>
+      </div>`).join('')
+    :`<div style="padding:20px 16px;text-align:center;color:rgba(255,255,255,.3);font-size:13px">✓ Tous les remboursements du jour sont à jour</div>`;
+
+    document.getElementById('view').innerHTML=`
+    <div style="padding:16px;padding-bottom:80px">
+
+      <!-- Stats grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+
+        <div class="glass stat-card" style="grid-column:1/-1">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div class="stat-lbl">Remboursements aujourd'hui</div>
+              <div class="stat-val" style="color:#f27f0d;font-size:28px;margin-top:4px">${reps.length}</div>
+              <div class="stat-sub">${paid} encaissé${paid>1?'s':''} · <span style="color:#fb923c">${pending} en attente</span></div>
             </div>
+            <div style="width:52px;height:52px;border-radius:14px;background:rgba(242,127,13,.12);display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined filled" style="color:#f27f0d;font-size:28px">payments</span>
+            </div>
+          </div>
         </div>
-    </div>
 
-    <!-- PWA Install Banner (mobile) -->
-    <div id="pwa-install-banner" class="hidden fixed bottom-16 left-4 right-4 z-40 bg-primary text-white rounded-xl shadow-2xl p-4 flex items-center gap-3 lg:bottom-4" style="padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0px))">
-        <span class="material-symbols-outlined text-3xl">install_mobile</span>
-        <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold">Installer PorteFin</p>
-            <p class="text-xs opacity-80">Accès rapide depuis l'écran d'accueil</p>
+        <div class="glass stat-card">
+          <div class="stat-lbl">Encours total</div>
+          <div class="stat-val" style="color:#60a5fa;font-size:16px;margin-top:4px">${fmt(encours)}</div>
+          <div class="stat-sub">FCFA actifs</div>
         </div>
-        <button id="pwa-install-btn" class="px-4 py-2 bg-white text-primary font-bold text-xs rounded-lg flex-shrink-0">Installer</button>
-        <button id="pwa-install-dismiss" class="p-1 opacity-60 hover:opacity-100 flex-shrink-0">
-            <span class="material-symbols-outlined text-lg">close</span>
+
+        <div class="glass stat-card">
+          <div class="stat-lbl">Impayés</div>
+          <div class="stat-val" style="color:#f87171;font-size:20px;margin-top:4px">${(overdueR||[]).length}</div>
+          <div class="stat-sub">échéances dépassées</div>
+        </div>
+
+        ${(souff||[]).length>0?`
+        <div class="glass stat-card" style="grid-column:1/-1;border-color:rgba(239,68,68,.2)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="material-symbols-outlined filled" style="color:#f87171;font-size:20px">warning</span>
+            <div>
+              <div class="stat-lbl" style="color:#f87171">Dossiers en souffrance</div>
+              <div class="stat-val" style="color:#f87171;font-size:18px;margin-top:2px">${souff.length} dossier${souff.length>1?'s':''}</div>
+            </div>
+          </div>
+        </div>`:''}
+      </div>
+
+      <!-- Remboursements en attente today -->
+      ${topReps.length>0?`
+      <div style="margin-top:4px">
+        <div class="section-h"><h2>À encaisser aujourd'hui</h2><span onclick="navTo('repayments')" style="cursor:pointer;color:#f27f0d;font-size:12px;font-weight:600">Tout voir →</span></div>
+        <div class="glass" style="overflow:hidden">${repsHtml}</div>
+      </div>`:''}
+
+      <!-- Boutons rapides -->
+      <div style="margin-top:16px">
+        <div class="section-h"><h2>Actions rapides</h2></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn-primary" onclick="navTo('repayments')" style="padding:14px;flex-direction:column;gap:6px;border-radius:12px">
+            <span class="material-symbols-outlined filled" style="font-size:24px">payments</span>
+            <span style="font-size:12px">Remboursements</span>
+          </button>
+          <button class="btn-primary" onclick="navTo('prospects');setTimeout(()=>openProspectForm(),300)" style="padding:14px;flex-direction:column;gap:6px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 4px 15px rgba(99,102,241,.3)">
+            <span class="material-symbols-outlined filled" style="font-size:24px">person_add</span>
+            <span style="font-size:12px">Nouveau prospect</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }catch(e){
+    document.getElementById('view').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function quickToggle(id,isPaid,btn){
+  btn.disabled=true;
+  try{
+    const newPaid=!isPaid;
+    const{error}=await sb.from('repayments').update({
+      is_paid:newPaid,
+      actual_payment_date:newPaid?today():null
+    }).eq('id',id);
+    if(error)throw error;
+    if(newPaid){
+      btn.className='toggle-paid paid';
+      btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">check_circle</span> Payé';
+      btn.onclick=()=>quickToggle(id,true,btn);
+    }else{
+      btn.className='toggle-paid pending';
+      btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">radio_button_unchecked</span> En attente';
+      btn.onclick=()=>quickToggle(id,false,btn);
+    }
+    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+  }catch(e){
+    toast('Erreur de mise à jour','err');
+  }finally{btn.disabled=false;}
+}
+
+// ═══════════════════════════════════════════════
+//  ÉCRAN 2 : REMBOURSEMENTS
+// ═══════════════════════════════════════════════
+let repDate=today();
+let repFilter='all'; // all | pending | paid
+
+async function viewRepayments(){
+  document.getElementById('view').innerHTML=`
+  <div style="padding-top:12px;padding-bottom:80px">
+    <!-- Sélecteur date -->
+    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px">
+      <button class="btn-ghost" style="padding:8px 10px" onclick="shiftDate(-1)">
+        <span class="material-symbols-outlined" style="font-size:18px">chevron_left</span>
+      </button>
+      <input type="date" id="rep-date-inp" class="m-input" style="flex:1;padding:10px 12px;text-align:center"
+        value="${repDate}" onchange="repDate=this.value;loadRepayments()"/>
+      <button class="btn-ghost" style="padding:8px 10px" onclick="shiftDate(1)">
+        <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
+      </button>
+    </div>
+    <!-- Filtres -->
+    <div class="tab-bar">
+      <div class="tab-btn ${repFilter==='all'?'active':''}" onclick="setRepFilter('all')">Tous</div>
+      <div class="tab-btn ${repFilter==='pending'?'active':''}" onclick="setRepFilter('pending')">En attente</div>
+      <div class="tab-btn ${repFilter==='paid'?'active':''}" onclick="setRepFilter('paid')">Payés</div>
+    </div>
+    <!-- Liste -->
+    <div id="rep-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
+  </div>`;
+  loadRepayments();
+}
+
+function shiftDate(n){
+  const d=new Date(repDate+'T12:00:00');
+  d.setDate(d.getDate()+n);
+  repDate=d.toISOString().split('T')[0];
+  document.getElementById('rep-date-inp').value=repDate;
+  loadRepayments();
+}
+function setRepFilter(f){
+  repFilter=f;
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim().toLowerCase().startsWith(f==='all'?'tous':f==='pending'?'en':'pa'));
+  });
+  loadRepayments();
+}
+
+async function loadRepayments(){
+  const list=document.getElementById('rep-list');
+  if(!list)return;
+  list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
+  try{
+    let q=sb.from('repayments')
+      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,clients(full_name,phone1))')
+      .eq('scheduled_date',repDate)
+      .order('is_paid',{ascending:true});
+    if(repFilter==='pending')q=q.eq('is_paid',false);
+    if(repFilter==='paid')q=q.eq('is_paid',true);
+    const{data,error}=await q;
+    if(error)throw error;
+    const rows=data||[];
+    if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">event_busy</span><p>Aucun remboursement pour cette date</p></div>`;return;}
+    const paid=rows.filter(r=>r.is_paid).length;
+    list.innerHTML=`
+      <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} remboursement${rows.length>1?'s':''}</span>
+        <span style="font-size:12px;color:#4ade80">${paid} payé${paid>1?'s':''}</span>
+      </div>
+      <div class="glass" style="margin:0 16px;overflow:hidden">
+        ${rows.map(r=>repRow(r)).join('')}
+      </div>`;
+  }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+}
+
+function repRow(r){
+  const name=getName(r.credits);
+  const phone=getPhone(r.credits);
+  const isPaid=r.is_paid;
+  return`<div class="rep-item" id="rep-${r.id}">
+    <div class="rep-avatar">${initials(name)}</div>
+    <div style="flex:1;min-width:0">
+      <p style="font-size:14px;font-weight:600;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin:0">${fmt(r.amount)} FCFA</p>
+      ${r.is_reported?`<span class="badge badge-blue" style="margin-top:4px;font-size:9px">Reporté</span>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="toggleRepPaid('${r.id}',${isPaid},this)">
+        <span class="material-symbols-outlined" style="font-size:13px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
+        ${isPaid?'Payé':'En attente'}
+      </button>
+      ${phone?`<div style="display:flex;gap:4px">
+        <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>
         </button>
+        <button class="action-btn ab-call" onclick="call('${phone}')">
+          <span class="material-symbols-outlined filled" style="font-size:18px">call</span>
+        </button>
+      </div>`:''}
     </div>
+  </div>`;
+}
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js"></script>
+async function toggleRepPaid(id,isPaid,btn){
+  btn.disabled=true;
+  try{
+    const newPaid=!isPaid;
+    const{error}=await sb.from('repayments').update({
+      is_paid:newPaid,
+      actual_payment_date:newPaid?today():null
+    }).eq('id',id);
+    if(error)throw error;
+    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+    loadRepayments();
+  }catch(e){toast('Erreur','err');btn.disabled=false;}
+}
+
+// ═══════════════════════════════════════════════
+//  ÉCRAN 3 : CRÉDITS
+// ═══════════════════════════════════════════════
+let credSearch='';
+let credFilter='all';
+
+async function viewCredits(){
+  document.getElementById('view').innerHTML=`
+  <div style="padding-top:12px;padding-bottom:80px">
+    <div class="search-wrap">
+      <span class="material-symbols-outlined">search</span>
+      <input class="search-inp" type="search" placeholder="Rechercher un client…" value="${credSearch}"
+        oninput="credSearch=this.value;loadCredits()"/>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-btn ${credFilter==='all'?'active':''}" onclick="setCredFilter('all')">Tous</div>
+      <div class="tab-btn ${credFilter==='encours'?'active':''}" onclick="setCredFilter('encours')">En cours</div>
+      <div class="tab-btn ${credFilter==='souffrance'?'active':''}" onclick="setCredFilter('souffrance')">Souffrance</div>
+    </div>
+    <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
+  </div>`;
+  loadCredits();
+}
+
+function setCredFilter(f){
+  credFilter=f;
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const t=b.textContent.trim().toLowerCase();
+    b.classList.toggle('active',(f==='all'&&t==='tous')||(f==='encours'&&t==='en cours')||(f==='souffrance'&&t==='souffrance'));
+  });
+  loadCredits();
+}
+
+async function loadCredits(){
+  const list=document.getElementById('cred-list');
+  if(!list)return;
+  list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
+  try{
+    let q=sb.from('credits')
+      .select('id,amount,status,type,client_name,phone,health,end_date,clients(full_name,phone1)')
+      .not('status','in','("Soldé","SOLDÉ","soldé")')
+      .order('created_at',{ascending:false});
+    if(credFilter==='encours')q=q.in('status',['En cours','en cours','ENCOURS']);
+    if(credFilter==='souffrance')q=q.eq('health','Souffrance');
+    const{data,error}=await q;
+    if(error)throw error;
+    let rows=data||[];
+    if(credSearch){
+      const s=credSearch.toLowerCase();
+      rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));
+    }
+    if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
+
+    // Pour chaque crédit, compter les remboursements
+    const ids=rows.map(c=>c.id);
+    const{data:repsAll}=await sb.from('repayments').select('credit_id,is_paid').in('credit_id',ids);
+    const repsMap={};
+    (repsAll||[]).forEach(r=>{
+      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0};
+      repsMap[r.credit_id].total++;
+      if(r.is_paid)repsMap[r.credit_id].paid++;
+    });
+
+    list.innerHTML=`
+      <div style="padding:0 16px 8px">
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} dossier${rows.length>1?'s':''}</span>
+      </div>
+      <div class="glass" style="margin:0 16px;overflow:hidden">
+        ${rows.map(c=>credRow(c,repsMap[c.id]||{total:0,paid:0})).join('')}
+      </div>`;
+  }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+}
+
+function credRow(c,reps){
+  const name=getName(c);
+  const phone=getPhone(c);
+  const pct=reps.total>0?Math.round(reps.paid/reps.total*100):0;
+  const isS=c.health==='Souffrance';
+  return`<div class="cred-item">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <p style="font-size:14px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${name}</p>
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px">${c.health||'Sain'}</span>
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(c.amount)} FCFA · ${c.type||'—'}</p>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <p style="font-size:10px;color:rgba(255,255,255,.3);margin:4px 0 0">${reps.paid}/${reps.total} échéances · ${pct}%</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="btn-ghost" style="padding:6px 10px;font-size:11px" onclick="viewEcheancier('${c.id}','${name.replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span> Échéancier
+        </button>
+        <div style="display:flex;gap:4px">
+          ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
+          </button>
+          <button class="action-btn ab-call" onclick="call('${phone}')">
+            <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
+          </button>`:''}
+          <button class="action-btn ab-del" onclick="deleteCredit('${c.id}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined" style="font-size:17px">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function viewEcheancier(creditId,clientName){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  try{
+    const{data,error}=await sb.from('repayments')
+      .select('id,installment_number,scheduled_date,amount,is_paid,is_reported,actual_payment_date')
+      .eq('credit_id',creditId)
+      .order('installment_number',{ascending:true});
+    if(error)throw error;
+    const rows=data||[];
+    const paid=rows.filter(r=>r.is_paid).length;
+    const t=today();
+    document.getElementById('modal-content').innerHTML=`
+      <div style="padding:0 20px 20px">
+        <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">${clientName}</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div class="glass-sm" style="flex:1;padding:10px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:#4ade80">${paid}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">Payés</div>
+          </div>
+          <div class="glass-sm" style="flex:1;padding:10px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:#fb923c">${rows.length-paid}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">Restants</div>
+          </div>
+          <div class="glass-sm" style="flex:1;padding:10px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:white">${rows.length}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">Total</div>
+          </div>
+        </div>
+        <div class="glass" style="overflow:hidden">
+          ${rows.map(r=>{
+            const overdue=!r.is_paid&&r.scheduled_date<t;
+            return`<div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:8px;background:${r.is_paid?'rgba(34,197,94,.15)':overdue?'rgba(239,68,68,.15)':'rgba(255,255,255,.06)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span class="material-symbols-outlined filled" style="font-size:16px;color:${r.is_paid?'#4ade80':overdue?'#f87171':'rgba(255,255,255,.4)'}">${r.is_paid?'check_circle':overdue?'warning':'radio_button_unchecked'}</span>
+              </div>
+              <div style="flex:1">
+                <p style="font-size:13px;font-weight:600;margin:0">N°${String(r.installment_number||'—').padStart(2,'0')} · ${fmtDate(r.scheduled_date)}</p>
+                <p style="font-size:11px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(r.amount)} FCFA${r.is_paid&&r.actual_payment_date?' · Payé le '+fmtDate(r.actual_payment_date):''}</p>
+              </div>
+              <button class="toggle-paid ${r.is_paid?'paid':'pending'}" onclick="toggleEch('${r.id}',${r.is_paid},'${creditId}','${clientName.replace(/'/g,"\\'")}',this)" style="font-size:10px;padding:5px 9px">
+                <span class="material-symbols-outlined" style="font-size:12px">${r.is_paid?'check_circle':'radio_button_unchecked'}</span>
+                ${r.is_paid?'Payé':'Attente'}
+              </button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;
+  }
+}
+
+async function toggleEch(id,isPaid,creditId,clientName,btn){
+  btn.disabled=true;
+  try{
+    const newPaid=!isPaid;
+    const{error}=await sb.from('repayments').update({
+      is_paid:newPaid,
+      actual_payment_date:newPaid?today():null
+    }).eq('id',id);
+    if(error)throw error;
+    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+    viewEcheancier(creditId,clientName);
+  }catch(e){toast('Erreur','err');btn.disabled=false;}
+}
+
+async function deleteCredit(id,name){
+  openConfirm(`Supprimer le dossier de ${name} ?`,'Cette action supprime le crédit et ses échéanciers.',async()=>{
+    try{
+      await sb.from('repayments').delete().eq('credit_id',id);
+      await sb.from('credits').delete().eq('id',id);
+      toast('Dossier supprimé','ok');
+      loadCredits();
+    }catch(e){toast('Erreur suppression','err');}
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  ÉCRAN 4 : PROSPECTS
+// ═══════════════════════════════════════════════
+let prosSearch='';
+let prosFilter='all';
+
+async function viewProspects(){
+  document.getElementById('view').innerHTML=`
+  <div style="padding-top:12px;padding-bottom:80px">
+    <div class="search-wrap">
+      <span class="material-symbols-outlined">search</span>
+      <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
+        oninput="prosSearch=this.value;loadProspects()"/>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-btn ${prosFilter==='all'?'active':''}" onclick="setProsFilter('all')">Tous</div>
+      <div class="tab-btn ${prosFilter==='Nouveau'?'active':''}" onclick="setProsFilter('Nouveau')">Nouveaux</div>
+      <div class="tab-btn ${prosFilter==='À relancer'?'active':''}" onclick="setProsFilter('À relancer')">À relancer</div>
+      <div class="tab-btn ${prosFilter==='Converti'?'active':''}" onclick="setProsFilter('Converti')">Convertis</div>
+    </div>
+    <div id="pros-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
+  </div>`;
+  showFab(()=>openProspectForm());
+  loadProspects();
+}
+
+function setProsFilter(f){
+  prosFilter=f;
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const t=b.textContent.trim();
+    b.classList.toggle('active',
+      (f==='all'&&t==='Tous')||(f==='Nouveau'&&t==='Nouveaux')||
+      (f==='À relancer'&&t==='À relancer')||(f==='Converti'&&t==='Convertis'));
+  });
+  loadProspects();
+}
+
+async function loadProspects(){
+  const list=document.getElementById('pros-list');
+  if(!list)return;
+  list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
+  try{
+    let q=sb.from('prospects').select('*').order('created_at',{ascending:false});
+    if(prosFilter!=='all')q=q.eq('status',prosFilter);
+    const{data,error}=await q;
+    if(error)throw error;
+    let rows=data||[];
+    if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone1||'').includes(s));}
+    if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">person_search</span><p>Aucun prospect trouvé</p></div>`;return;}
+    list.innerHTML=`
+      <div style="padding:0 16px 8px"><span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span></div>
+      <div class="glass" style="margin:0 16px;overflow:hidden">
+        ${rows.map(p=>prosRow(p)).join('')}
+      </div>`;
+  }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+}
+
+const STATUS_COLORS={'Nouveau':'badge-blue','À relancer':'badge-orange','Converti':'badge-green','Perdu':'badge-red'};
+function prosRow(p){
+  const name=p.full_name||'Inconnu';
+  const phone=p.phone1||'';
+  const sc=STATUS_COLORS[p.status]||'badge-gray';
+  return`<div class="pros-item">
+    <div class="pros-avatar">${initials(name)}</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <p style="font-size:14px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${name}</p>
+        <span class="badge ${sc}" style="font-size:9px">${p.status||'—'}</span>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+      <div style="display:flex;gap:4px">
+        ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
+        </button>
+        <button class="action-btn ab-call" onclick="call('${phone}')">
+          <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
+        </button>`:''}
+        <button class="action-btn ab-edit" onclick="openProspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+          <span class="material-symbols-outlined" style="font-size:17px">edit</span>
+        </button>
+        <button class="action-btn ab-del" onclick="deleteProspect('${p.id}','${name.replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined" style="font-size:17px">delete</span>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openProspectForm(p=null){
+  const isEdit=!!p;
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">${isEdit?'Modifier le prospect':'Nouveau prospect'}</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;color:rgba(255,255,255,.5);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Nom complet *</label>
+          <input id="pf-name" class="m-input" type="text" placeholder="Nom et prénom" value="${p?.full_name||''}"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:rgba(255,255,255,.5);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Téléphone</label>
+          <input id="pf-phone" class="m-input" type="tel" placeholder="+225 07 00 00 00" value="${p?.phone1||''}" inputmode="tel"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:rgba(255,255,255,.5);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Activité</label>
+          <input id="pf-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${p?.activity||''}"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:rgba(255,255,255,.5);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Statut</label>
+          <select id="pf-status" class="m-input m-select">
+            <option value="Nouveau" ${(p?.status||'Nouveau')==='Nouveau'?'selected':''}>Nouveau</option>
+            <option value="À relancer" ${p?.status==='À relancer'?'selected':''}>À relancer</option>
+            <option value="Converti" ${p?.status==='Converti'?'selected':''}>Converti</option>
+            <option value="Perdu" ${p?.status==='Perdu'?'selected':''}>Perdu</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:rgba(255,255,255,.5);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Notes</label>
+          <textarea id="pf-notes" class="m-input" rows="3" placeholder="Informations complémentaires…" style="resize:none">${p?.notes||''}</textarea>
+        </div>
+        <button class="btn-primary" onclick="saveProspect(${p?`'${p.id}'`:null})" style="margin-top:4px">
+          <span class="material-symbols-outlined filled" style="font-size:18px">${isEdit?'save':'person_add'}</span>
+          ${isEdit?'Enregistrer les modifications':'Ajouter le prospect'}
+        </button>
+        ${isEdit?`<button class="btn-ghost" onclick="deleteProspect('${p.id}','${(p.full_name||'').replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span> Supprimer
+        </button>`:''}
+      </div>
+    </div>`);
+}
+
+async function saveProspect(id=null){
+  const name=document.getElementById('pf-name').value.trim();
+  if(!name){toast('Nom requis','err');return;}
+  const payload={
+    full_name:name,
+    phone1:document.getElementById('pf-phone').value.trim()||null,
+    activity:document.getElementById('pf-activity').value.trim()||null,
+    status:document.getElementById('pf-status').value,
+    notes:document.getElementById('pf-notes').value.trim()||null,
+  };
+  try{
+    let error;
+    if(id){
+      ({error}=await sb.from('prospects').update(payload).eq('id',id));
+    }else{
+      payload.created_by=currentUser?.id;
+      ({error}=await sb.from('prospects').insert([payload]));
+    }
+    if(error)throw error;
+    toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
+    closeModal();
+    loadProspects();
+  }catch(e){toast('Erreur : '+e.message,'err');}
+}
+
+async function deleteProspect(id,name){
+  openConfirm(`Supprimer ${name} ?`,'Cette action est irréversible.',async()=>{
+    try{
+      const{error}=await sb.from('prospects').delete().eq('id',id);
+      if(error)throw error;
+      toast('Prospect supprimé','ok');
+      closeModal();
+      loadProspects();
+    }catch(e){toast('Erreur suppression','err');}
+  });
+}
+
+// ─── LOGOUT ───────────────────────────────────
+function confirmLogout(){
+  openConfirm('Se déconnecter ?','Vous serez redirigé vers la page de connexion.',async()=>{
+    await sb.auth.signOut();
+    window.location.replace('./login.html');
+  });
+}
+
+// Service Worker
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
 </body>
 </html>

@@ -1,67 +1,45 @@
-const CACHE_NAME = "portefin-v1";
-
-const PRECACHE_URLS = [
-  "./index.html",
-  "./login.html",
-  "./app.js",
-  "./manifest.json",
-  "./icons/icon-192.svg",
-  "./icons/icon-512.svg",
+const CACHE = 'portefin-v1';
+const STATIC = [
+  './index.html',
+  './login.html',
+  './manifest.json',
+  './icons/icon-192.svg',
+  './icons/icon-512.svg'
 ];
 
-// Install: pre-cache app shell
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC).catch(() => {})));
   self.skipWaiting();
 });
 
-// Activate: clean old caches
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch: network-first for HTML/API, cache-first for assets
-self.addEventListener("fetch", (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Skip non-GET and cross-origin
-  if (request.method !== "GET" || url.origin !== self.location.origin) return;
-
-  // HTML pages & API: network-first
-  if (request.headers.get("accept")?.includes("text/html") || url.pathname.includes("supabase")) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
+  // Supabase → toujours réseau
+  if (url.includes('supabase.co')) {
+    e.respondWith(fetch(e.request).catch(() =>
+      new Response('{"error":"offline"}', { headers: { 'Content-Type': 'application/json' } })
+    ));
     return;
   }
-
-  // Static assets: cache-first
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        return response;
-      });
+  // Reste → cache-first + mise à jour réseau
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const net = fetch(e.request).then(res => {
+        if (res && res.status === 200 && e.request.method === 'GET') {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        }
+        return res;
+      }).catch(() => {});
+      return cached || net;
     })
   );
 });

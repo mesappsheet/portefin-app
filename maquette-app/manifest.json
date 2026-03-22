@@ -1,13 +1,13 @@
 {
-  "name": "PorteFin - Gestion de Portefeuille",
+  "name": "PorteFin Mobile",
   "short_name": "PorteFin",
-  "description": "Plateforme SaaS de gestion de portefeuille microfinance. Prospection, crédits et tableau de bord unifié.",
+  "description": "Gestion microfinance sur le terrain — remboursements, crédits, prospects.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#111821",
-  "theme_color": "#1763cf",
+  "orientation": "portrait",
+  "background_color": "#0c1425",
+  "theme_color": "#0c1425",
   "lang": "fr",
   "categories": ["finance", "business", "productivity"],
   "icons": [
@@ -30,14 +30,7 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "form_factor": "narrow",
-      "label": "PorteFin - Tableau de bord"
-    },
-    {
-      "src": "icons/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "form_factor": "wide",
-      "label": "PorteFin - Vue desktop"
+      "label": "PorteFin Mobile — Tableau de bord"
     }
   ],
   "prefer_related_applications": false
