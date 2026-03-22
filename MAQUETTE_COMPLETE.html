@@ -8264,6 +8264,7 @@ Suivant
             moduleLabel.textContent = currentModule === 'credits' ? "Module : CRÉDITS (Données Strictes + Échéancier)" : "Module : PROSPECTION (Coordonnées & Activités)";
             
             showNotification("Analyse du fichier en cours...", "info");
+            window.pauseInactivityTimer?.();
 
             try {
                 const results = await ImportEngine.processFile(file, currentImportModule);
@@ -8331,6 +8332,8 @@ Suivant
             } catch (err) {
                 console.error("Import Error:", err);
                 showNotification("Échec de la lecture du fichier", "error");
+            } finally {
+                window.resumeInactivityTimer?.();
             }
         }
 
@@ -8345,6 +8348,8 @@ Suivant
             const confirmBtn = document.getElementById('import-confirm-btn');
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = `<span class="size-4 border-2 border-white/20 border-t-white animate-spin rounded-full"></span> Importation...`;
+
+            window.pauseInactivityTimer?.();
 
             try {
                 const { data: { user } } = await _supabase.auth.getUser();
@@ -8396,6 +8401,8 @@ Suivant
                 showNotification("Erreur lors de la sauvegarde : " + (err.message || "Erreur inconnue"), "error");
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Confirmer l'importation`;
+            } finally {
+                window.resumeInactivityTimer?.();
             }
         }
     </script>
@@ -8435,14 +8442,26 @@ Suivant
         // ── Timer d'inactivité : 1 minute ───────────────────────────────
         const INACTIVITY_MS = 60 * 1000; // 1 minute
         let inactivityTimer = null;
+        let inactivityPaused = false;
 
         function resetInactivityTimer() {
+            if (inactivityPaused) return;
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(function() {
                 sessionStorage.removeItem("portefin_session");
                 window.location.replace("./login.html");
             }, INACTIVITY_MS);
         }
+
+        // Exposé globalement pour les opérations longues (import, etc.)
+        window.pauseInactivityTimer = function() {
+            inactivityPaused = true;
+            clearTimeout(inactivityTimer);
+        };
+        window.resumeInactivityTimer = function() {
+            inactivityPaused = false;
+            resetInactivityTimer();
+        };
 
         ["mousemove","mousedown","keydown","touchstart","scroll","click"].forEach(function(evt) {
             document.addEventListener(evt, resetInactivityTimer, { passive: true, capture: true });
