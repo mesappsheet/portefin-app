@@ -7011,8 +7011,8 @@ Suivant
 
         async function fetchProspectHeroStats() {
             try {
-                const headers = { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` };
-                const base = _SB_URL + '/rest/v1/prospects';
+                const headers = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+                const base = SB_URL + '/rest/v1/prospects';
                 const [totalRes, nouveauRes, convertiRes] = await Promise.all([
                     fetch(`${base}?select=id`, { headers }),
                     fetch(`${base}?select=id&status=eq.NOUVEAU`, { headers }),
@@ -7030,11 +7030,11 @@ Suivant
 
         async function fetchCreditHeroStats() {
             try {
-                const headers = { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` };
-                const base = _SB_URL + '/rest/v1/credits';
+                const headers = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+                const base = SB_URL + '/rest/v1/credits';
                 const [actifRes, unpaidRes, soufRes] = await Promise.all([
                     fetch(`${base}?select=id&status=eq.EN COURS`, { headers }),
-                    fetch(`${_SB_URL}/rest/v1/repayments?select=credit_id&scheduled_date=lt.${new Date().toISOString().split('T')[0]}&is_paid=eq.false`, { headers }),
+                    fetch(`${SB_URL}/rest/v1/repayments?select=credit_id&scheduled_date=lt.${new Date().toISOString().split('T')[0]}&is_paid=eq.false`, { headers }),
                     fetch(`${base}?select=id&health=ilike.SOUFFRANCE*&status=neq.SOLDÉ`, { headers })
                 ]);
                 const actifs = await actifRes.json().catch(() => []);
