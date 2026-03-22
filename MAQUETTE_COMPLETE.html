@@ -7862,18 +7862,20 @@ Suivant
                     }
                     inputs.forEach(el => el.disabled = false);
 
-                    // Pré-remplissage
+                    // Pré-remplissage — les crédits importés ont les données dans la table
+                    // credits (client_name, phone, email, activity, address) et non dans clients
+                    // On utilise snapshot.* comme fallback pour les champs manquants dans clients
                     const client = snapshot.clients || {};
-                    document.getElementById('credit-name').value = client.full_name || snapshot.client_name || '';
-                    document.getElementById('credit-email').value = client.email || '';
-                    document.getElementById('credit-phone1').value = client.phone1 || '';
-                    document.getElementById('credit-phone2').value = client.phone2 || '';
-                    document.getElementById('credit-activity').value = client.activity || '';
-                    document.getElementById('credit-address').value = client.address || '';
-                    document.getElementById('credit-amount').value = snapshot.amount || '';
-                    document.getElementById('credit-type').value = snapshot.type || 'Prêt Personnel';
+                    document.getElementById('credit-name').value     = client.full_name || snapshot.client_name || '';
+                    document.getElementById('credit-email').value    = client.email     || snapshot.email       || '';
+                    document.getElementById('credit-phone1').value   = client.phone1    || snapshot.phone       || '';
+                    document.getElementById('credit-phone2').value   = client.phone2    || '';
+                    document.getElementById('credit-activity').value = client.activity  || snapshot.activity    || '';
+                    document.getElementById('credit-address').value  = client.address   || snapshot.address     || '';
+                    document.getElementById('credit-amount').value     = snapshot.amount     || '';
+                    document.getElementById('credit-type').value       = snapshot.type       || 'Prêt Personnel';
                     document.getElementById('credit-start-date').value = snapshot.start_date || '';
-                    document.getElementById('credit-end-date').value = snapshot.end_date || '';
+                    document.getElementById('credit-end-date').value   = snapshot.end_date   || '';
 
                     window.editingCreditId = null;
                     window.editingClientId = null;
