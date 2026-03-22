@@ -4041,27 +4041,33 @@ Suivant
     <div class="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
         <div>
             <h3 class="text-xl font-bold text-slate-900 dark:text-white">Reporter l'échéance</h3>
-            <p class="text-sm text-slate-500">Période de règlement : Mai 2024</p>
+            <p id="report-installment-num" class="text-sm text-slate-500 font-medium">—</p>
         </div>
         <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
             <span class="material-symbols-outlined">close</span>
         </button>
     </div>
-    <div class="p-6">
-        <div class="space-y-4">
-            <div class="space-y-2">
-                <label class="text-sm font-semibold block text-slate-800 dark:text-slate-200">Nouvelle date de paiement</label>
-                <input id="report-date" type="date" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all">
+    <div class="p-6 space-y-4">
+        <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <span class="material-symbols-outlined text-slate-400">event</span>
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date actuelle</p>
+                <p id="report-current-date" class="text-sm font-bold text-slate-800 dark:text-slate-200">—</p>
             </div>
         </div>
         <div class="space-y-2">
-            <label class="text-sm font-semibold block text-slate-800 dark:text-slate-200">Motif du report (optionnel)</label>
-            <textarea id="report-reason" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 min-h-[80px] placeholder:text-slate-400 transition-all" placeholder="Ex: Difficulté de trésorerie temporaire..."></textarea>
+            <label class="text-sm font-semibold block text-slate-800 dark:text-slate-200">Nouvelle date de paiement</label>
+            <input id="report-date" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all">
+            <p id="report-weekend-warn" class="hidden text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"></p>
         </div>
-        <div class="mt-4 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900 flex gap-3">
+        <div class="space-y-2">
+            <label class="text-sm font-semibold block text-slate-800 dark:text-slate-200">Motif du report (optionnel)</label>
+            <textarea id="report-reason" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 min-h-[80px] placeholder:text-slate-400 transition-all" placeholder="Ex: Jour férié, fête nationale non planifiée..."></textarea>
+        </div>
+        <div class="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900 flex gap-3">
             <span class="material-symbols-outlined text-primary text-xl">info</span>
             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Le report d'échéance du <span class="font-bold text-slate-800 dark:text-slate-200">15 mai</span> au <span class="font-bold text-slate-800 dark:text-slate-200">20 mai 2024</span> peut engendrer des frais additionnels.
+                Les dates tombant un samedi ou dimanche sont automatiquement décalées au <strong>lundi suivant</strong>.
             </p>
         </div>
     </div>
@@ -4070,7 +4076,7 @@ Suivant
             Annuler
         </button>
         <button onclick="handleSaveReport()" class="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
-            Confirmer le report
+            <span class="material-symbols-outlined text-[16px] mr-1">event_available</span> Confirmer le report
         </button>
     </div>
 </div>
@@ -4697,6 +4703,25 @@ Suivant
         let targetId = null; // Store ID for modals
         window.editingCreditId = null;
         window.editingClientId = null;
+
+        // ── Utilitaires dates (weekend + formatage) ──────────────────────────
+        function skipWeekend(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            if (day === 6) d.setDate(d.getDate() + 2); // Samedi → Lundi
+            else if (day === 0) d.setDate(d.getDate() + 1); // Dimanche → Lundi
+            return d;
+        }
+        function toLocalDateStr(date) {
+            if (!date || isNaN(date.getTime())) return null;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        // Expose globalement pour CreditModule.js
+        window.skipWeekend = skipWeekend;
+        window.toLocalDateStr = toLocalDateStr;
 
         function openModal(screenId, id = null) {
             targetId = id;
@@ -5758,8 +5783,8 @@ Suivant
                              <button onclick="handleMarkAsPaid('${r.id}')" class="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 transition-all shadow-sm">
                                 <span class="material-symbols-outlined text-[16px]">payments</span> Encaisser
                              </button>
-                             <button onclick="openModal('credits_report', '${r.id}')" class="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                <span class="material-symbols-outlined text-[16px]">calendar_month</span> ${r.is_reported ? 'Gérer Report' : 'Reporter'}
+                             <button onclick="openReportModal('${r.id}', '${r.scheduled_date}', ${r.installment_number})" class="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                <span class="material-symbols-outlined text-[16px]">calendar_month</span> ${r.is_reported ? 'Modifier Report' : 'Reporter'}
                              </button>
                             `
                         }
@@ -5790,28 +5815,76 @@ Suivant
             }
         }
 
+        // Ouvre le modal de report avec pré-remplissage
+        function openReportModal(repaymentId, scheduledDate, installmentNum) {
+            targetId = repaymentId;
+            openModal('credits_report', repaymentId);
+            // Pré-remplissage après rendu du modal
+            setTimeout(() => {
+                const dateInput = document.getElementById('report-date');
+                if (dateInput) {
+                    dateInput.value = scheduledDate;
+                    dateInput.min = toLocalDateStr(new Date());
+                    // Écoute changement pour avertir si weekend
+                    dateInput.onchange = function() {
+                        const chosen = new Date(this.value + 'T12:00:00');
+                        const adjusted = skipWeekend(new Date(chosen));
+                        const adjustedStr = toLocalDateStr(adjusted);
+                        const warnEl = document.getElementById('report-weekend-warn');
+                        if (warnEl) {
+                            if (adjustedStr !== this.value) {
+                                warnEl.textContent = `⚠ Weekend détecté — sera automatiquement reporté au ${adjusted.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long'})}`;
+                                warnEl.classList.remove('hidden');
+                            } else {
+                                warnEl.classList.add('hidden');
+                            }
+                        }
+                    };
+                }
+                const numEl = document.getElementById('report-installment-num');
+                if (numEl) numEl.textContent = `Échéance n°${String(installmentNum).padStart(2, '0')}`;
+                const curEl = document.getElementById('report-current-date');
+                if (curEl) {
+                    const d = new Date(scheduledDate + 'T12:00:00');
+                    curEl.textContent = d.toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'});
+                }
+                const warnEl = document.getElementById('report-weekend-warn');
+                if (warnEl) warnEl.classList.add('hidden');
+                const reasonEl = document.getElementById('report-reason');
+                if (reasonEl) reasonEl.value = '';
+            }, 0);
+        }
+
         async function handleSaveReport() {
             if (!targetId) return;
-            const newDate = document.getElementById('report-date').value;
+            const rawDate = document.getElementById('report-date').value;
             const reason = document.getElementById('report-reason').value;
 
-            if (!newDate) return alert("Veuillez choisir une nouvelle date.");
+            if (!rawDate) return alert("Veuillez choisir une nouvelle date.");
+
+            // Applique le saut de weekend
+            const adjusted = skipWeekend(new Date(rawDate + 'T12:00:00'));
+            const newDate = toLocalDateStr(adjusted);
 
             const { error } = await _supabase
                 .from('repayments')
-                .update({ 
-                    scheduled_date: newDate, 
-                    report_reason: reason,
-                    is_reported: true 
+                .update({
+                    scheduled_date: newDate,
+                    report_reason: reason || null,
+                    is_reported: true
                 })
                 .eq('id', targetId);
 
             if (error) {
                 alert("Erreur lors du report : " + error.message);
             } else {
-                alert("Échéance reportée avec succès !");
+                const msg = newDate !== rawDate
+                    ? `Échéance reportée au ${adjusted.toLocaleDateString('fr-FR')} (weekend → lundi)`
+                    : `Échéance reportée au ${adjusted.toLocaleDateString('fr-FR')}`;
+                showNotification(msg, 'success');
                 closeModal();
                 if (currentCredit) populateScheduleView(currentCredit);
+                if (typeof fetchProgressCredits === 'function') fetchProgressCredits();
             }
         }
 
@@ -5843,11 +5916,12 @@ Suivant
                 if (currentDate > end && monthCount > 1) break; // Ensure at least one if possible
                 if (currentDate > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break; // Buffer 15 days
 
+                const adjustedDate = skipWeekend(new Date(currentDate));
                 repayments.push({
                     credit_id: currentCredit.id,
                     installment_number: monthCount,
-                    scheduled_date: currentDate.toISOString().split('T')[0],
-                    amount: null, // Pas de montant affiché selon demande
+                    scheduled_date: toLocalDateStr(adjustedDate),
+                    amount: null,
                     status: 'En attente'
                 });
 

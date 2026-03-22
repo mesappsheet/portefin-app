@@ -124,10 +124,16 @@ class CreditModule {
             // Si on a dépassé la date de fin de plus de 15 jours, on arrête
             if (currentDueDate > new Date(endDate.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
             
-            let adjustedDate = new Date(currentDueDate);
-            const dayOfWeek = adjustedDate.getDay();
-            if (dayOfWeek === 6) adjustedDate.setDate(adjustedDate.getDate() + 2); // Samedi -> Lundi
-            else if (dayOfWeek === 0) adjustedDate.setDate(adjustedDate.getDate() + 1); // Dimanche -> Lundi
+            // Utilise la fonction globale si disponible, sinon inline
+            let adjustedDate = (typeof window !== 'undefined' && window.skipWeekend)
+                ? window.skipWeekend(new Date(currentDueDate))
+                : (() => {
+                    const d = new Date(currentDueDate);
+                    const day = d.getDay();
+                    if (day === 6) d.setDate(d.getDate() + 2);
+                    else if (day === 0) d.setDate(d.getDate() + 1);
+                    return d;
+                })();
 
             schedule.push({
                 installment_number: monthCount,
