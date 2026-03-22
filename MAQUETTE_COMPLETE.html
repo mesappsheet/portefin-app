@@ -119,10 +119,33 @@
         }
 
         /* Custom scrollbar for better look */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f27f0d; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* ── Tableaux de données : défilement + en-têtes figés ─────────────── */
+        .tbl-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 62vh;
+            border-radius: 0.75rem;
+        }
+        .tbl-scroll table {
+            min-width: 580px; /* force le scroll horizontal sur petit écran */
+        }
+        .tbl-scroll thead th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 15 !important;
+            background-color: #f8fafc !important;
+            box-shadow: 0 1px 0 #e2e8f0;
+        }
+        .dark .tbl-scroll thead th {
+            background-color: #1e293b !important;
+            box-shadow: 0 1px 0 #334155;
+        }
 
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
@@ -7075,6 +7098,30 @@ Suivant
                     </td>
                 </tr>`;
             }).join('');
+        }
+
+        // ── Auto-scroll tables : applique tbl-scroll sur tous les wrappers de tableau ──
+        function applyTableScroll() {
+            document.querySelectorAll('#main-content table, #modal-content table').forEach(table => {
+                const wrapper = table.parentElement;
+                if (!wrapper || wrapper.classList.contains('tbl-scroll')) return;
+                // Ne pas appliquer aux tableaux sans thead (pas des tableaux de données)
+                if (!table.querySelector('thead')) return;
+                wrapper.classList.remove('overflow-hidden');
+                wrapper.classList.add('tbl-scroll');
+            });
+        }
+
+        // Observe les changements dans le contenu principal pour re-appliquer automatiquement
+        const _tblObserver = new MutationObserver(() => applyTableScroll());
+        const _mainContent = document.getElementById('main-content');
+        if (_mainContent) {
+            _tblObserver.observe(_mainContent, { childList: true, subtree: true });
+        }
+        // Applique aussi dans les modals
+        const _modalContent = document.getElementById('modal-content');
+        if (_modalContent) {
+            _tblObserver.observe(_modalContent, { childList: true, subtree: true });
         }
 
         function updateDashboardTime() {
