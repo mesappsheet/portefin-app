@@ -593,7 +593,7 @@
 </div>
 
 <!-- Impayés -->
-<div onclick="switchModule('credits'); loadScreen('credits_unpaid');" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all group flex flex-col justify-between min-h-[120px]">
+<div onclick="switchModule('credits'); loadScreen('credits_unpaid');" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all group flex flex-col justify-between min-h-[120px] overflow-hidden">
   <div class="flex items-center justify-between">
     <div class="size-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
       <span class="material-symbols-outlined text-lg">warning</span>
@@ -608,7 +608,7 @@
 </div>
 
 <!-- En Souffrance -->
-<div onclick="switchModule('credits'); loadScreen('credits_souffrance');" class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800 shadow-sm cursor-pointer hover:border-orange-400 hover:shadow-md transition-all group flex flex-col justify-between min-h-[120px]">
+<div onclick="switchModule('credits'); loadScreen('credits_souffrance');" class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800 shadow-sm cursor-pointer hover:border-orange-400 hover:shadow-md transition-all group flex flex-col justify-between min-h-[120px] overflow-hidden">
   <div class="flex items-center justify-between">
     <div class="size-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0">
       <span class="material-symbols-outlined text-lg">health_and_safety</span>
@@ -7101,26 +7101,25 @@ Suivant
             }).join('');
         }
 
-        // ── Auto-scroll tables : applique tbl-scroll sur tous les wrappers de tableau ──
+        // ── Auto-scroll tables : enveloppe chaque tableau dans un div.tbl-scroll ──
         function applyTableScroll() {
-            document.querySelectorAll('#main-content table, #modal-content table').forEach(table => {
-                const wrapper = table.parentElement;
-                if (!wrapper || wrapper.classList.contains('tbl-scroll')) return;
-                // Ne pas appliquer aux tableaux sans thead (pas des tableaux de données)
-                if (!table.querySelector('thead')) return;
-                wrapper.classList.remove('overflow-hidden');
-                wrapper.classList.add('tbl-scroll');
+            document.querySelectorAll('table').forEach(table => {
+                if (!table.querySelector('thead')) return; // ignorer sans en-tête
+                if (table.closest('.tbl-scroll')) return; // déjà enveloppé
+                // Insérer un nouveau div wrapper sans toucher aux classes existantes
+                const wrapper = document.createElement('div');
+                wrapper.className = 'tbl-scroll';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
             });
         }
 
-        // Observe les changements dans le contenu principal pour re-appliquer automatiquement
+        // Observe les changements dans view-container (écrans dynamiques)
         const _tblObserver = new MutationObserver(() => applyTableScroll());
-        // view-container = zone principale des écrans dynamiques
         const _viewContainer = document.getElementById('view-container');
         if (_viewContainer) {
             _tblObserver.observe(_viewContainer, { childList: true, subtree: true });
         }
-        // modal-content = zone des modals
         const _modalContentEl = document.getElementById('modal-content');
         if (_modalContentEl) {
             _tblObserver.observe(_modalContentEl, { childList: true, subtree: true });
@@ -7845,8 +7844,11 @@ Suivant
                     const { error: err4 } = await _supabase.from('credits').delete().eq('id', creditId);
                     if (err4) throw err4;
 
-                    const { error: err5 } = await _supabase.from('clients').delete().eq('id', clientId);
-                    if (err5) throw err5;
+                    // Ne supprimer le client que s'il existe (clientId peut être null pour crédits importés)
+                    if (clientId) {
+                        const { error: err5 } = await _supabase.from('clients').delete().eq('id', clientId);
+                        if (err5) throw err5;
+                    }
 
                     // --- ÉTAPE 4 : Alerte de Succès et Libération ---
                     alert("✅ ANCIENNES DONNÉES SUPPRIMÉES !\n\nLe formulaire est maintenant disponible pour la nouvelle saisie.");
