@@ -330,6 +330,54 @@
     </div>
 
     <!-- Modal Overlay -->
+
+    <!-- Overlay bloquant : progression suppression -->
+    <div id="deletion-progress-overlay" class="fixed inset-0 z-[999999] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-80 p-8 text-center space-y-5">
+            <div class="size-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl text-red-600 animate-spin" style="animation:spin 1s linear infinite">progress_activity</span>
+            </div>
+            <div>
+                <p class="text-base font-black text-slate-800 dark:text-white">Suppression en cours…</p>
+                <p class="text-sm text-slate-500 mt-1">Veuillez patienter, ne fermez pas la page.</p>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Progression</span>
+                    <span id="del-progress-text">0 / 0</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div id="del-progress-bar" class="h-2.5 bg-red-500 rounded-full transition-all duration-300" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale résultat suppression -->
+    <div id="deletion-result-overlay" class="fixed inset-0 z-[999999] hidden items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm text-center overflow-hidden">
+            <div id="del-result-header" class="px-6 py-5"></div>
+            <div class="px-6 py-6 space-y-3">
+                <p id="del-result-msg" class="text-sm font-semibold text-slate-600 dark:text-slate-300"></p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                        <p class="text-2xl font-black" id="del-result-ok">0</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">Supprimés</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                        <p class="text-2xl font-black text-red-500" id="del-result-err">0</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">Erreurs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 pb-6">
+                <button onclick="document.getElementById('deletion-result-overlay').classList.replace('flex','hidden')" class="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-xl text-sm uppercase tracking-widest hover:opacity-90 transition-all">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Confirmation Suppression Collective (2 étapes) -->
     <div id="bulk-delete-overlay" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-red-100 dark:border-red-900/30 overflow-hidden">
@@ -8136,22 +8184,23 @@ Suivant
                 `Vous êtes sur le point de supprimer <strong>${ids.length} dossier(s) de crédit</strong> sélectionné(s).`,
                 ['Dossiers de crédit', 'Échéanciers de remboursement', 'Notes associées', 'Documents associés'],
                 async () => {
-                    showNotification('Suppression en cours...', 'info');
+                    window.pauseInactivityTimer?.();
                     let errors = 0;
-                    for (const id of ids) {
+                    for (let i = 0; i < ids.length; i++) {
+                        showDeletionProgress(i, ids.length);
                         try {
-                            await _supabase.from('repayments').delete().eq('credit_id', id);
-                            await _supabase.from('credit_notes').delete().eq('credit_id', id);
-                            await _supabase.from('credit_documents').delete().eq('credit_id', id);
-                            const { error } = await _supabase.from('credits').delete().eq('id', id);
+                            await _supabase.from('repayments').delete().eq('credit_id', ids[i]);
+                            await _supabase.from('credit_notes').delete().eq('credit_id', ids[i]);
+                            await _supabase.from('credit_documents').delete().eq('credit_id', ids[i]);
+                            const { error } = await _supabase.from('credits').delete().eq('id', ids[i]);
                             if (error) errors++;
                         } catch (e) { errors++; }
                     }
-                    if (errors === 0) {
-                        showNotification(`${ids.length} dossier(s) supprimé(s) avec succès.`, 'success');
-                    } else {
-                        showNotification(`Suppression partielle : ${errors} erreur(s).`, 'error');
-                    }
+                    showDeletionProgress(ids.length, ids.length);
+                    await new Promise(r => setTimeout(r, 300));
+                    hideDeletionProgress();
+                    showDeletionResult(ids.length, errors);
+                    window.resumeInactivityTimer?.();
                     selectedCreditIds.clear();
                     updateCreditSelectionBar();
                     const masterCbC = document.getElementById('credit-select-all');
@@ -8217,20 +8266,21 @@ Suivant
                 `Vous êtes sur le point de supprimer <strong>${ids.length} prospect(s)</strong> sélectionné(s).`,
                 ['Fiches prospects', 'Notes associées'],
                 async () => {
-                    showNotification('Suppression en cours...', 'info');
+                    window.pauseInactivityTimer?.();
                     let errors = 0;
-                    for (const id of ids) {
+                    for (let i = 0; i < ids.length; i++) {
+                        showDeletionProgress(i, ids.length);
                         try {
-                            await _supabase.from('prospect_notes').delete().eq('prospect_id', id);
-                            const { error } = await _supabase.from('prospects').delete().eq('id', id);
+                            await _supabase.from('prospect_notes').delete().eq('prospect_id', ids[i]);
+                            const { error } = await _supabase.from('prospects').delete().eq('id', ids[i]);
                             if (error) errors++;
                         } catch (e) { errors++; }
                     }
-                    if (errors === 0) {
-                        showNotification(`${ids.length} prospect(s) supprimé(s) avec succès.`, 'success');
-                    } else {
-                        showNotification(`Suppression partielle : ${errors} erreur(s).`, 'error');
-                    }
+                    showDeletionProgress(ids.length, ids.length);
+                    await new Promise(r => setTimeout(r, 300));
+                    hideDeletionProgress();
+                    showDeletionResult(ids.length, errors);
+                    window.resumeInactivityTimer?.();
                     selectedProspectIds.clear();
                     updateProspectSelectionBar();
                     const masterCbP = document.getElementById('prospect-select-all');
@@ -8302,6 +8352,42 @@ Suivant
             // Reset input for next time
             const input = document.getElementById('bulk-delete-type-input');
             if (input) input.value = '';
+        }
+
+        // ── Helpers progression/résultat suppression ──────────────────────────
+        function showDeletionProgress(current, total) {
+            const overlay = document.getElementById('deletion-progress-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            document.getElementById('del-progress-text').textContent = `${current} / ${total}`;
+            document.getElementById('del-progress-bar').style.width = total > 0 ? `${Math.round(current / total * 100)}%` : '0%';
+        }
+        function hideDeletionProgress() {
+            const overlay = document.getElementById('deletion-progress-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+        function showDeletionResult(total, errors) {
+            const ok = total - errors;
+            const success = errors === 0;
+            document.getElementById('del-result-header').innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full flex items-center justify-center ${success ? 'bg-emerald-100' : 'bg-orange-100'}">
+                        <span class="material-symbols-outlined ${success ? 'text-emerald-600' : 'text-orange-600'}" style="font-variation-settings:'FILL' 1">${success ? 'check_circle' : 'warning'}</span>
+                    </div>
+                    <div class="text-left">
+                        <p class="font-black text-slate-800 dark:text-white text-sm">${success ? 'Suppression terminée' : 'Suppression partielle'}</p>
+                        <p class="text-xs text-slate-400">${total} élément(s) traité(s)</p>
+                    </div>
+                </div>`;
+            document.getElementById('del-result-msg').textContent = success
+                ? `Tous les éléments ont été supprimés définitivement.`
+                : `${errors} suppression(s) ont échoué. Vérifiez vos droits d'accès.`;
+            document.getElementById('del-result-ok').textContent = ok;
+            document.getElementById('del-result-err').textContent = errors;
+            const res = document.getElementById('deletion-result-overlay');
+            res.classList.remove('hidden');
+            res.classList.add('flex');
         }
 
         // ═══════════ FIN SÉLECTION MULTIPLE ═══════════
