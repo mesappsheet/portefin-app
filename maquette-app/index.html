@@ -559,10 +559,10 @@ async function viewRepayments(){
       </button>
     </div>
     <!-- Filtres -->
-    <div class="tab-bar">
-      <div class="tab-btn ${repFilter==='all'?'active':''}" onclick="setRepFilter('all')">Tous</div>
-      <div class="tab-btn ${repFilter==='pending'?'active':''}" onclick="setRepFilter('pending')">En attente</div>
-      <div class="tab-btn ${repFilter==='paid'?'active':''}" onclick="setRepFilter('paid')">Payés</div>
+    <div class="tab-bar" id="rep-tabs">
+      <div class="tab-btn ${repFilter==='all'?'active':''}" data-f="all" onclick="setRepFilter('all')">Tous</div>
+      <div class="tab-btn ${repFilter==='pending'?'active':''}" data-f="pending" onclick="setRepFilter('pending')">En attente</div>
+      <div class="tab-btn ${repFilter==='paid'?'active':''}" data-f="paid" onclick="setRepFilter('paid')">Payés</div>
     </div>
     <!-- Liste -->
     <div id="rep-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
@@ -579,9 +579,7 @@ function shiftDate(n){
 }
 function setRepFilter(f){
   repFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    b.classList.toggle('active',b.textContent.trim().toLowerCase().startsWith(f==='all'?'tous':f==='pending'?'en':'pa'));
-  });
+  document.querySelectorAll('#rep-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
   loadRepayments();
 }
 
@@ -668,22 +666,20 @@ async function viewCredits(){
       <input class="search-inp" type="search" placeholder="Rechercher un client…" value="${credSearch}"
         oninput="credSearch=this.value;loadCredits()"/>
     </div>
-    <div class="tab-bar">
-      <div class="tab-btn ${credFilter==='all'?'active':''}" onclick="setCredFilter('all')">Tous</div>
-      <div class="tab-btn ${credFilter==='encours'?'active':''}" onclick="setCredFilter('encours')">En cours</div>
-      <div class="tab-btn ${credFilter==='souffrance'?'active':''}" onclick="setCredFilter('souffrance')">Souffrance</div>
+    <div class="tab-bar" id="cred-tabs">
+      <div class="tab-btn ${credFilter==='all'?'active':''}" data-f="all" onclick="setCredFilter('all')">Tous</div>
+      <div class="tab-btn ${credFilter==='encours'?'active':''}" data-f="encours" onclick="setCredFilter('encours')">En cours</div>
+      <div class="tab-btn ${credFilter==='souffrance'?'active':''}" data-f="souffrance" onclick="setCredFilter('souffrance')">Souffrance</div>
     </div>
     <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
+  showFab(()=>openCreditForm());
   loadCredits();
 }
 
 function setCredFilter(f){
   credFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    const t=b.textContent.trim().toLowerCase();
-    b.classList.toggle('active',(f==='all'&&t==='tous')||(f==='encours'&&t==='en cours')||(f==='souffrance'&&t==='souffrance'));
-  });
+  document.querySelectorAll('#cred-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
   loadCredits();
 }
 
@@ -829,6 +825,150 @@ async function toggleEch(id,isPaid,creditId,clientName,btn){
   }catch(e){toast('Erreur','err');btn.disabled=false;}
 }
 
+function openCreditForm(){
+  const todayStr=today();
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">Nouveau client / Crédit</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <p style="font-size:11px;font-weight:700;color:#f27f0d;text-transform:uppercase;letter-spacing:.08em;margin:0">Informations client</p>
+
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Nom complet *</label>
+          <input id="cf-name" class="m-input" type="text" placeholder="Nom et prénom du client"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Téléphone</label>
+          <input id="cf-phone" class="m-input" type="tel" placeholder="+225 07 00 00 00" inputmode="tel"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Activité</label>
+          <input id="cf-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…"/>
+        </div>
+
+        <p style="font-size:11px;font-weight:700;color:#f27f0d;text-transform:uppercase;letter-spacing:.08em;margin:8px 0 0">Détails du crédit</p>
+
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Montant *</label>
+          <input id="cf-amount" class="m-input" type="number" placeholder="Ex: 500000" inputmode="numeric"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Type de remboursement *</label>
+          <select id="cf-type" class="m-input m-select">
+            <option value="Mensuel">Mensuel</option>
+            <option value="Hebdomadaire">Hebdomadaire</option>
+            <option value="Journalier">Journalier</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Date de début *</label>
+          <input id="cf-start" class="m-input" type="date" value="${todayStr}"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Nombre d'échéances *</label>
+          <input id="cf-count" class="m-input" type="number" placeholder="Ex: 12" inputmode="numeric" min="1" max="120"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Montant par échéance</label>
+          <input id="cf-install" class="m-input" type="number" placeholder="Laisser vide = automatique" inputmode="numeric"/>
+        </div>
+
+        <button class="btn-primary" onclick="saveCredit()" style="margin-top:6px">
+          <span class="material-symbols-outlined filled" style="font-size:18px">add_circle</span>
+          Créer le dossier
+        </button>
+      </div>
+    </div>`);
+}
+
+function skipWeekendLocal(d){
+  const day=d.getDay();
+  if(day===6)d.setDate(d.getDate()+2);
+  else if(day===0)d.setDate(d.getDate()+1);
+  return d;
+}
+
+async function saveCredit(){
+  const name=document.getElementById('cf-name').value.trim();
+  const amount=parseFloat(document.getElementById('cf-amount').value)||0;
+  const type=document.getElementById('cf-type').value;
+  const startVal=document.getElementById('cf-start').value;
+  const count=parseInt(document.getElementById('cf-count').value)||0;
+  const installAmt=parseFloat(document.getElementById('cf-install').value)||null;
+
+  if(!name){toast('Nom du client requis','err');return;}
+  if(!amount){toast('Montant requis','err');return;}
+  if(!count||count<1){toast('Nombre d\'échéances requis','err');return;}
+  if(!startVal){toast('Date de début requise','err');return;}
+
+  const phone=(document.getElementById('cf-phone').value||'').trim()||null;
+  const activity=(document.getElementById('cf-activity').value||'').trim()||null;
+
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="border:2px solid rgba(255,255,255,.3);border-top-color:white;width:16px;height:16px;border-radius:50%;animation:spin .7s linear infinite"></div> Création…';}
+
+  try{
+    // 1. Créer ou trouver le client
+    const{data:clientData,error:cErr}=await sb.from('clients').upsert([{
+      full_name:name, phone1:phone, activity, health:'Sain', is_active:true
+    }],{onConflict:'full_name'}).select('id').single();
+    if(cErr&&!clientData)throw cErr;
+    const clientId=clientData?.id||null;
+
+    // 2. Calculer la date de fin
+    const startD=new Date(startVal+'T12:00:00');
+    let endD=new Date(startD);
+    if(type==='Mensuel')endD.setMonth(endD.getMonth()+count);
+    else if(type==='Hebdomadaire')endD.setDate(endD.getDate()+count*7);
+    else endD.setDate(endD.getDate()+count);
+
+    // 3. Créer le crédit
+    const installment=installAmt||(amount/count);
+    const{data:credit,error:crErr}=await sb.from('credits').insert([{
+      client_id:clientId||undefined,
+      client_name:name,
+      phone:phone,
+      activity:activity,
+      amount,
+      type,
+      status:'En cours',
+      health:'Sain',
+      start_date:startVal,
+      end_date:today(),
+      created_by:currentUser?.id||null
+    }]).select('id').single();
+    if(crErr)throw crErr;
+
+    // 4. Générer les échéances
+    const repayments=[];
+    let cur=new Date(startD);
+    for(let i=1;i<=count;i++){
+      const adj=skipWeekendLocal(new Date(cur));
+      repayments.push({
+        credit_id:credit.id,
+        installment_number:i,
+        scheduled_date:adj.toISOString().split('T')[0],
+        amount:Math.round(installment),
+        is_paid:false,
+        status:'En attente'
+      });
+      if(type==='Mensuel'){cur=new Date(startD);cur.setMonth(cur.getMonth()+i);}
+      else if(type==='Hebdomadaire')cur.setDate(cur.getDate()+7);
+      else cur.setDate(cur.getDate()+1);
+    }
+    const{error:rErr}=await sb.from('repayments').insert(repayments);
+    if(rErr)throw rErr;
+
+    toast(`Dossier créé — ${count} échéances générées ✓`,'ok');
+    closeModal();
+    loadCredits();
+  }catch(e){
+    toast('Erreur : '+(e.message||'inconnue'),'err');
+    if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">add_circle</span> Créer le dossier';}
+  }
+}
+
 async function deleteCredit(id,name){
   openConfirm(`Supprimer le dossier de ${name} ?`,'Cette action supprime le crédit et ses échéanciers.',async()=>{
     try{
@@ -854,11 +994,11 @@ async function viewProspects(){
       <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
         oninput="prosSearch=this.value;loadProspects()"/>
     </div>
-    <div class="tab-bar">
-      <div class="tab-btn ${prosFilter==='all'?'active':''}" onclick="setProsFilter('all')">Tous</div>
-      <div class="tab-btn ${prosFilter==='Nouveau'?'active':''}" onclick="setProsFilter('Nouveau')">Nouveaux</div>
-      <div class="tab-btn ${prosFilter==='À relancer'?'active':''}" onclick="setProsFilter('À relancer')">À relancer</div>
-      <div class="tab-btn ${prosFilter==='Converti'?'active':''}" onclick="setProsFilter('Converti')">Convertis</div>
+    <div class="tab-bar" id="pros-tabs">
+      <div class="tab-btn ${prosFilter==='all'?'active':''}" data-f="all" onclick="setProsFilter('all')">Tous</div>
+      <div class="tab-btn ${prosFilter==='Nouveau'?'active':''}" data-f="Nouveau" onclick="setProsFilter('Nouveau')">Nouveaux</div>
+      <div class="tab-btn ${prosFilter==='À relancer'?'active':''}" data-f="À relancer" onclick="setProsFilter('À relancer')">À relancer</div>
+      <div class="tab-btn ${prosFilter==='Converti'?'active':''}" data-f="Converti" onclick="setProsFilter('Converti')">Convertis</div>
     </div>
     <div id="pros-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -868,12 +1008,7 @@ async function viewProspects(){
 
 function setProsFilter(f){
   prosFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    const t=b.textContent.trim();
-    b.classList.toggle('active',
-      (f==='all'&&t==='Tous')||(f==='Nouveau'&&t==='Nouveaux')||
-      (f==='À relancer'&&t==='À relancer')||(f==='Converti'&&t==='Convertis'));
-  });
+  document.querySelectorAll('#pros-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
   loadProspects();
 }
 
