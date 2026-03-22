@@ -514,14 +514,27 @@
 <div class="absolute right-0 bottom-0 w-1/2 h-full opacity-10 transform translate-x-8 translate-y-8 pointer-events-none">
 <span class="material-symbols-outlined text-[200px]">person_search</span>
 </div>
-<div class="relative p-8 h-full flex flex-col justify-between text-white">
+<div class="relative p-6 h-full flex flex-col justify-between text-white">
 <div>
-<h5 class="text-2xl font-bold mb-2">PROSPECTION</h5>
-<p class="text-white/80 max-w-xs">Gérez vos nouveaux prospects et identifiez les opportunités de croissance stratégique.</p>
+  <h5 class="text-2xl font-bold mb-4">PROSPECTION</h5>
+  <div class="grid grid-cols-3 gap-2">
+    <div class="bg-white/10 rounded-xl px-3 py-2 text-center border border-white/15">
+      <p id="hero-prospect-total" class="text-xl font-black">—</p>
+      <p class="text-[10px] text-orange-100 font-semibold uppercase tracking-wide mt-0.5">Total</p>
+    </div>
+    <div class="bg-white/10 rounded-xl px-3 py-2 text-center border border-white/15">
+      <p id="hero-prospect-nouveau" class="text-xl font-black">—</p>
+      <p class="text-[10px] text-orange-100 font-semibold uppercase tracking-wide mt-0.5">Nouveaux</p>
+    </div>
+    <div class="bg-white/10 rounded-xl px-3 py-2 text-center border border-white/15">
+      <p id="hero-prospect-converti" class="text-xl font-black">—</p>
+      <p class="text-[10px] text-orange-100 font-semibold uppercase tracking-wide mt-0.5">Convertis</p>
+    </div>
+  </div>
 </div>
-<div class="flex items-center gap-2 font-bold text-sm uppercase tracking-widest">
-                Accéder à la prospection
-                <span class="material-symbols-outlined">arrow_forward</span>
+<div class="flex items-center gap-2 font-bold text-sm uppercase tracking-widest text-orange-100">
+  Accéder à la prospection
+  <span class="material-symbols-outlined">arrow_forward</span>
 </div>
 </div>
 </div>
@@ -530,14 +543,27 @@
 <div class="absolute right-0 bottom-0 w-1/2 h-full opacity-10 transform translate-x-8 translate-y-8 pointer-events-none">
 <span class="material-symbols-outlined text-[200px]">payments</span>
 </div>
-<div class="relative p-8 h-full flex flex-col justify-between text-white">
+<div class="relative p-6 h-full flex flex-col justify-between text-white">
 <div>
-<h5 class="text-2xl font-bold mb-2">CRÉDITS</h5>
-<p class="text-white/80 max-w-xs">Suivi en temps réel des dossiers de crédit, décaissements et calendriers de remboursement.</p>
+  <h5 class="text-2xl font-bold mb-4">CRÉDITS</h5>
+  <div class="grid grid-cols-3 gap-2">
+    <div class="bg-white/10 rounded-xl px-3 py-2 text-center border border-white/15">
+      <p id="hero-credit-actif" class="text-xl font-black">—</p>
+      <p class="text-[10px] text-emerald-100 font-semibold uppercase tracking-wide mt-0.5">Actifs</p>
+    </div>
+    <div onclick="event.stopPropagation(); switchModule('credits'); loadScreen('credits_unpaid')" class="bg-red-500/25 rounded-xl px-3 py-2 text-center border border-red-300/20 hover:bg-red-500/35 transition-colors">
+      <p id="hero-credit-impaye" class="text-xl font-black text-red-200">—</p>
+      <p class="text-[10px] text-red-200 font-semibold uppercase tracking-wide mt-0.5">Impayés</p>
+    </div>
+    <div onclick="event.stopPropagation(); switchModule('credits'); loadScreen('credits_souffrance')" class="bg-orange-500/25 rounded-xl px-3 py-2 text-center border border-orange-300/20 hover:bg-orange-500/35 transition-colors">
+      <p id="hero-credit-souffrance" class="text-xl font-black text-orange-200">—</p>
+      <p class="text-[10px] text-orange-200 font-semibold uppercase tracking-wide mt-0.5">Souffrance</p>
+    </div>
+  </div>
 </div>
 <div class="flex items-center gap-2 font-bold text-sm uppercase tracking-widest text-emerald-100">
-                Gérer mes crédits
-                <span class="material-symbols-outlined">arrow_forward</span>
+  Gérer mes crédits
+  <span class="material-symbols-outlined">arrow_forward</span>
 </div>
 </div>
 </div>
@@ -4451,6 +4477,9 @@ Suivant
             const firstScreen = moduleConfig.screens.find(s => !s.isModal);
             if (firstScreen) loadScreen(firstScreen.id);
 
+            if (moduleKey === 'credits') fetchCreditHeroStats?.();
+            if (moduleKey === 'prospection') fetchProspectHeroStats?.();
+
 
             // Auto-close main sidebar on small screens or when it's an overlay
             const sidebar = document.getElementById('main-sidebar');
@@ -6932,8 +6961,49 @@ Suivant
         }
         setInterval(updateDashboardTime, 60000);
 
+        async function fetchProspectHeroStats() {
+            try {
+                const headers = { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` };
+                const base = _SB_URL + '/rest/v1/prospects';
+                const [totalRes, nouveauRes, convertiRes] = await Promise.all([
+                    fetch(`${base}?select=id`, { headers }),
+                    fetch(`${base}?select=id&status=eq.NOUVEAU`, { headers }),
+                    fetch(`${base}?select=id&status=eq.CONVERTI`, { headers })
+                ]);
+                const total    = await totalRes.json().catch(() => []);
+                const nouveau  = await nouveauRes.json().catch(() => []);
+                const converti = await convertiRes.json().catch(() => []);
+                const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+                el('hero-prospect-total',    (total    || []).length);
+                el('hero-prospect-nouveau',  (nouveau  || []).length);
+                el('hero-prospect-converti', (converti || []).length);
+            } catch(e) {}
+        }
+
+        async function fetchCreditHeroStats() {
+            try {
+                const headers = { apikey: _SB_KEY, Authorization: `Bearer ${_SB_KEY}` };
+                const base = _SB_URL + '/rest/v1/credits';
+                const [actifRes, unpaidRes, soufRes] = await Promise.all([
+                    fetch(`${base}?select=id&status=eq.EN COURS`, { headers }),
+                    fetch(`${_SB_URL}/rest/v1/repayments?select=credit_id&scheduled_date=lt.${new Date().toISOString().split('T')[0]}&is_paid=eq.false`, { headers }),
+                    fetch(`${base}?select=id&health=ilike.SOUFFRANCE*&status=neq.SOLDÉ`, { headers })
+                ]);
+                const actifs = await actifRes.json().catch(() => []);
+                const unpaid = await unpaidRes.json().catch(() => []);
+                const souf   = await soufRes.json().catch(() => []);
+                const unpaidCount = new Set((unpaid || []).map(r => r.credit_id)).size;
+                const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+                el('hero-credit-actif',      (actifs || []).length);
+                el('hero-credit-impaye',     unpaidCount);
+                el('hero-credit-souffrance', (souf || []).length);
+            } catch(e) {}
+        }
+
         async function fetchDashboardStats() {
             updateDashboardTime();
+            fetchCreditHeroStats();
+            fetchProspectHeroStats();
             const today = new Date().toISOString().split('T')[0];
             const startOfMonth = new Date();
             startOfMonth.setDate(1);
