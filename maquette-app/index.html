@@ -167,6 +167,15 @@ body:not(.light) .pros-avatar{color:#818cf8}
 .sheet-close:active{background:var(--ghost-hover)}
 .sheet-title{font-size:17px;font-weight:700;color:var(--text);padding:12px 20px 14px;border-bottom:1px solid var(--sep)}
 
+/* Context menu */
+.ctx-menu{position:fixed;z-index:500;background:var(--sheet-bg);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:ctxIn .15s ease}
+@keyframes ctxIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.ctx-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);border:none;background:none;width:100%;text-align:left;transition:background .15s}
+.ctx-item:active{background:rgba(255,255,255,.07)}
+.ctx-item.ctx-danger{color:#f87171}
+.ctx-item.ctx-danger:active{background:rgba(239,68,68,.1)}
+.ctx-sep{height:1px;background:var(--sep);margin:4px 0}
+
 /* Toast */
 #toast{position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-10px);z-index:999;display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;color:white;min-width:240px;max-width:90vw;transition:all .3s;opacity:0;pointer-events:none;backdrop-filter:blur(16px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -298,6 +307,8 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 let currentUser=null;
 let currentScreen='dashboard';
 let _fab=null;
+let _credCache={};
+let _prosCache={};
 
 // ─── AUTH GUARD ───────────────────────────────
 (async()=>{
@@ -360,6 +371,73 @@ function toast(msg,type='info'){
   document.getElementById('t-icon').textContent=icons[type]||'info';
   t.className=`show ${type}`;
   clearTimeout(_tt);_tt=setTimeout(()=>{t.className='';},3000);
+}
+
+// ─── CONTEXT MENU ─────────────────────────────
+function showMenu(btn,items){
+  closeCtxMenu();
+  const rect=btn.getBoundingClientRect();
+  const menu=document.createElement('div');
+  menu.className='ctx-menu';menu.id='ctx-menu';
+  items.forEach((item,i)=>{
+    if(item.sep){const s=document.createElement('div');s.className='ctx-sep';menu.appendChild(s);return;}
+    const el=document.createElement('button');
+    el.className='ctx-item'+(item.danger?' ctx-danger':'');
+    el.innerHTML=`<span class="material-symbols-outlined filled" style="font-size:18px">${item.icon}</span>${item.label}`;
+    el.ontouchend=el.onclick=(e)=>{e.stopPropagation();closeCtxMenu();item.fn();};
+    menu.appendChild(el);
+  });
+  document.body.appendChild(menu);
+  const menuH=menu.childElementCount*44+12;
+  let top=rect.bottom+6;
+  if(top+menuH>window.innerHeight-20)top=rect.top-menuH-6;
+  let left=rect.right-menu.offsetWidth||rect.right-200;
+  if(left<8)left=8;
+  if(left+200>window.innerWidth-8)left=window.innerWidth-208;
+  menu.style.top=Math.max(8,top)+'px';
+  menu.style.left=Math.max(8,left)+'px';
+  setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true,capture:true}),100);
+}
+function closeCtxMenu(){
+  const m=document.getElementById('ctx-menu');
+  if(m)m.remove();
+}
+function credMenu(btn,cid){
+  const c=_credCache[cid];if(!c)return;
+  const name=getName(c);
+  const phone=getPhone(c.clients);
+  const items=[
+    {icon:'calendar_month',label:'Échéancier',fn:()=>viewEcheancier(cid,name)},
+    {icon:'sticky_note_2',label:'Notes',fn:()=>openCreditNotes(cid,name)},
+    {icon:'swap_horiz',label:'Changer statut',fn:()=>changeCreditStatus(cid,name,c.status||'')},
+    {sep:true},
+    ...(phone?[
+      {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount||0,c.end_date||'',(c.activity||''),cid)},
+      {icon:'call',label:'Appeler',fn:()=>call(phone)},
+      {sep:true},
+    ]:[]),
+    {icon:'edit',label:'Modifier',fn:()=>openClientEditForm(cid)},
+    {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
+  ];
+  showMenu(btn,items);
+}
+function prosMenu(btn,pid){
+  const p=_prosCache[pid];if(!p)return;
+  const name=p.full_name||'Inconnu';
+  const phone=p.phone||'';
+  const items=[
+    ...(phone?[
+      {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid)},
+      {icon:'call',label:'Appeler',fn:()=>call(phone)},
+      {sep:true},
+    ]:[]),
+    {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
+    {icon:'person_add',label:'Convertir en crédit',fn:()=>convertProspect(pid,name,phone)},
+    {sep:true},
+    {icon:'edit',label:'Modifier',fn:()=>openProspectForm(p)},
+    {icon:'delete',label:'Supprimer',fn:()=>deleteProspect(pid,name),danger:true},
+  ];
+  showMenu(btn,items);
 }
 
 // ─── MODAL ────────────────────────────────────
@@ -827,6 +905,7 @@ async function loadCredits(){
       rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));
     }
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
+    rows.forEach(c=>_credCache[c.id]=c);
 
     // Pour chaque crédit, compter les remboursements
     const ids=rows.map(c=>c.id);
@@ -859,37 +938,16 @@ function credRow(c,reps){
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
           <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px">${c.health||'Sain'}</span>
+          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px">${c.status||'EN COURS'}</span>
         </div>
         <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(c.amount)} FCFA · ${c.type||'—'}</p>
         <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
         <p style="font-size:10px;color:rgba(255,255,255,.3);margin:4px 0 0">${reps.paid}/${reps.total} échéances · ${pct}%</p>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <div style="display:flex;gap:4px">
-          <button class="btn-ghost" style="padding:6px 10px;font-size:11px" onclick="viewEcheancier('${c.id}','${name.replace(/'/g,"\\'")}')">
-            <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span> Échéancier
-          </button>
-          <button class="btn-ghost" style="padding:6px 10px;font-size:11px" title="Notes" onclick="openCreditNotes('${c.id}','${name.replace(/'/g,"\\'")}')">
-            <span class="material-symbols-outlined" style="font-size:15px">sticky_note_2</span>
-          </button>
-        </div>
-        <div style="display:flex;gap:4px">
-          ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}', 'Crédit', ${c.amount||0}, '${c.end_date||''}', '${(c.activity||'').replace(/'/g,"\\'")}', '${c.id}')">
-            <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
-          </button>
-          <button class="action-btn ab-call" onclick="call('${phone}')">
-            <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
-          </button>`:''}
-          <button class="action-btn" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)" title="Changer statut" onclick="changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${c.status||''}')">
-            <span class="material-symbols-outlined" style="font-size:17px;color:#818cf8">swap_horiz</span>
-          </button>
-          <button class="action-btn ab-edit" onclick="openClientEditForm('${c.id}')">
-            <span class="material-symbols-outlined" style="font-size:17px">edit</span>
-          </button>
-          <button class="action-btn ab-del" onclick="deleteCredit('${c.id}','${name.replace(/'/g,"\\'")}')">
-            <span class="material-symbols-outlined" style="font-size:17px">delete</span>
-          </button>
-        </div>
+      <div style="display:flex;align-items:center">
+        <button class="action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
+          <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
+        </button>
       </div>
     </div>
   </div>`;
@@ -1416,6 +1474,7 @@ async function loadProspects(){
     let rows=data||[];
     if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone||'').includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">person_search</span><p>Aucun prospect trouvé</p></div>`;return;}
+    rows.forEach(p=>_prosCache[p.id]=p);
     
     let bulkHtml = '';
     if(selectedProsPWA.size > 0) {
@@ -1472,33 +1531,16 @@ function prosRow(p){
       <div class="pros-avatar">${initials(name)}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <p style="font-size:14px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${name}</p>
+          <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
           <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
         </div>
         <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
-        ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}', 'Prospection', 0, '', '${(p.activity||'').replace(/'/g,"\\'")}', '${p.id}')">
-          <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
-        </button>
-        <button class="action-btn ab-call" onclick="call('${phone}')">
-          <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
-        </button>`:''}
-        <button class="action-btn" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)" title="Notes" onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')">
-          <span class="material-symbols-outlined" style="font-size:17px;color:#34d399">sticky_note_2</span>
-        </button>
-        <button class="action-btn" style="background:rgba(242,127,13,.15);border:1px solid rgba(242,127,13,.25)" title="Convertir en crédit" onclick="convertProspect('${p.id}','${name.replace(/'/g,"\\'")}','${phone}')">
-          <span class="material-symbols-outlined" style="font-size:17px;color:#f27f0d">person_add</span>
-        </button>
-        <button class="action-btn ab-edit" onclick="openProspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-          <span class="material-symbols-outlined" style="font-size:17px">edit</span>
-        </button>
-        <button class="action-btn ab-del" onclick="deleteProspect('${p.id}','${name.replace(/'/g,"\\'")}')">
-          <span class="material-symbols-outlined" style="font-size:17px">delete</span>
-        </button>
-      </div>
+    <div style="display:flex;align-items:center">
+      <button class="action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)" onclick="event.stopPropagation();prosMenu(this,'${p.id}')">
+        <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
+      </button>
     </div>
   </div>`;
 }
