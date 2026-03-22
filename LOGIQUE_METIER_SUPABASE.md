@@ -166,12 +166,24 @@ La détection de doublon est basée sur les champs de conflit :
 
 Si un doublon est détecté, les données sont **mises à jour** (upsert) et un badge `DOUBLON` apparaît dans le rapport d'import.
 
-### 3.4 Génération de l'échéancier à l'import
+### 3.4 Création automatique du client à l'import
+
+> **Nouveauté** : À l'import d'un crédit, un enregistrement est automatiquement créé (ou retrouvé) dans la table `clients`. Le crédit est ensuite lié via `client_id`.
+
+Cela garantit :
+- Que tous les crédits ont un `client_id` valide (importés ou créés via formulaire)
+- Que les jointures SQL fonctionnent uniformément (plus besoin de fallback `client_name`)
+- Que le client apparaît dans tous les écrans (Fins d'Échéance, Remboursements, Crédits Soldés…)
+
+**Clé de dédup pour `clients` :** `full_name` (upsert — si le client existe déjà, on récupère son ID sans doublon)
+
+### 3.5 Génération de l'échéancier à l'import
 
 Pour chaque crédit importé valide :
-1. L'échéancier est calculé via `CreditModule.generateSchedule()` — règle anti-weekend incluse
-2. Les échéances existantes non payées sont supprimées
-3. Le nouvel échéancier est inséré dans `repayments`
+1. Client créé/retrouvé dans `clients` → `client_id` lié au crédit
+2. L'échéancier est calculé via `CreditModule.generateSchedule()` — règle anti-weekend incluse
+3. Les échéances existantes non payées sont supprimées
+4. Le nouvel échéancier est inséré dans `repayments`
 
 ---
 

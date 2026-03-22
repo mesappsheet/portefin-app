@@ -66,18 +66,42 @@ class ImportEngine {
             try {
                 const payload = module.prepareForSupabase(row.data, userId);
 
-                // 1. Explicit Check for Existing Record (Robustness)
-                // This allows us to report "Duplicate detected - Keeping most recent data"
+                // 1. Pour les crédits : créer/retrouver le client dans la table `clients`
+                //    afin que client_id soit toujours renseigné (évite les problèmes de jointure)
+                if (module.requiresSchedule() && row.data.client_name) {
+                    const clientPayload = {
+                        full_name: row.data.client_name,
+                        phone1: row.data.phone || null,
+                        email: row.data.email || null,
+                        activity: row.data.activity || null,
+                        address: row.data.address || null,
+                        health: 'Sain',
+                        is_active: true
+                    };
+                    // Upsert client : full_name comme clé de dédup
+                    const { data: clientRecord, error: cErr } = await supabase
+                        .from('clients')
+                        .upsert([clientPayload], { onConflict: 'full_name' })
+                        .select('id')
+                        .single();
+
+                    if (!cErr && clientRecord) {
+                        payload.client_id = clientRecord.id;
+                    }
+                    // Si erreur (contrainte manquante, etc.), on continue sans client_id
+                    // pour ne pas bloquer l'import
+                }
+
+                // 2. Vérification doublon
                 let checkQuery = supabase.from(tableName).select('id').maybeSingle();
                 conflictFields.forEach(f => {
                     if (payload[f]) checkQuery = checkQuery.eq(f, payload[f]);
                 });
-                
+
                 const { data: existing } = await checkQuery;
                 const isUpdate = !!existing;
 
-                // 2. Perform Upsert
-                // This will create or update, effectively keeping the data from the Excel file
+                // 3. Upsert du dossier (crédit ou prospect)
                 const { data, error } = await supabase
                     .from(tableName)
                     .upsert([payload], { onConflict: conflictFields.join(',') })
@@ -85,13 +109,13 @@ class ImportEngine {
 
                 if (error) throw error;
                 if (!data || data.length === 0) throw new Error("Erreur lors de la sauvegarde du dossier.");
-                
+
                 const record = data[0];
-                
+
                 if (isUpdate) stats.updated++;
                 else stats.inserted++;
 
-                // 3. Handle specific module logic (like repayment schedules for credits)
+                // 4. Échéancier (crédits uniquement)
                 if (module.requiresSchedule() && row.schedule) {
                     // Always clear previous pending schedule for this folder to avoid overlaps
                     await supabase
