@@ -4702,7 +4702,8 @@ Suivant
             
             if (content) {
                 container.innerHTML = content;
-                
+                applyTableScroll(); // en-têtes figés + scroll sur contenu statique
+
                 // Update sub-nav active state
                 document.querySelectorAll('#sub-screens-list button').forEach(btn => {
                     if (btn.dataset.screenId === screenId) {
@@ -7114,14 +7115,15 @@ Suivant
 
         // Observe les changements dans le contenu principal pour re-appliquer automatiquement
         const _tblObserver = new MutationObserver(() => applyTableScroll());
-        const _mainContent = document.getElementById('main-content');
-        if (_mainContent) {
-            _tblObserver.observe(_mainContent, { childList: true, subtree: true });
+        // view-container = zone principale des écrans dynamiques
+        const _viewContainer = document.getElementById('view-container');
+        if (_viewContainer) {
+            _tblObserver.observe(_viewContainer, { childList: true, subtree: true });
         }
-        // Applique aussi dans les modals
-        const _modalContent = document.getElementById('modal-content');
-        if (_modalContent) {
-            _tblObserver.observe(_modalContent, { childList: true, subtree: true });
+        // modal-content = zone des modals
+        const _modalContentEl = document.getElementById('modal-content');
+        if (_modalContentEl) {
+            _tblObserver.observe(_modalContentEl, { childList: true, subtree: true });
         }
 
         function updateDashboardTime() {
