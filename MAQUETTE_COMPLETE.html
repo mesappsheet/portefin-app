@@ -1987,12 +1987,22 @@
             <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Informations Générales</h2>
         </div>
         <div class="grid grid-cols-1 gap-6">
-            <!-- Nom et Prénoms -->
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nom et Prénoms <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">badge</span>
-                    <input id="prospect-name" class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="Ex: Jean Dupont" type="text"/>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nom et Prénoms -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nom et Prénoms <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">badge</span>
+                        <input id="prospect-name" class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="Ex: Jean Dupont" type="text"/>
+                    </div>
+                </div>
+                <!-- Adresse Email -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Adresse Email</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">mail</span>
+                        <input id="prospect-email" class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="nom@exemple.com" type="email"/>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2063,6 +2073,22 @@
         <div class="flex flex-col gap-1.5 pt-2">
             <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Avis / Observations</label>
             <textarea id="prospect-observations" class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none" placeholder="Saisissez vos notes ou remarques particulières ici..." rows="4"></textarea>
+        </div>
+        <!-- Exclusion d'automatisation -->
+        <div class="flex items-center justify-between p-4 bg-orange-50/50 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-xl mt-4">
+            <div class="flex items-center gap-3">
+                <div class="size-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+                    <span class="material-symbols-outlined text-sm">notifications_off</span>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Exclure des automatisations</p>
+                    <p class="text-[10px] text-slate-500">Ne pas envoyer de messages automatiques à ce prospect</p>
+                </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input id="prospect-exclude-automation" type="checkbox" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
         </div>
     </section>
 </div>
@@ -4206,6 +4232,22 @@ Suivant
                     <input id="credit-end-date" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" required type="date"/>
                 </label>
             </div>
+            <!-- Exclusion d'automatisation -->
+            <div class="flex items-center justify-between p-4 bg-primary/5 dark:bg-primary/20 border border-primary/10 rounded-xl mt-4">
+                <div class="flex items-center gap-3">
+                    <div class="size-8 rounded-lg bg-primary/10 dark:bg-primary/30 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm">notifications_off</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Exclure des automatisations</p>
+                        <p class="text-[10px] text-slate-500">Ne pas envoyer de rappels de paiement automatiques</p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input id="credit-exclude-automation" type="checkbox" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+            </div>
         </section>
 
         <div class="flex justify-end gap-4 pt-4 shrink-0">
@@ -4537,17 +4579,37 @@ Suivant
         let selectedProspectId = null;
         window.editingProspectId = null;
 
-        // Initialize Credit Types
-        let creditDossierTypes = JSON.parse(localStorage.getItem('credit_dossier_types')) || ["Prêt Personnel", "Immobilier", "Consommation"];
+        // Initialize Credit Types (chargés depuis Supabase)
+        let creditDossierTypes = ["Prêt Personnel", "Immobilier", "Consommation"];
+        async function loadCreditDossierTypes() {
+            try {
+                const { data } = await _supabase.from('credit_dossier_types').select('name').order('name');
+                if (data && data.length > 0) creditDossierTypes = data.map(r => r.name);
+            } catch(e) {}
+        }
 
-        // Initialize Prospect Fields
-        let prospectActivities = JSON.parse(localStorage.getItem('prospect_activities')) || ["Commerce", "Services", "Industrie", "Transport", "Agro-Business"];
-        let prospectStatuses = JSON.parse(localStorage.getItem('prospect_statuses')) || [
+        // Initialize Prospect Fields (chargés depuis Supabase)
+        let prospectActivities = ["Commerce", "Services", "Industrie", "Transport", "Agro-Business"];
+        let prospectStatuses = [
             { label: "Nouveau", color: "blue" },
             { label: "En cours", color: "orange" },
             { label: "Qualifié", color: "emerald" },
             { label: "Prioritaire", color: "rose" }
         ];
+
+        async function loadProspectActivities() {
+            try {
+                const { data } = await _supabase.from('prospect_activities').select('name').order('name');
+                if (data && data.length > 0) prospectActivities = data.map(r => r.name);
+            } catch(e) {}
+        }
+
+        async function loadProspectStatuses() {
+            try {
+                const { data } = await _supabase.from('prospect_statuses').select('label, color').order('label');
+                if (data && data.length > 0) prospectStatuses = data;
+            } catch(e) {}
+        }
 
         // States for Credits Filters
         let endTermFilter = 'month';
@@ -4772,7 +4834,7 @@ Suivant
         window.skipWeekend = skipWeekend;
         window.toLocalDateStr = toLocalDateStr;
 
-        function openModal(screenId, id = null) {
+        async function openModal(screenId, id = null) {
             targetId = id;
             window.editingCreditId = null; // Reset edit mode when opening modal
             const overlay = document.getElementById('modal-overlay');
@@ -4787,18 +4849,23 @@ Suivant
 
                 // --- INITIALISATION SPÉCIFIQUE MODALE ---
                 if (screenId === 'credits_new_dossier') {
+                    await loadCreditDossierTypes();
                     renderCreditTypes();
                 }
                 if (screenId === 'credit_manage_types') {
+                    await loadCreditDossierTypes();
                     renderManageCreditTypes();
                 }
                 if (screenId === 'prospection_add') {
+                    await Promise.all([loadProspectActivities(), loadProspectStatuses()]);
                     renderProspectFormOptions();
                 }
                 if (screenId === 'prospection_manage_activities') {
+                    await loadProspectActivities();
                     renderManageActivities();
                 }
                 if (screenId === 'prospection_manage_statuses') {
+                    await loadProspectStatuses();
                     renderManageStatuses();
                 }
 
@@ -4839,56 +4906,58 @@ Suivant
         function renderManageActivities() {
             const list = document.getElementById('activities-manage-list');
             if (!list) return;
-            list.innerHTML = prospectActivities.map((a, i) => `
+            list.innerHTML = prospectActivities.map((a) => `
                 <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all group">
                     <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors">${a}</span>
-                    <button onclick="handleDeleteActivityManage(${i})" class="size-9 rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+                    <button onclick="handleDeleteActivityManage(${JSON.stringify(a)})" class="size-9 rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
                         <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
                 </div>
             `).join('');
         }
 
-        function handleAddActivityManage() {
+        async function handleAddActivityManage() {
             const input = document.getElementById('new-activity-manage-input');
             const val = input.value.trim();
             if (val && !prospectActivities.includes(val)) {
-                prospectActivities.push(val);
-                localStorage.setItem('prospect_activities', JSON.stringify(prospectActivities));
-                input.value = '';
-                renderManageActivities();
-                renderProspectFormOptions();
-                showNotification("Secteur d'activité ajouté", "success");
+                const { error } = await _supabase.from('prospect_activities').insert({ name: val });
+                if (!error) {
+                    await loadProspectActivities();
+                    input.value = '';
+                    renderManageActivities();
+                    renderProspectFormOptions();
+                    showNotification("Secteur d'activité ajouté", "success");
+                }
             }
         }
 
-        function handleDeleteActivityManage(index) {
-            prospectActivities.splice(index, 1);
-            localStorage.setItem('prospect_activities', JSON.stringify(prospectActivities));
-            renderManageActivities();
-            renderProspectFormOptions();
+        async function handleDeleteActivityManage(name) {
+            const { error } = await _supabase.from('prospect_activities').delete().eq('name', name);
+            if (!error) {
+                await loadProspectActivities();
+                renderManageActivities();
+                renderProspectFormOptions();
+                showNotification("Secteur d'activité supprimé", "info");
+            }
         }
 
         function renderManageStatuses() {
             const list = document.getElementById('statuses-manage-list');
             if (!list) return;
-            list.innerHTML = prospectStatuses.map((s, i) => {
-                const label = typeof s === 'string' ? s : s.label;
-                const color = typeof s === 'string' ? 'slate' : (s.color || 'slate');
-                return `
+            list.innerHTML = prospectStatuses.map((s) => `
                 <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:border-primary/20 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-2 h-8 rounded-full bg-${color}-500"></div>
-                        <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors uppercase tracking-tight">${label}</span>
+                        <div class="w-2 h-8 rounded-full bg-${s.color || 'slate'}-500"></div>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors uppercase tracking-tight">${s.label}</span>
                     </div>
-                    <button onclick="handleDeleteStatusManage(${i})" class="size-9 rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+                    <button onclick="handleDeleteStatusManage(${JSON.stringify(s.label)})" class="size-9 rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
                         <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
                 </div>
-            `;}).join('');
+            `).join('');
         }
 
-        function handleAddStatusManage() {
+        async function handleAddStatusManage() {
             const input = document.getElementById('new-status-manage-input');
             const colorSelect = document.getElementById('new-status-manage-color');
             const val = input.value.trim();
@@ -4897,19 +4966,21 @@ Suivant
                 const color = colorSelect ? colorSelect.value : 'slate';
                 const exists = prospectStatuses.some(s => (s.label || s) === val);
                 if (!exists) {
-                    prospectStatuses.push({ label: val, color: color });
-                    localStorage.setItem('prospect_statuses', JSON.stringify(prospectStatuses));
-                    input.value = '';
-                    renderManageStatuses();
-                    renderProspectFormOptions();
-                    showNotification("Statut ajouté", "success");
+                    const { error } = await _supabase.from('prospect_statuses').insert({ label: val, color: color });
+                    if (!error) {
+                        await loadProspectStatuses();
+                        input.value = '';
+                        renderManageStatuses();
+                        renderProspectFormOptions();
+                        showNotification("Statut ajouté", "success");
+                    }
                 }
             }
         }
 
-        function handleDeleteStatusManage(index) {
-            prospectStatuses.splice(index, 1);
-            localStorage.setItem('prospect_statuses', JSON.stringify(prospectStatuses));
+        async function handleDeleteStatusManage(label) {
+            await _supabase.from('prospect_statuses').delete().eq('label', label);
+            await loadProspectStatuses();
             renderManageStatuses();
             renderProspectFormOptions();
         }
@@ -4917,31 +4988,35 @@ Suivant
         function renderManageCreditTypes() {
             const list = document.getElementById('credit-types-list');
             if (!list) return;
-            list.innerHTML = creditDossierTypes.map((t, i) => `
+            list.innerHTML = creditDossierTypes.map(t => `
                 <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
                     <span class="text-sm font-semibold">${t}</span>
-                    <button onclick="handleDeleteCreditType(${i})" class="text-red-500 hover:bg-red-50 p-1 rounded-lg">
+                    <button onclick="handleDeleteCreditType(${JSON.stringify(t)})" class="text-red-500 hover:bg-red-50 p-1 rounded-lg">
                         <span class="material-symbols-outlined text-sm">delete</span>
                     </button>
                 </div>
             `).join('');
         }
 
-        function handleAddCreditType() {
+        async function handleAddCreditType() {
             const input = document.getElementById('new-credit-type-input');
             const val = input.value.trim();
             if (val && !creditDossierTypes.includes(val)) {
-                creditDossierTypes.push(val);
-                localStorage.setItem('credit_dossier_types', JSON.stringify(creditDossierTypes));
-                input.value = '';
-                renderManageCreditTypes();
-                showNotification("Type ajouté", "success");
+                const { error } = await _supabase.from('credit_dossier_types').insert({ name: val });
+                if (!error) {
+                    await loadCreditDossierTypes();
+                    input.value = '';
+                    renderManageCreditTypes();
+                    showNotification("Type ajouté", "success");
+                } else {
+                    showNotification("Erreur lors de l'ajout", "error");
+                }
             }
         }
 
-        function handleDeleteCreditType(index) {
-            creditDossierTypes.splice(index, 1);
-            localStorage.setItem('credit_dossier_types', JSON.stringify(creditDossierTypes));
+        async function handleDeleteCreditType(name) {
+            await _supabase.from('credit_dossier_types').delete().eq('name', name);
+            await loadCreditDossierTypes();
             renderManageCreditTypes();
         }
 
@@ -5926,29 +6001,31 @@ Suivant
 
             const start = new Date(currentCredit.start_date);
             const end = new Date(currentCredit.end_date);
-            
             if (isNaN(start) || isNaN(end)) return alert("Dates de début ou de fin invalides.");
 
-            // Basic monthly calculation
-            let repayments = [];
-            let currentDate = new Date(start);
-            // First payment after 1 month? Or same day?
-            // Let's say monthly on the same day as start_date
-            let monthCount = 1;
+            // Mémorisation stable du jour cible
+            const targetDay = start.getDate();
+            const startMonth = start.getMonth();
+            const startYear = start.getFullYear();
 
-            // Calculate monthly amount (very simple flat rate assumption for now)
-            // In a real app we'd check loan type (amortization vs flat)
-            // For now, let's just divide total amount by suspected number of months
-            const diffTime = Math.abs(end - start);
-            const diffMonths = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44)));
-            const installmentAmount = Math.round(currentCredit.amount / diffMonths);
+            let repayments = [];
+            let monthCount = 1;
             
             while (true) {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                if (currentDate > end && monthCount > 1) break; // Ensure at least one if possible
-                if (currentDate > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break; // Buffer 15 days
+                // Calcul stable sans dérive
+                let currentDateRef = new Date(startYear, startMonth + monthCount, targetDay);
+                
+                // Gestion des mois courts
+                if (currentDateRef.getDate() !== targetDay) {
+                    currentDateRef.setDate(0);
+                }
 
-                const adjustedDate = skipWeekend(new Date(currentDate));
+                // Buffer de 15 jours après la fin
+                if (currentDateRef > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
+
+                // Règle anti-weekend
+                const adjustedDate = skipWeekend(new Date(currentDateRef));
+                
                 repayments.push({
                     credit_id: currentCredit.id,
                     installment_number: monthCount,
@@ -5957,9 +6034,8 @@ Suivant
                     status: 'En attente'
                 });
 
+                if (monthCount >= 120 || currentDateRef >= end) break;
                 monthCount++;
-                if (monthCount > 60) break; // Safety
-                if (currentDate >= end) break;
             }
 
             // Delete ALL existing repayments for total reset
@@ -7458,6 +7534,7 @@ Suivant
             const activity = document.getElementById('prospect-activity').value;
             const status = document.getElementById('prospect-status').value;
             const observations = document.getElementById('prospect-observations').value;
+            const excludeAuto = document.getElementById('prospect-exclude-automation')?.checked || false;
 
             // Validation
             let errors = [];
@@ -7484,7 +7561,8 @@ Suivant
                 address: address,
                 activity: activity,
                 status: status || 'Nouveau',
-                neighborhood: address
+                neighborhood: address,
+                exclude_automation: excludeAuto
             };
 
             if (window.editingProspectId) {
@@ -7536,6 +7614,7 @@ Suivant
             const endDate = document.getElementById('credit-end-date').value;
             const activity = document.getElementById('credit-activity').value;
             const address = document.getElementById('credit-address').value;
+            const excludeAuto = document.getElementById('credit-exclude-automation')?.checked || false;
 
             // Validation
             let errors = [];
@@ -7572,7 +7651,8 @@ Suivant
                     address: address,
                     total_portefeuille: amount,
                     health: 'Sain',
-                    is_active: true
+                    is_active: true,
+                    exclude_automation: excludeAuto
                 }], { onConflict: 'full_name,phone1' })
                 .select()
                 .single();
@@ -7594,7 +7674,8 @@ Suivant
                     manager_id: getSessionUser().id,
                     phone: phone1,
                     activity: activity,
-                    email: email || null
+                    email: email || null,
+                    exclude_automation: excludeAuto
                 }], { onConflict: 'client_name,amount,start_date' })
                 .select();
 
@@ -7647,28 +7728,39 @@ Suivant
             let currentDate = new Date(start);
             let monthCount = 1;
 
-            while (true) {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                
-                // Si on a dépassé la date de fin de plus de 15 jours, on arrête
-                if (currentDate > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
+            const targetDay = start.getDate();
+            const startMonth = start.getMonth();
+            const startYear = start.getFullYear();
 
-                let adjustedDate = new Date(currentDate);
+            while (true) {
+                // Calcul stable à partir de la date de départ
+                let currentDateRef = new Date(startYear, startMonth + monthCount, targetDay);
+                
+                // Si Jan 31 -> Fév 31, ramener au 28 Fév
+                if (currentDateRef.getDate() !== targetDay) {
+                    currentDateRef.setDate(0);
+                }
+
+                // Si on a dépassé la date de fin de plus de 15 jours, on arrête
+                if (currentDateRef > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
+
+                // Application locale de la règle week-end
+                let adjustedDate = new Date(currentDateRef);
                 const dayOfWeek = adjustedDate.getDay();
-                if (dayOfWeek === 6) adjustedDate.setDate(adjustedDate.getDate() + 2);
-                else if (dayOfWeek === 0) adjustedDate.setDate(adjustedDate.getDate() + 1);
+                if (dayOfWeek === 6) adjustedDate.setDate(adjustedDate.getDate() + 2); // Sam -> Lun
+                else if (dayOfWeek === 0) adjustedDate.setDate(adjustedDate.getDate() + 1); // Dim -> Lun
 
                 repayments.push({
                     credit_id: credit.id,
                     installment_number: monthCount,
-                    scheduled_date: adjustedDate.toISOString().split('T')[0],
-                    amount: null, // Pas de montant affiché selon demande
+                    scheduled_date: toLocalDateStr(adjustedDate),
+                    amount: null,
                     status: 'En attente',
                     is_paid: false
                 });
 
+                if (monthCount >= 120 || currentDateRef >= end) break;
                 monthCount++;
-                if (monthCount > 120 || adjustedDate >= end) break;
             }
 
             if (repayments.length > 0) {
@@ -7718,6 +7810,12 @@ Suivant
                 document.getElementById('prospect-phone2').value = currentProspect.phone2 || '';
                 document.getElementById('prospect-activity').value = currentProspect.activity || '';
                 document.getElementById('prospect-status').value = currentProspect.status || '';
+                if (document.getElementById('prospect-exclude-automation')) {
+                    document.getElementById('prospect-exclude-automation').checked = currentProspect.exclude_automation || false;
+                }
+                if (document.getElementById('prospect-email')) {
+                    document.getElementById('prospect-email').value = currentProspect.email || '';
+                }
                 window.editingProspectId = currentProspect.id;
             }, 100);
         }
@@ -7934,6 +8032,9 @@ Suivant
                     document.getElementById('credit-type').value       = snapshot.type       || 'Prêt Personnel';
                     document.getElementById('credit-start-date').value = snapshot.start_date || '';
                     document.getElementById('credit-end-date').value   = snapshot.end_date   || '';
+                    if (document.getElementById('credit-exclude-automation')) {
+                        document.getElementById('credit-exclude-automation').checked = snapshot.exclude_automation || false;
+                    }
 
                     window.editingCreditId = null;
                     window.editingClientId = null;

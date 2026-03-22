@@ -11,6 +11,17 @@
   to = "/MAQUETTE_COMPLETE.html"
   status = 200
 
+# PWA Mobile
+[[redirects]]
+  from = "/mobile"
+  to = "/maquette-app/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/mobile/login"
+  to = "/maquette-app/login.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

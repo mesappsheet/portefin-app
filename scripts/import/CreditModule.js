@@ -111,40 +111,51 @@ class CreditModule {
      */
     generateSchedule(data) {
         let schedule = [];
-        let startDate = new Date(data.start_date);
-        let endDate = new Date(data.end_date);
+        const start = new Date(data.start_date);
+        const endDate = new Date(data.end_date);
         
-        // On commence à M+1
-        let currentDueDate = new Date(startDate);
+        // Mémoriser le jour cible (ex: le 02 du mois) pour rester stable sur toute la durée
+        const targetDay = start.getDate();
+        const startMonth = start.getMonth();
+        const startYear = start.getFullYear();
+        
         let monthCount = 1;
 
         while (true) {
-            currentDueDate.setMonth(currentDueDate.getMonth() + 1);
+            // Création stable du mois suivant : Année, Mois + Offset, Jour
+            let currentDueDate = new Date(startYear, startMonth + monthCount, targetDay);
+            
+            // Sécurité pour les mois courts (ex: Jan 31 -> Fév 31 devient Mars 03 en JS)
+            // On ramène au dernier jour du mois si débordement.
+            if (currentDueDate.getDate() !== targetDay) {
+                currentDueDate.setDate(0); 
+            }
             
             // Si on a dépassé la date de fin de plus de 15 jours, on arrête
             if (currentDueDate > new Date(endDate.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
             
-            // Utilise la fonction globale si disponible, sinon inline
+            // Appliquer la règle anti-weekend sur une COPIE pour ne pas déshabituer le calcul du mois suivant
             let adjustedDate = (typeof window !== 'undefined' && window.skipWeekend)
                 ? window.skipWeekend(new Date(currentDueDate))
                 : (() => {
                     const d = new Date(currentDueDate);
                     const day = d.getDay();
-                    if (day === 6) d.setDate(d.getDate() + 2);
-                    else if (day === 0) d.setDate(d.getDate() + 1);
+                    if (day === 6) d.setDate(d.getDate() + 2); // Samedi -> Lundi
+                    else if (day === 0) d.setDate(d.getDate() + 1); // Dimanche -> Lundi
                     return d;
                 })();
 
             schedule.push({
                 installment_number: monthCount,
                 scheduled_date: toLocalDateStr(adjustedDate),
-                amount: null, // Pas de montant affiché
+                amount: null,
                 status: "En attente"
             });
 
+            // Condition d'arrêt
+            if (monthCount > 120 || currentDueDate >= endDate) break;
+            
             monthCount++;
-            // Sécurité pour éviter les boucles infinies ou échéanciers trop longs (> 10 ans)
-            if (monthCount > 120 || adjustedDate >= endDate) break;
         }
         return schedule;
     }

@@ -278,6 +278,11 @@ body:not(.light) .pros-avatar{color:#818cf8}
       <span class="nl">Prospects</span>
       <div class="nav-dot"></div>
     </div>
+    <div class="nav-item" onclick="navTo('models')" id="nav-models">
+      <span class="material-symbols-outlined ni">text_snippet</span>
+      <span class="nl">Modèles</span>
+      <div class="nav-dot"></div>
+    </div>
   </nav>
 </div>
 
@@ -335,13 +340,12 @@ function navTo(screen){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const nav=document.getElementById('nav-'+screen);
   if(nav)nav.classList.add('active');
-  const icons={'dashboard':'dashboard','repayments':'payments','credits':'account_balance','prospects':'person_search'};
   document.querySelectorAll('.nav-item .ni').forEach((ic,i)=>{
-    const screens=['dashboard','repayments','credits','prospects'];
+    const screens=['dashboard','repayments','credits','prospects','models'];
     ic.classList.toggle('filled',screens[i]===screen);
   });
   hideFab();
-  const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects};
+  const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects,'models':viewModels};
   if(views[screen])views[screen]();
 }
 
@@ -400,11 +404,88 @@ function initials(name){if(!name)return'?';return name.trim().split(' ').map(w=>
 function getName(r){return r?.clients?.full_name||r?.client_name||r?.full_name||'Inconnu';}
 function getPhone(r){return r?.clients?.phone1||r?.phone||r?.phone1||'';}
 
-function wa(phone,name=''){
+async function wa(phone, name='', category='Crédit', amount=0, date='', activity='', id=''){
   const p=(phone||'').replace(/\D/g,'');
   if(!p){toast('Numéro introuvable','err');return;}
-  const msg=encodeURIComponent(`Bonjour ${name},`);
-  window.open(`https://wa.me/${p}?text=${msg}`,'_blank');
+
+  let template=null;
+  try{
+    // 1. Essai catégorie spécifique active
+    let{data:tpl}=await sb.from('communication_models')
+      .select('title,body,category')
+      .eq('active',true)
+      .ilike('type','WhatsApp%')
+      .eq('category',category)
+      .limit(1);
+    
+    // 2. Fallback intelligent (Prospection ou Crédit) si vide
+    if(!tpl||!tpl.length){
+      const fallback=category.includes('rosp')?'Prospection':'Crédit';
+      const res=await sb.from('communication_models')
+        .select('title,body,category')
+        .eq('active',true)
+        .ilike('type','WhatsApp%')
+        .eq('category',fallback)
+        .limit(1);
+      tpl=res.data;
+    }
+    template=tpl&&tpl[0]||null;
+  }catch(e){console.error("WA Template Error:",e);}
+
+  if(!template || !template.body){
+    toast(`Aucun modèle actif pour "${category}"`,'err');
+    template = { body: `Bonjour ${name},`, title: 'Par défaut', category: 'Système' };
+  }
+
+  const formattedAmount=amount?new Intl.NumberFormat('fr-FR').format(amount):'';
+  const fmtDate_=date?fmtDate(date):'';
+  
+  const replaceMap = {
+    "{{Nom du Client}}": name,
+    "{{Nom du Prospect}}": name,
+    "{{Nom}}": name,
+    "{{Capital}}": formattedAmount,
+    "{{Montant}}": formattedAmount,
+    "{{Montant à Payer}}": formattedAmount,
+    "{{Date}}": fmtDate_,
+    "{{Date d'Échéance}}": fmtDate_,
+    "{{Activité}}": activity || '',
+    "{{ID}}": id ? id.substring(0,8) : '',
+    "{{Id_Dossier}}": id ? id.substring(0,8) : ''
+  };
+
+  let msgBody = template.body;
+  Object.keys(replaceMap).forEach(tag => {
+    msgBody = msgBody.split(tag).join(replaceMap[tag]);
+  });
+
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(37,211,102,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span class="material-symbols-outlined filled" style="color:#25d366;font-size:20px">chat</span>
+        </div>
+        <div>
+          <p style="font-size:10px;color:#25d366;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">WhatsApp</p>
+          <p style="font-size:15px;font-weight:700;color:var(--text);margin:0">${name}</p>
+        </div>
+      </div>
+      <p style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Modèle : <strong>${template.title}</strong> (${template.category})</p>
+      <textarea id="wa-msg-preview" class="m-input" rows="7" style="resize:none;font-size:13px;line-height:1.6">${msgBody}</textarea>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+        <button onclick="sendWaFinal('${p}','wa-msg-preview')" class="btn-primary" style="flex:2;background:linear-gradient(135deg,#25d366,#128c7e);box-shadow:0 4px 15px rgba(37,211,102,.3)">
+          <span class="material-symbols-outlined filled" style="font-size:18px">send</span> Envoyer via WhatsApp
+        </button>
+      </div>
+    </div>`);
+}
+
+function sendWaFinal(phone, textareaId){
+  const msg=(document.getElementById(textareaId).value||'').trim();
+  if(!msg){toast('Message vide','err');return;}
+  closeModal();
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 function call(phone){
   const p=(phone||'').replace(/[\s\-]/g,'');
@@ -421,7 +502,7 @@ async function viewDashboard(){
   try{
     const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff}]=await Promise.all([
       sb.from('repayments').select('id,amount,is_paid,credits(client_name,clients(full_name,phone1))').eq('scheduled_date',t),
-      sb.from('credits').select('amount').in('status',['En cours','en cours','ENCOURS']),
+      sb.from('credits').select('amount,type').in('status',['En cours','en cours','ENCOURS']),
       sb.from('repayments').select('id').lt('scheduled_date',t).eq('is_paid',false),
       sb.from('credits').select('id').eq('health','Souffrance')
     ]);
@@ -429,6 +510,34 @@ async function viewDashboard(){
     const paid=reps.filter(r=>r.is_paid).length;
     const pending=reps.length-paid;
     const encours=(activeC||[]).reduce((s,c)=>s+(c.amount||0),0);
+
+    // Group by category
+    const cats = (activeC||[]).reduce((acc,c)=>{
+      const key = c.type||'Autre';
+      if(!acc[key]) acc[key] = {count:0, total:0};
+      acc[key].count++; acc[key].total += (c.amount||0);
+      return acc;
+    }, {});
+
+    const catGrid = Object.entries(cats).map(([name, data])=>{
+      let icon = 'account_balance';
+      let color = '#94a3b8';
+      if(name.toLowerCase().includes('immo')) { icon='home'; color='#10b981'; }
+      else if(name.toLowerCase().includes('pro')) { icon='business'; color='#6366f1'; }
+      else if(name.toLowerCase().includes('conso')) { icon='shopping_cart'; color='#f59e0b'; }
+      
+      return `
+        <div class="glass" style="padding:10px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="material-symbols-outlined" style="font-size:16px;color:${color}">${icon}</span>
+            <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase">${name}</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;color:var(--text)">${fmt(data.total)}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.4)">${data.count} dossier${data.count>1?'s':''}</div>
+        </div>
+      `;
+    }).join('');
+
 
     const topReps=reps.filter(r=>!r.is_paid).slice(0,5);
     const repsHtml=topReps.length?topReps.map(r=>`
@@ -485,7 +594,16 @@ async function viewDashboard(){
             </div>
           </div>
         </div>`:''}
+
+        <!-- Categories Grid -->
+        <div style="grid-column:1/-1;padding-top:6px">
+          <div class="stat-lbl" style="margin-bottom:8px">Par Catégorie</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            ${catGrid}
+          </div>
+        </div>
       </div>
+
 
       <!-- Remboursements en attente today -->
       ${topReps.length>0?`
@@ -627,7 +745,7 @@ function repRow(r){
         ${isPaid?'Payé':'En attente'}
       </button>
       ${phone?`<div style="display:flex;gap:4px">
-        <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+        <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')">
           <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>
         </button>
         <button class="action-btn ab-call" onclick="call('${phone}')">
@@ -670,6 +788,7 @@ async function viewCredits(){
       <div class="tab-btn ${credFilter==='all'?'active':''}" data-f="all" onclick="setCredFilter('all')">Tous</div>
       <div class="tab-btn ${credFilter==='encours'?'active':''}" data-f="encours" onclick="setCredFilter('encours')">En cours</div>
       <div class="tab-btn ${credFilter==='souffrance'?'active':''}" data-f="souffrance" onclick="setCredFilter('souffrance')">Souffrance</div>
+      <div class="tab-btn ${credFilter==='solde'?'active':''}" data-f="solde" onclick="setCredFilter('solde')">Soldés</div>
     </div>
     <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -690,10 +809,14 @@ async function loadCredits(){
   try{
     let q=sb.from('credits')
       .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
-      .not('status','in','("Soldé","SOLDÉ","soldé")')
       .order('created_at',{ascending:false});
-    if(credFilter==='encours')q=q.in('status',['En cours','en cours','ENCOURS']);
-    if(credFilter==='souffrance')q=q.eq('health','Souffrance');
+    if(credFilter==='solde'){
+      q=q.in('status',['Soldé','SOLDÉ','soldé']);
+    } else {
+      q=q.not('status','in','("Soldé","SOLDÉ","soldé")');
+      if(credFilter==='encours')q=q.in('status',['En cours','en cours','ENCOURS']);
+      if(credFilter==='souffrance')q=q.eq('health','Souffrance');
+    }
     const{data,error}=await q;
     if(error)throw error;
     let rows=data||[];
@@ -740,16 +863,24 @@ function credRow(c,reps){
         <p style="font-size:10px;color:rgba(255,255,255,.3);margin:4px 0 0">${reps.paid}/${reps.total} échéances · ${pct}%</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <button class="btn-ghost" style="padding:6px 10px;font-size:11px" onclick="viewEcheancier('${c.id}','${name.replace(/'/g,"\\'")}')">
-          <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span> Échéancier
-        </button>
         <div style="display:flex;gap:4px">
-          ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+          <button class="btn-ghost" style="padding:6px 10px;font-size:11px" onclick="viewEcheancier('${c.id}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span> Échéancier
+          </button>
+          <button class="btn-ghost" style="padding:6px 10px;font-size:11px" title="Notes" onclick="openCreditNotes('${c.id}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined" style="font-size:15px">sticky_note_2</span>
+          </button>
+        </div>
+        <div style="display:flex;gap:4px">
+          ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}', 'Crédit', ${c.amount||0}, '${c.end_date||''}', '${(c.activity||'').replace(/'/g,"\\'")}', '${c.id}')">
             <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
           </button>
           <button class="action-btn ab-call" onclick="call('${phone}')">
             <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
           </button>`:''}
+          <button class="action-btn" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)" title="Changer statut" onclick="changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${c.status||''}')">
+            <span class="material-symbols-outlined" style="font-size:17px;color:#818cf8">swap_horiz</span>
+          </button>
           <button class="action-btn ab-edit" onclick="openClientEditForm('${c.id}')">
             <span class="material-symbols-outlined" style="font-size:17px">edit</span>
           </button>
@@ -794,17 +925,22 @@ async function viewEcheancier(creditId,clientName){
           ${rows.map(r=>{
             const overdue=!r.is_paid&&r.scheduled_date<t;
             return`<div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:10px">
-              <div style="width:32px;height:32px;border-radius:8px;background:${r.is_paid?'rgba(34,197,94,.15)':overdue?'rgba(239,68,68,.15)':'rgba(255,255,255,.06)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <span class="material-symbols-outlined filled" style="font-size:16px;color:${r.is_paid?'#4ade80':overdue?'#f87171':'rgba(255,255,255,.4)'}">${r.is_paid?'check_circle':overdue?'warning':'radio_button_unchecked'}</span>
+              <div style="width:32px;height:32px;border-radius:8px;background:${r.is_paid?'rgba(34,197,94,.15)':r.is_reported?'rgba(99,102,241,.15)':overdue?'rgba(239,68,68,.15)':'rgba(255,255,255,.06)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span class="material-symbols-outlined filled" style="font-size:16px;color:${r.is_paid?'#4ade80':r.is_reported?'#818cf8':overdue?'#f87171':'rgba(255,255,255,.4)'}">${r.is_paid?'check_circle':r.is_reported?'event_repeat':overdue?'warning':'radio_button_unchecked'}</span>
               </div>
               <div style="flex:1">
                 <p style="font-size:13px;font-weight:600;margin:0">N°${String(r.installment_number||'—').padStart(2,'0')} · ${fmtDate(r.scheduled_date)}</p>
-                <p style="font-size:11px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(r.amount)} FCFA${r.is_paid&&r.actual_payment_date?' · Payé le '+fmtDate(r.actual_payment_date):''}</p>
+                <p style="font-size:11px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(r.amount)} FCFA${r.is_paid&&r.actual_payment_date?' · Payé le '+fmtDate(r.actual_payment_date):r.is_reported&&r.report_reason?' · Motif: '+r.report_reason:''}</p>
               </div>
-              <button class="toggle-paid ${r.is_paid?'paid':'pending'}" onclick="toggleEch('${r.id}',${r.is_paid},'${creditId}','${clientName.replace(/'/g,"\\'")}',this)" style="font-size:10px;padding:5px 9px">
-                <span class="material-symbols-outlined" style="font-size:12px">${r.is_paid?'check_circle':'radio_button_unchecked'}</span>
-                ${r.is_paid?'Payé':'Attente'}
-              </button>
+              <div style="display:flex;gap:4px;align-items:center">
+                <button class="toggle-paid ${r.is_paid?'paid':'pending'}" onclick="toggleEch('${r.id}',${r.is_paid},'${creditId}','${clientName.replace(/'/g,"\\'")}',this)" style="font-size:10px;padding:5px 9px">
+                  <span class="material-symbols-outlined" style="font-size:12px">${r.is_paid?'check_circle':'radio_button_unchecked'}</span>
+                  ${r.is_paid?'Payé':'Attente'}
+                </button>
+                ${!r.is_paid?`<button onclick="reportRep('${r.id}','${creditId}','${clientName.replace(/'/g,"\\'")}','${r.scheduled_date}')" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);border-radius:8px;padding:5px 7px;cursor:pointer" title="Reporter">
+                  <span class="material-symbols-outlined" style="font-size:14px;color:#818cf8">event_repeat</span>
+                </button>`:''}
+              </div>
             </div>`;
           }).join('')}
         </div>
@@ -828,9 +964,77 @@ async function toggleEch(id,isPaid,creditId,clientName,btn){
   }catch(e){toast('Erreur','err');btn.disabled=false;}
 }
 
-async function openCreditForm(){
-  // Même localStorage que le SaaS PC (clé identique)
-  const creditDossierTypes=JSON.parse(localStorage.getItem('credit_dossier_types'))||['Prêt Personnel','Immobilier','Consommation'];
+async function openManageCreditTypes() {
+  let types = [];
+  try {
+    const { data } = await sb.from('credit_dossier_types').select('name').order('name');
+    if (data) types = data.map(r => r.name);
+  } catch (e) {}
+
+  const itemsHtml = types.map(t => `
+    <div style="display:flex;align-items:center;justify-between;padding:12px;background:#f8fafc;border-radius:12px;margin-bottom:8px;border:1px solid var(--sep)">
+      <span style="font-size:14px;font-weight:600;color:var(--text);flex:1">${t}</span>
+      <button onclick="handleDeleteCreditTypePWA('${t.replace(/'/g, "\\'")}')" style="color:#ef4444;background:none;border:none;padding:4px">
+        <span class="material-symbols-outlined" style="font-size:20px">delete</span>
+      </button>
+    </div>
+  `).join('');
+
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--sep)">
+        <button onclick="openCreditForm()" style="background:none;border:none;color:var(--text3);padding:0">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p style="font-size:16px;font-weight:700;margin:0">Gérer les Types de Dossier</p>
+      </div>
+      
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <input id="new-credit-type-input" class="m-input" style="margin:0" placeholder="Nouveau type..."/>
+        <button onclick="handleAddCreditTypePWA()" style="background:var(--p);color:#white;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:12px;text-transform:uppercase">Ajouter</button>
+      </div>
+
+      <div style="max-height:300px;overflow-y:auto">
+        ${itemsHtml || '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px 0">Aucun type personnalisé</p>'}
+      </div>
+
+      <button onclick="openCreditForm()" class="m-btn btn-p" style="margin-top:20px;width:100%">Fermer</button>
+    </div>
+  `);
+}
+
+async function handleAddCreditTypePWA() {
+  const input = document.getElementById('new-credit-type-input');
+  const val = input.value.trim();
+  if (!val) return;
+  
+  const { error } = await sb.from('credit_dossier_types').insert({ name: val });
+  if (error) {
+    toast('Erreur lors de l\'ajout', 'err');
+  } else {
+    toast('Type ajouté ✓', 'ok');
+    openManageCreditTypes();
+  }
+}
+
+async function handleDeleteCreditTypePWA(name) {
+  if (!confirm(`Supprimer le type "${name}" ?`)) return;
+  const { error } = await sb.from('credit_dossier_types').delete().eq('name', name);
+  if (error) {
+    toast('Erreur lors de la suppression', 'err');
+  } else {
+    toast('Type supprimé', 'ok');
+    openManageCreditTypes();
+  }
+}
+
+async function openCreditForm(prefill=null){
+  // Types dossier depuis Supabase (synchronisé avec le SaaS PC)
+  let creditDossierTypes=['Prêt Personnel','Immobilier','Consommation'];
+  try{
+    const{data}=await sb.from('credit_dossier_types').select('name').order('name');
+    if(data&&data.length>0)creditDossierTypes=data.map(r=>r.name);
+  }catch(e){}
   const typeOptions=creditDossierTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
 
   const todayStr=today();
@@ -853,29 +1057,29 @@ async function openCreditForm(){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
-          <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont"/>
+          <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${prefill?.name||''}"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-          <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email"/>
+          <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email" value="${prefill?.email||''}"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
+            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${prefill?.phone1||''}"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
+            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${prefill?.phone2||''}"/>
           </div>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
-          <input id="credit-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..."/>
+          <input id="credit-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..." value="${prefill?.activity||''}"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
-          <input id="credit-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..."/>
+          <input id="credit-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..." value="${prefill?.address||''}"/>
         </div>
 
         <!-- Section 2 -->
@@ -889,7 +1093,10 @@ async function openCreditForm(){
           <input id="credit-amount" class="m-input" type="number" placeholder="Ex: 5 000 000" inputmode="numeric"/>
         </div>
         <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Type de dossier</label>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block">Type de dossier</label>
+            <button onclick="openManageCreditTypes()" style="background:none;border:none;color:var(--p);font-size:11px;font-weight:700;text-transform:uppercase;padding:0">Gérer</button>
+          </div>
           <select id="credit-type" class="m-input m-select">${typeOptions}</select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1187,12 +1394,19 @@ function setProsFilter(f){
   document.querySelectorAll('#pros-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
   loadProspects();
 }
+let statusMapPWA = {};
+let selectedProsPWA = new Set();
+
 
 async function loadProspects(){
   const list=document.getElementById('pros-list');
   if(!list)return;
   list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
+    if(Object.keys(statusMapPWA).length===0){
+      const{data:stData}=await sb.from('prospect_statuses').select('label,color');
+      (stData||[]).forEach(s=>statusMapPWA[s.label]=s.color);
+    }
     let q=sb.from('prospects').select('*').order('created_at',{ascending:false});
     if(prosFilter!=='all')q=q.eq('status',prosFilter);
     const{data,error}=await q;
@@ -1200,36 +1414,82 @@ async function loadProspects(){
     let rows=data||[];
     if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone||'').includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">person_search</span><p>Aucun prospect trouvé</p></div>`;return;}
+    
+    let bulkHtml = '';
+    if(selectedProsPWA.size > 0) {
+      bulkHtml = `<div style="padding:0 16px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#f87171;font-weight:700">${selectedProsPWA.size} sélectionné(s)</span>
+        <button class="btn-ghost" style="color:#f87171;font-size:11px;padding:4px 8px" onclick="bulkDeleteProsPWA()">
+          <span class="material-symbols-outlined" style="font-size:16px">delete_sweep</span> Supprimer
+        </button>
+      </div>`;
+    }
+
     list.innerHTML=`
-      <div style="padding:0 16px 8px"><span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span></div>
+      <div style="padding:0 16px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span>
+        <button class="btn-ghost" style="font-size:11px" onclick="toggleSelectAllProsPWA(${JSON.stringify(rows.map(r=>r.id)).replace(/"/g,'&quot;')})">Tout sélectionner</button>
+      </div>
+      ${bulkHtml}
       <div class="glass" style="margin:0 16px;overflow:hidden">
         ${rows.map(p=>prosRow(p)).join('')}
       </div>`;
   }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
 }
 
-const STATUS_COLORS={'Nouveau':'badge-blue','À relancer':'badge-orange','Converti':'badge-green','Perdu':'badge-red'};
+function toggleSelectAllProsPWA(ids){
+  if(selectedProsPWA.size === ids.length) selectedProsPWA.clear();
+  else ids.forEach(id=>selectedProsPWA.add(id));
+  loadProspects();
+}
+
+async function bulkDeleteProsPWA(){
+  const ids = [...selectedProsPWA];
+  if(!ids.length)return;
+  openConfirm(`Supprimer ${ids.length} prospect(s) ?`,`Cette action supprimera également leurs notes.`,async ()=>{
+    try {
+      await sb.from('prospect_notes').delete().in('prospect_id', ids);
+      const {error} = await sb.from('prospects').delete().in('id', ids);
+      if(error) throw error;
+      toast(`${ids.length} prospect(s) supprimé(s)`,'ok');
+      selectedProsPWA.clear();
+      loadProspects();
+    } catch(e) { toast('Erreur lors de la suppression','err'); }
+  });
+}
+
+
 function prosRow(p){
   const name=p.full_name||'Inconnu';
   const phone=p.phone||'';
-  const sc=STATUS_COLORS[p.status]||'badge-gray';
-  return`<div class="pros-item">
-    <div class="pros-avatar">${initials(name)}</div>
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <p style="font-size:14px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${name}</p>
-        <span class="badge ${sc}" style="font-size:9px">${p.status||'—'}</span>
+  const color = statusMapPWA[p.status] || '#cbd5e1';
+  const isSel = selectedProsPWA.has(p.id);
+  return`<div class="pros-item ${isSel?'selected':''}" style="${isSel?'background:linear-gradient(90deg, rgba(242,127,13,0.1) 0%, transparent 100%)':''}">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+      <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation(); toggleProSelPWA('${p.id}')" style="accent-color:#f27f0d">
+      <div class="pros-avatar">${initials(name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <p style="font-size:14px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${name}</p>
+          <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
       </div>
-      <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
-      <div style="display:flex;gap:4px">
-        ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}')">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+        ${phone?`<button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}', 'Prospection', 0, '', '${(p.activity||'').replace(/'/g,"\\'")}', '${p.id}')">
           <span class="material-symbols-outlined filled" style="font-size:17px">chat</span>
         </button>
         <button class="action-btn ab-call" onclick="call('${phone}')">
           <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
         </button>`:''}
+        <button class="action-btn" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)" title="Notes" onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')">
+          <span class="material-symbols-outlined" style="font-size:17px;color:#34d399">sticky_note_2</span>
+        </button>
+        <button class="action-btn" style="background:rgba(242,127,13,.15);border:1px solid rgba(242,127,13,.25)" title="Convertir en crédit" onclick="convertProspect('${p.id}','${name.replace(/'/g,"\\'")}','${phone}')">
+          <span class="material-symbols-outlined" style="font-size:17px;color:#f27f0d">person_add</span>
+        </button>
         <button class="action-btn ab-edit" onclick="openProspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">
           <span class="material-symbols-outlined" style="font-size:17px">edit</span>
         </button>
@@ -1241,14 +1501,151 @@ function prosRow(p){
   </div>`;
 }
 
-function openProspectForm(p=null){
+function toggleProSelPWA(id){
+  if(selectedProsPWA.has(id)) selectedProsPWA.delete(id);
+  else selectedProsPWA.add(id);
+  loadProspects();
+}
+
+
+async function openManageProspectActivities() {
+  let acts = [];
+  try {
+    const { data } = await sb.from('prospect_activities').select('name').order('name');
+    if (data) acts = data.map(r => r.name);
+  } catch (e) {}
+
+  const itemsHtml = acts.map(a => `
+    <div style="display:flex;align-items:center;justify-between;padding:12px;background:#f8fafc;border-radius:12px;margin-bottom:8px;border:1px solid var(--sep)">
+      <span style="font-size:14px;font-weight:600;color:var(--text);flex:1">${a}</span>
+      <button onclick="handleDeleteActivityPWA('${a.replace(/'/g, "\\'")}')" style="color:#ef4444;background:none;border:none;padding:4px">
+        <span class="material-symbols-outlined" style="font-size:20px">delete</span>
+      </button>
+    </div>
+  `).join('');
+
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--sep)">
+        <button onclick="openProspectForm()" style="background:none;border:none;color:var(--text3);padding:0">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p style="font-size:16px;font-weight:700;margin:0">Gérer les Activités</p>
+      </div>
+      
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <input id="new-act-input" class="m-input" style="margin:0" placeholder="Nouvelle activité..."/>
+        <button onclick="handleAddActivityPWA()" style="background:var(--p);color:white;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:12px;text-transform:uppercase">Ajouter</button>
+      </div>
+
+      <div style="max-height:300px;overflow-y:auto">
+        ${itemsHtml || '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px 0">Aucune activité enregistrée</p>'}
+      </div>
+
+      <button onclick="openProspectForm()" class="m-btn btn-p" style="margin-top:20px;width:100%">Fermer</button>
+    </div>
+  `);
+}
+
+async function handleAddActivityPWA() {
+  const input = document.getElementById('new-act-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const { error } = await sb.from('prospect_activities').insert({ name: val });
+  if (error) toast('Erreur ajout', 'err');
+  else { toast('Activité ajoutée', 'ok'); openManageProspectActivities(); }
+}
+
+async function handleDeleteActivityPWA(name) {
+  if (!confirm(`Supprimer l'activité "${name}" ?`)) return;
+  const { error } = await sb.from('prospect_activities').delete().eq('name', name);
+  if (error) toast('Erreur suppression', 'err');
+  else { toast('Activité supprimée', 'ok'); openManageProspectActivities(); }
+}
+
+async function openManageProspectStatuses() {
+  let stats = [];
+  try {
+    const { data } = await sb.from('prospect_statuses').select('label, color').order('label');
+    if (data) stats = data;
+  } catch (e) {}
+
+  const itemsHtml = stats.map(s => `
+    <div style="display:flex;align-items:center;justify-between;padding:12px;background:#f8fafc;border-radius:12px;margin-bottom:8px;border:1px solid var(--sep)">
+      <div style="width:12px;height:12px;border-radius:50%;background:var(--${s.color || 'slate'});margin-right:10px"></div>
+      <span style="font-size:14px;font-weight:600;color:var(--text);flex:1">${s.label}</span>
+      <button onclick="handleDeleteStatusPWA('${s.label.replace(/'/g, "\\'")}')" style="color:#ef4444;background:none;border:none;padding:4px">
+        <span class="material-symbols-outlined" style="font-size:20px">delete</span>
+      </button>
+    </div>
+  `).join('');
+
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--sep)">
+        <button onclick="openProspectForm()" style="background:none;border:none;color:var(--text3);padding:0">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p style="font-size:16px;font-weight:700;margin:0">Gérer les Statuts</p>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        <input id="new-stat-input" class="m-input" style="margin:0" placeholder="Nom du statut..."/>
+        <div style="display:flex;gap:8px">
+          <select id="new-stat-color" class="m-input m-select" style="margin:0;flex:1">
+            <option value="p">Bleu (App)</option>
+            <option value="orange">Orange</option>
+            <option value="emerald">Vert</option>
+            <option value="rose">Rose</option>
+            <option value="slate">Gris</option>
+          </select>
+          <button onclick="handleAddStatusPWA()" style="background:var(--p);color:white;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:12px;text-transform:uppercase">Ajouter</button>
+        </div>
+      </div>
+
+      <div style="max-height:300px;overflow-y:auto">
+        ${itemsHtml || '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px 0">Aucun statut enregistré</p>'}
+      </div>
+
+      <button onclick="openProspectForm()" class="m-btn btn-p" style="margin-top:20px;width:100%">Fermer</button>
+    </div>
+  `);
+}
+
+async function handleAddStatusPWA() {
+  const name = document.getElementById('new-stat-input').value.trim();
+  const color = document.getElementById('new-stat-color').value;
+  if (!name) return;
+  const { error } = await sb.from('prospect_statuses').insert({ label: name, color: color });
+  if (error) toast('Erreur ajout', 'err');
+  else { toast('Statut ajouté', 'ok'); openManageProspectStatuses(); }
+}
+
+async function handleDeleteStatusPWA(label) {
+  if (!confirm(`Supprimer le statut "${label}" ?`)) return;
+  const { error } = await sb.from('prospect_statuses').delete().eq('label', label);
+  if (error) toast('Erreur suppression', 'err');
+  else { toast('Statut supprimé', 'ok'); openManageProspectStatuses(); }
+}
+
+async function openProspectForm(p=null){
   const isEdit=!!p;
-  const todayStr=today();
-  // Même localStorage que le SaaS PC
-  const prospectActivities=JSON.parse(localStorage.getItem('prospect_activities'))||['Commerce','Services','Industrie','Transport','Agro-Business'];
-  const prospectStatuses=JSON.parse(localStorage.getItem('prospect_statuses'))||[{label:'Nouveau'},{label:'En cours'},{label:'Qualifié'},{label:'Prioritaire'}];
-  const actOptions='<option value="">Sélectionner une activité</option>'+prospectActivities.map(a=>`<option value="${a}" ${p?.activity===a?'selected':''}>${a}</option>`).join('');
-  const statOptions=prospectStatuses.map(s=>{const l=typeof s==='string'?s:s.label;return`<option value="${l}" ${(p?.status||'Nouveau')===l?'selected':''}>${l}</option>`;}).join('');
+  
+  // Données dynamiques depuis Supabase (synchronisées en temps réel)
+  let acts=['Commerce','Services','Industrie','Transport','Agro-Business'];
+  let stats=[{label:'Nouveau'},{label:'En cours'},{label:'Qualifié'},{label:'Prioritaire'}];
+  
+  try {
+    const [actRes, statRes] = await Promise.all([
+      sb.from('prospect_activities').select('name').order('name'),
+      sb.from('prospect_statuses').select('label, color').order('label')
+    ]);
+    if (actRes.data && actRes.data.length > 0) acts = actRes.data.map(r => r.name);
+    if (statRes.data && statRes.data.length > 0) stats = statRes.data;
+  } catch(e) {}
+
+  const actOptions='<option value="">Sélectionner une activité</option>'+acts.map(a=>`<option value="${a}" ${p?.activity===a?'selected':''}>${a}</option>`).join('');
+  const statOptions=stats.map(s=>{const l=typeof s==='string'?s:s.label;return`<option value="${l}" ${(p?.status||'Nouveau')===l?'selected':''}>${l}</option>`;}).join('');
   openModal(`
     <div style="padding:0 20px 24px">
       <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">${isEdit?'Modifier le prospect':'Nouveau Prospect'}</p>
@@ -1281,7 +1678,7 @@ function openProspectForm(p=null){
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Date de création <span style="color:#ef4444">*</span></label>
             <div style="position:relative">
               <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">calendar_today</span>
-              <input id="prospect-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:todayStr}" style="padding-left:38px"/>
+              <input id="prospect-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:today()}" style="padding-left:38px"/>
             </div>
           </div>
           <div>
@@ -1317,11 +1714,17 @@ function openProspectForm(p=null){
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Activité</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label style="font-size:13px;font-weight:600;color:var(--text)">Activité</label>
+              <button onclick="openManageProspectActivities()" style="background:none;border:none;color:var(--p);font-size:10px;font-weight:700;text-transform:uppercase;padding:0">Gérer</button>
+            </div>
             <select id="prospect-activity" class="m-input m-select">${actOptions}</select>
           </div>
           <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Statut</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label style="font-size:13px;font-weight:600;color:var(--text)">Statut</label>
+              <button onclick="openManageProspectStatuses()" style="background:none;border:none;color:var(--p);font-size:10px;font-weight:700;text-transform:uppercase;padding:0">Gérer</button>
+            </div>
             <select id="prospect-status" class="m-input m-select">${statOptions}</select>
           </div>
         </div>
@@ -1382,7 +1785,6 @@ async function saveProspect(id=null){
     if(id){
       ({error}=await sb.from('prospects').update(payload).eq('id',id));
     }else{
-      payload.created_by=currentUser?.id;
       ({error}=await sb.from('prospects').upsert([payload],{onConflict:'full_name,phone'}));
     }
     if(error)throw error;
@@ -1402,6 +1804,322 @@ async function deleteProspect(id,name,fromForm=false){
       loadProspects();
     }catch(e){toast('Erreur suppression','err');}
   });
+}
+
+// ═══════════════════════════════════════════════
+//  NOTES CRÉDIT
+// ═══════════════════════════════════════════════
+async function openCreditNotes(creditId, clientName){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  try{
+    const{data}=await sb.from('credit_notes').select('*').eq('credit_id',creditId).order('created_at',{ascending:false});
+    const rows=data||[];
+    document.getElementById('modal-content').innerHTML=`
+      <div style="padding:0 20px 24px">
+        <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">Notes — ${clientName}</p>
+        <div style="margin-bottom:16px">
+          <textarea id="new-credit-note" class="m-input" rows="3" placeholder="Saisir une note de visite, remarque…" style="resize:none"></textarea>
+          <button class="btn-primary" style="width:100%;margin-top:8px" onclick="saveCreditNote('${creditId}','${clientName.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined filled" style="font-size:18px">note_add</span> Ajouter la note
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${rows.length?rows.map(n=>`
+            <div class="glass-sm" style="padding:12px">
+              <p style="font-size:13px;margin:0 0 6px;line-height:1.5">${n.content}</p>
+              <p style="font-size:10px;color:var(--text2);margin:0">${fmtDate(n.created_at?.split('T')[0]||'')} · ${n.author_name||'Gestionnaire'}</p>
+            </div>`).join('')
+          :`<div class="empty" style="padding:20px 0"><span class="material-symbols-outlined">note</span><p>Aucune note pour ce dossier</p></div>`}
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function saveCreditNote(creditId, clientName){
+  const content=(document.getElementById('new-credit-note').value||'').trim();
+  if(!content){toast('Note vide','err');return;}
+  const{error}=await sb.from('credit_notes').insert({
+    credit_id:creditId, content,
+    author_name:currentUser?.name||currentUser?.email?.split('@')[0]||'Gestionnaire'
+  });
+  if(error)toast('Erreur lors de l\'ajout','err');
+  else{toast('Note ajoutée ✓','ok');openCreditNotes(creditId,clientName);}
+}
+
+// ═══════════════════════════════════════════════
+//  NOTES PROSPECT
+// ═══════════════════════════════════════════════
+async function openProspectNotes(prospectId, name){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  try{
+    const{data}=await sb.from('prospect_notes').select('*').eq('prospect_id',prospectId).order('created_at',{ascending:false});
+    const rows=data||[];
+    document.getElementById('modal-content').innerHTML=`
+      <div style="padding:0 20px 24px">
+        <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">Notes — ${name}</p>
+        <div style="margin-bottom:16px">
+          <textarea id="new-pros-note" class="m-input" rows="3" placeholder="Saisir une observation, remarque…" style="resize:none"></textarea>
+          <button class="btn-primary" style="width:100%;margin-top:8px" onclick="saveProspectNote('${prospectId}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined filled" style="font-size:18px">note_add</span> Ajouter la note
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${rows.length?rows.map(n=>`
+            <div class="glass-sm" style="padding:12px">
+              <p style="font-size:13px;margin:0 0 6px;line-height:1.5">${n.content}</p>
+              <p style="font-size:10px;color:var(--text2);margin:0">${fmtDate(n.created_at?.split('T')[0]||'')} · ${n.author_name||'Gestionnaire'}</p>
+            </div>`).join('')
+          :`<div class="empty" style="padding:20px 0"><span class="material-symbols-outlined">note</span><p>Aucune note pour ce prospect</p></div>`}
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function saveProspectNote(prospectId, name){
+  const content=(document.getElementById('new-pros-note').value||'').trim();
+  if(!content){toast('Note vide','err');return;}
+  const{error}=await sb.from('prospect_notes').insert({
+    prospect_id:prospectId, content,
+    author_name:currentUser?.name||currentUser?.email?.split('@')[0]||'Gestionnaire'
+  });
+  if(error)toast('Erreur lors de l\'ajout','err');
+  else{toast('Note ajoutée ✓','ok');openProspectNotes(prospectId,name);}
+}
+
+// ═══════════════════════════════════════════════
+//  CHANGER STATUT CRÉDIT
+// ═══════════════════════════════════════════════
+function changeCreditStatus(creditId, clientName, currentStatus){
+  const isSolde=['Soldé','SOLDÉ','soldé'].includes(currentStatus);
+  const isSouffrance=currentStatus==='Souffrance';
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <p class="sheet-title" style="padding:0 0 8px;margin-bottom:6px">${clientName}</p>
+      <p style="font-size:12px;color:var(--text2);margin:0 0 20px">Statut actuel : <strong>${currentStatus||'—'}</strong></p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${!isSolde&&isSouffrance?`
+        <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="setCreditStatus('${creditId}','En cours','Sain')">
+          <span class="material-symbols-outlined filled">check_circle</span> Remettre EN COURS
+        </button>`:''}
+        ${!isSouffrance?`
+        <button class="btn-primary" style="background:linear-gradient(135deg,#f87171,#dc2626)" onclick="setCreditStatus('${creditId}','Souffrance','Souffrance')">
+          <span class="material-symbols-outlined filled">warning</span> Marquer EN SOUFFRANCE
+        </button>`:''}
+        ${!isSolde?`
+        <button class="btn-primary" style="background:linear-gradient(135deg,#60a5fa,#2563eb)" onclick="setCreditStatus('${creditId}','Soldé','Soldé')">
+          <span class="material-symbols-outlined filled">task_alt</span> Marquer SOLDÉ (clôturer)
+        </button>`:''}
+        <button class="btn-ghost" onclick="closeModal()">Annuler</button>
+      </div>
+    </div>`);
+}
+
+async function setCreditStatus(creditId, status, health){
+  const now=today();
+  const creditUpdate={status, health};
+  if(status==='Soldé') creditUpdate.end_date=now;
+
+  const{error}=await sb.from('credits').update(creditUpdate).eq('id',creditId);
+  if(error){toast('Erreur','err');return;}
+
+  // Soldé → toutes les échéances impayées passent automatiquement à Payé
+  if(status==='Soldé'){
+    const{error:repErr}=await sb.from('repayments').update({
+      is_paid:true,
+      actual_payment_date:now,
+      status:'Payé'
+    }).eq('credit_id',creditId).eq('is_paid',false);
+    if(repErr)console.error('Erreur màj échéances:',repErr);
+    toast('Crédit soldé — toutes les échéances marquées payées ✓','ok');
+  }else{
+    toast(`Statut → ${status} ✓`,'ok');
+  }
+  closeModal();
+  loadCredits();
+}
+
+// ═══════════════════════════════════════════════
+//  REPORTER UNE ÉCHÉANCE
+// ═══════════════════════════════════════════════
+function reportRep(repId, creditId, clientName, currentDate){
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">Reporter l'échéance</p>
+      <p style="font-size:12px;color:var(--text2);margin:0 0 16px">Date actuelle : <strong>${fmtDate(currentDate)}</strong></p>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:8px">Nouvelle date <span style="color:#f27f0d">*</span></label>
+        <input id="report-new-date" class="m-input" type="date" value="${today()}"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:8px">Motif du report</label>
+        <input id="report-reason-inp" class="m-input" type="text" placeholder="Ex: Client absent, problème financier…"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-ghost" onclick="viewEcheancier('${creditId}','${clientName}')" style="flex:1">Annuler</button>
+        <button class="btn-primary" onclick="confirmReport('${repId}','${creditId}','${clientName}')" style="flex:2">
+          <span class="material-symbols-outlined filled" style="font-size:18px">event_repeat</span> Confirmer le report
+        </button>
+      </div>
+    </div>`);
+}
+
+async function confirmReport(repId, creditId, clientName){
+  const newDate=document.getElementById('report-new-date').value;
+  const reason=(document.getElementById('report-reason-inp').value||'').trim()||null;
+  if(!newDate){toast('Date requise','err');return;}
+  const{error}=await sb.from('repayments').update({
+    scheduled_date:newDate, is_reported:true, report_reason:reason
+  }).eq('id',repId);
+  if(error)toast('Erreur lors du report','err');
+  else{toast('Échéance reportée ✓','ok');viewEcheancier(creditId,clientName);}
+}
+
+// ═══════════════════════════════════════════════
+//  CONVERTIR PROSPECT → CRÉDIT
+// ═══════════════════════════════════════════════
+async function convertProspect(prospectId, name, phone){
+  openConfirm(
+    `Convertir ${name} en dossier crédit ?`,
+    'Le statut du prospect passera à "Converti" et le formulaire de dossier s\'ouvrira pré-rempli.',
+    async()=>{
+      await sb.from('prospects').update({status:'Converti'}).eq('id',prospectId);
+      navTo('credits');
+      setTimeout(async()=>{
+        await openCreditForm({name, phone1:phone||''});
+      },300);
+    }
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  ÉCRAN 5 : MODÈLES DE COMMUNICATION
+// ═══════════════════════════════════════════════
+async function viewModels(){
+  document.getElementById('view').innerHTML=`<div class="loader"><div class="spin"></div> Chargement…</div>`;
+  try{
+    const{data,error}=await sb.from('communication_models')
+      .select('id,title,type,category,body,active')
+      .order('category').order('type').order('title');
+    if(error)throw error;
+    const models=data||[];
+
+    // Grouper par catégorie
+    const groups={};
+    models.forEach(m=>{
+      if(!groups[m.category])groups[m.category]=[];
+      groups[m.category].push(m);
+    });
+
+    const catColors={
+      'Crédit':'#f27f0d','Prospection':'#6366f1','Échéance':'#10b981','Suivi':'#60a5fa'
+    };
+    const typeIcons={'WhatsApp':'chat','SMS':'sms'};
+    const typeColors={'WhatsApp':'#25d366','SMS':'#3b82f6'};
+
+    const html=Object.entries(groups).map(([cat,items])=>{
+      const cc=catColors[cat]||'#94a3b8';
+      return`
+        <div style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;padding:0 16px;margin-bottom:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${cc}"></div>
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:${cc}">${cat}</span>
+            <span style="font-size:10px;color:var(--text3)">${items.length} modèle${items.length>1?'s':''}</span>
+          </div>
+          <div class="glass" style="margin:0 16px;overflow:hidden">
+            ${items.map((m,idx)=>{
+              const tc=typeColors[m.type]||'#94a3b8';
+              const ti=typeIcons[m.type]||'message';
+              const preview=(m.body||'').replace(/\{\{.*?\}\}/g,'[…]').substring(0,90);
+              return`<div style="padding:14px 16px;${idx<items.length-1?'border-bottom:1px solid var(--sep)':''}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+                      <span style="font-size:13px;font-weight:700;color:var(--text)">${m.title}</span>
+                      <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;background:${tc}20;color:${tc};border:1px solid ${tc}40">
+                        <span class="material-symbols-outlined filled" style="font-size:10px">${ti}</span>${m.type}
+                      </span>
+                    </div>
+                    <p style="font-size:11px;color:var(--text2);margin:0;line-height:1.5;font-style:italic">"${preview}${m.body&&m.body.length>90?'…':''}"</p>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                    <label class="switch" title="${m.active?'Désactiver':'Activer'}">
+                      <input type="checkbox" ${m.active?'checked':''} onchange="toggleModelActive('${m.id}',this.checked,'${m.title.replace(/'/g,"\\'")}', '${m.category.replace(/'/g,"\\'")}', '${m.type}')">
+                      <span class="slider round"></span>
+                    </label>
+                    <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:${m.active?'#4ade80':'var(--text3)'}">${m.active?'ACTIF':'inactif'}</span>
+                  </div>
+                </div>
+                <button onclick="previewModel('${m.id}')" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+                  <span class="material-symbols-outlined" style="font-size:14px">visibility</span> Voir le message complet
+                </button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }).join('');
+
+    const activeWa=models.filter(m=>m.active&&m.type==='WhatsApp');
+    document.getElementById('view').innerHTML=`
+      <div style="padding:16px;padding-bottom:80px">
+        <!-- Info banner -->
+        <div class="glass" style="padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;border-color:rgba(37,211,102,.2)">
+          <span class="material-symbols-outlined filled" style="color:#25d366;font-size:22px;flex-shrink:0">info</span>
+          <div>
+            <p style="font-size:12px;font-weight:700;margin:0 0 2px;color:var(--text)">Modèles actifs WhatsApp : ${activeWa.length}</p>
+            <p style="font-size:11px;color:var(--text2);margin:0">Le modèle actif est utilisé lors des envois WhatsApp. Activez/désactivez ici, modifiez sur le PC.</p>
+          </div>
+        </div>
+        ${html||`<div class="empty"><span class="material-symbols-outlined">text_snippet</span><p>Aucun modèle</p></div>`}
+      </div>`;
+  }catch(e){
+    document.getElementById('view').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function toggleModelActive(id, active, title, category, type){
+  if(active){
+    const isWA = type.toUpperCase().includes('WHATSAPP');
+    await sb.from('communication_models')
+      .update({ active: false })
+      .eq('category', category)
+      .ilike('type', isWA ? 'WhatsApp%' : 'SMS%')
+      .neq('id', id);
+  }
+  const{error}=await sb.from('communication_models').update({active}).eq('id',id);
+  if(error){toast('Erreur de mise à jour','err');viewModels();}
+  else {
+    toast(`"${title}" — ${active?'activé ✓':'désactivé'}`, active?'ok':'info');
+    viewModels();
+  }
+}
+
+async function previewModel(id){
+  const{data,error}=await sb.from('communication_models').select('*').eq('id',id).single();
+  if(error||!data){toast('Erreur','err');return;}
+  const tc={'WhatsApp':'#25d366','SMS':'#3b82f6'}[data.type]||'#94a3b8';
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+        <span class="material-symbols-outlined filled" style="color:${tc};font-size:22px">${data.type==='WhatsApp'?'chat':'sms'}</span>
+        <div>
+          <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:${tc};margin:0">${data.type} · ${data.category}</p>
+          <p style="font-size:16px;font-weight:700;color:var(--text);margin:0">${data.title}</p>
+        </div>
+        <span style="margin-left:auto;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;background:${data.active?'rgba(74,222,128,.15)':'var(--card)'};color:${data.active?'#4ade80':'var(--text3)'}">
+          ${data.active?'ACTIF':'inactif'}
+        </span>
+      </div>
+      <div class="glass-sm" style="padding:14px 16px;line-height:1.7;font-size:13px;white-space:pre-wrap">${data.body}</div>
+      <div style="margin-top:12px;padding:10px 14px;background:rgba(242,127,13,.08);border-radius:10px;border:1px solid rgba(242,127,13,.15)">
+        <p style="font-size:10px;color:#f27f0d;font-weight:700;margin:0 0 4px;text-transform:uppercase;letter-spacing:.08em">Balises disponibles</p>
+        <p style="font-size:10px;color:var(--text2);margin:0;line-height:1.7">{{Nom}} · {{Nom du Client}} · {{Nom du Prospect}} · {{Capital}} · {{Montant}} · {{Montant à Payer}} · {{Date}} · {{Date d'Échéance}} · {{Activité}} · {{Id_Dossier}}</p>
+      </div>
+      <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:14px">Fermer</button>
+    </div>`);
 }
 
 // ─── LOGOUT ───────────────────────────────────
