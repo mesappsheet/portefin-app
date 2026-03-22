@@ -6990,20 +6990,22 @@ Suivant
             }
 
             tbody.innerHTML = data.map(c => {
-                const client = c.clients;
+                const displayName = c.clients?.full_name || c.client_name || 'Client Inconnu';
+                const displayPhone = c.clients?.phone1 || c.phone || '';
+                const safeName = displayName.replace(/'/g, "\\'");
                 return `
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${(client?.full_name || c.client_name || 'U').substring(0,2).toUpperCase()}</div>
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${displayName.substring(0,2).toUpperCase()}</div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-slate-900">${client?.full_name || c.client_name || 'Client Inconnu'}</span>
+                                <span class="font-bold text-slate-900">${displayName}</span>
                                 <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-5">
-                        <span class="text-sm font-medium text-slate-700">${new Date(c.end_date).toLocaleDateString()}</span>
+                        <span class="text-sm font-medium text-slate-700">${new Date(c.end_date).toLocaleDateString('fr-FR')}</span>
                     </td>
                     <td class="px-6 py-5 text-right">
                         <span class="text-sm font-bold text-slate-900">${parseInt(c.amount).toLocaleString('fr-FR')} FCFA</span>
@@ -7013,9 +7015,8 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex justify-end gap-1.5">
-                             <a href="tel:${client.phone1}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary transition-all shadow-sm hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">call</span></a>
-                             <button onclick="sendWhatsAppMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${c.amount}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all shadow-sm hover:bg-green-600 hover:text-white"><span class="material-symbols-outlined text-[18px]">chat</span></button>
-                             <button onclick="sendSmsMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${c.amount}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 transition-all shadow-sm hover:bg-blue-500 hover:text-white"><span class="material-symbols-outlined text-[18px]">sms</span></button>
+                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary transition-all shadow-sm hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all shadow-sm hover:bg-green-600 hover:text-white"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
                         </div>
                     </td>
                 </tr>`;
