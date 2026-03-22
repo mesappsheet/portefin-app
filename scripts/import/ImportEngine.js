@@ -51,7 +51,7 @@ class ImportEngine {
     /**
      * Sauvegarde les données validées dans Supabase avec gestion de doublons.
      */
-    static async saveToSupabase(validRows, module, supabase, userId) {
+    static async saveToSupabase(validRows, module, supabase, userId, onProgress = null) {
         let stats = {
             inserted: 0,
             updated: 0,
@@ -61,8 +61,12 @@ class ImportEngine {
 
         const tableName = module.getTableName();
         const conflictFields = module.getConflictFields();
+        const total = validRows.length;
 
-        for (const row of validRows) {
+        for (let rowIndex = 0; rowIndex < total; rowIndex++) {
+            const row = validRows[rowIndex];
+            const clientLabel = row.data.client_name || row.data.full_name || `Ligne ${rowIndex + 1}`;
+            if (onProgress) onProgress(rowIndex, total, clientLabel);
             try {
                 const payload = module.prepareForSupabase(row.data, userId);
 
@@ -158,10 +162,12 @@ class ImportEngine {
             }
         }
 
-        return { 
-            success: true, 
-            inserted: stats.inserted, 
-            updated: stats.updated, 
+        if (onProgress) onProgress(total, total, 'Terminé');
+
+        return {
+            success: true,
+            inserted: stats.inserted,
+            updated: stats.updated,
             failed: stats.failed,
             report: stats.details
         };

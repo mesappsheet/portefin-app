@@ -353,6 +353,29 @@
         </div>
     </div>
 
+    <!-- Overlay bloquant : progression importation -->
+    <div id="import-progress-overlay" class="fixed inset-0 z-[999999] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-80 p-8 text-center space-y-5">
+            <div class="size-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl text-primary animate-spin" style="animation:spin 1s linear infinite">upload_file</span>
+            </div>
+            <div>
+                <p class="text-base font-black text-slate-800 dark:text-white">Importation en cours…</p>
+                <p id="import-progress-name" class="text-xs text-slate-400 mt-1 truncate px-2">—</p>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Dossiers traités</span>
+                    <span id="import-progress-text">0 / 0</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div id="import-progress-bar" class="h-2.5 bg-primary rounded-full transition-all duration-300" style="width:0%"></div>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest">Ne fermez pas la page</p>
+        </div>
+    </div>
+
     <!-- Modale résultat suppression -->
     <div id="deletion-result-overlay" class="fixed inset-0 z-[999999] hidden items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm text-center overflow-hidden">
@@ -8428,6 +8451,21 @@ Suivant
             if (input) input.value = '';
         }
 
+        // ── Helpers progression importation ───────────────────────────────────
+        function showImportProgress(current, total, name) {
+            const overlay = document.getElementById('import-progress-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            document.getElementById('import-progress-text').textContent = `${current} / ${total}`;
+            document.getElementById('import-progress-bar').style.width = total > 0 ? `${Math.round(current / total * 100)}%` : '0%';
+            if (name) document.getElementById('import-progress-name').textContent = name;
+        }
+        function hideImportProgress() {
+            const overlay = document.getElementById('import-progress-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
         // ── Helpers progression/résultat suppression ──────────────────────────
         function showDeletionProgress(current, total) {
             const overlay = document.getElementById('deletion-progress-overlay');
@@ -8582,13 +8620,21 @@ Suivant
             confirmBtn.innerHTML = `<span class="size-4 border-2 border-white/20 border-t-white animate-spin rounded-full"></span> Importation...`;
 
             window.pauseInactivityTimer?.();
+            showImportProgress(0, validRows.length, 'Démarrage…');
 
             try {
                 const { data: { user } } = await _supabase.auth.getUser();
                 if (!user) throw new Error("Utilisateur non authentifié");
 
-                const result = await ImportEngine.saveToSupabase(validRows, currentImportModule, _supabase, user.id);
+                const result = await ImportEngine.saveToSupabase(
+                    validRows,
+                    currentImportModule,
+                    _supabase,
+                    user.id,
+                    (current, total, name) => showImportProgress(current, total, name)
+                );
                 
+                hideImportProgress();
                 if (result.success) {
                     const summaryHtml = `
                         <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -8629,6 +8675,7 @@ Suivant
                     showNotification(`Importation terminée: ${result.inserted} nouveaux, ${result.updated} mis à jour.`, "success");
                 }
             } catch (err) {
+                hideImportProgress();
                 console.error("Database Import Error:", err);
                 showNotification("Erreur lors de la sauvegarde : " + (err.message || "Erreur inconnue"), "error");
                 confirmBtn.disabled = false;
