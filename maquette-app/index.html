@@ -292,6 +292,7 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 let currentUser=null;
 let currentScreen='dashboard';
+let _fab=null;
 
 // ─── AUTH GUARD ───────────────────────────────
 (async()=>{
@@ -381,7 +382,6 @@ function closeConfirm(){document.getElementById('confirm-overlay').classList.rem
 document.getElementById('confirm-ok').onclick=()=>{if(_confirmCb)_confirmCb();closeConfirm();};
 
 // ─── FAB ──────────────────────────────────────
-let _fab=null;
 function showFab(cb){
   if(_fab)_fab.remove();
   _fab=document.createElement('button');
@@ -689,7 +689,7 @@ async function loadCredits(){
   list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
     let q=sb.from('credits')
-      .select('id,amount,status,type,client_name,phone,health,end_date,clients(full_name,phone1)')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
       .not('status','in','("Soldé","SOLDÉ","soldé")')
       .order('created_at',{ascending:false});
     if(credFilter==='encours')q=q.in('status',['En cours','en cours','ENCOURS']);
@@ -750,6 +750,9 @@ function credRow(c,reps){
           <button class="action-btn ab-call" onclick="call('${phone}')">
             <span class="material-symbols-outlined filled" style="font-size:17px">call</span>
           </button>`:''}
+          <button class="action-btn ab-edit" onclick="openClientEditForm('${c.id}')">
+            <span class="material-symbols-outlined" style="font-size:17px">edit</span>
+          </button>
           <button class="action-btn ab-del" onclick="deleteCredit('${c.id}','${name.replace(/'/g,"\\'")}')">
             <span class="material-symbols-outlined" style="font-size:17px">delete</span>
           </button>
@@ -826,13 +829,9 @@ async function toggleEch(id,isPaid,creditId,clientName,btn){
 }
 
 async function openCreditForm(){
-  // Charger les types de dossier depuis Supabase
-  let typeOptions='<option value="">-- Sélectionner --</option>';
-  try{
-    const{data:types}=await sb.from('credit_types').select('name').order('name');
-    if(types&&types.length)typeOptions=types.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
-    else typeOptions='<option value="Mensuel">Mensuel</option><option value="Hebdomadaire">Hebdomadaire</option><option value="Journalier">Journalier</option>';
-  }catch(e){typeOptions='<option value="Mensuel">Mensuel</option><option value="Hebdomadaire">Hebdomadaire</option><option value="Journalier">Journalier</option>';}
+  // Même localStorage que le SaaS PC (clé identique)
+  const creditDossierTypes=JSON.parse(localStorage.getItem('credit_dossier_types'))||['Prêt Personnel','Immobilier','Consommation'];
+  const typeOptions=creditDossierTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
 
   const todayStr=today();
   openModal(`
@@ -854,29 +853,29 @@ async function openCreditForm(){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
-          <input id="cf-name" class="m-input" type="text" placeholder="Ex: Jean Dupont"/>
+          <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-          <input id="cf-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email"/>
+          <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-            <input id="cf-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
+            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="cf-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
+            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel"/>
           </div>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
-          <input id="cf-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..."/>
+          <input id="credit-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..."/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
-          <input id="cf-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..."/>
+          <input id="credit-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..."/>
         </div>
 
         <!-- Section 2 -->
@@ -887,20 +886,37 @@ async function openCreditForm(){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Montant souhaité</label>
-          <input id="cf-amount" class="m-input" type="number" placeholder="Ex: 5 000 000" inputmode="numeric"/>
+          <input id="credit-amount" class="m-input" type="number" placeholder="Ex: 5 000 000" inputmode="numeric"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Type de dossier</label>
-          <select id="cf-type" class="m-input m-select">${typeOptions}</select>
+          <select id="credit-type" class="m-input m-select">${typeOptions}</select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Date Début <span style="color:#f27f0d">*</span></label>
-            <input id="cf-start" class="m-input" type="date" value="${todayStr}"/>
+            <input id="credit-start-date" class="m-input" type="date" value="${todayStr}"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Fin Échéance <span style="color:#f27f0d">*</span></label>
-            <input id="cf-end" class="m-input" type="date"/>
+            <input id="credit-end-date" class="m-input" type="date"/>
+          </div>
+        </div>
+
+        <!-- Exclusion d'automatisation -->
+        <div style="display:flex;align-items:center;justify-content:between;padding:12px;background:rgba(255,255,255,0.05);border-radius:12px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">notifications_off</span>
+            <div>
+              <p style="font-size:12px;font-weight:700;margin:0">Exclure des automatisations</p>
+              <p style="font-size:9px;color:rgba(255,255,255,0.4);margin:0">Ne pas envoyer de rappels</p>
+            </div>
+          </div>
+          <div style="flex:1;display:flex;justify-content:flex-end">
+            <label class="switch">
+              <input id="credit-exclude-automation" type="checkbox">
+              <span class="slider round"></span>
+            </label>
           </div>
         </div>
 
@@ -923,20 +939,21 @@ function skipWeekendLocal(d){
 }
 
 async function saveCredit(){
-  const name=(document.getElementById('cf-name').value||'').trim();
-  const startVal=document.getElementById('cf-start').value;
-  const endVal=document.getElementById('cf-end').value;
-  if(!name){toast('Nom complet requis','err');document.getElementById('cf-name').focus();return;}
+  const name=(document.getElementById('credit-name').value||'').trim();
+  const startVal=document.getElementById('credit-start-date').value;
+  const endVal=document.getElementById('credit-end-date').value;
+  if(!name){toast('Nom complet requis','err');document.getElementById('credit-name').focus();return;}
   if(!startVal){toast('Date de début requise','err');return;}
   if(!endVal){toast('Date de fin requise','err');return;}
 
-  const email=(document.getElementById('cf-email').value||'').trim()||null;
-  const phone1=(document.getElementById('cf-phone1').value||'').trim()||null;
-  const phone2=(document.getElementById('cf-phone2').value||'').trim()||null;
-  const amount=parseFloat(document.getElementById('cf-amount').value)||null;
-  const type=document.getElementById('cf-type').value||null;
-  const activity=(document.getElementById('cf-activity').value||'').trim()||null;
-  const address=(document.getElementById('cf-address').value||'').trim()||null;
+  const email=(document.getElementById('credit-email').value||'').trim()||null;
+  const phone1=(document.getElementById('credit-phone1').value||'').trim()||null;
+  const phone2=(document.getElementById('credit-phone2').value||'').trim()||null;
+  const amount=parseFloat(document.getElementById('credit-amount').value)||null;
+  const type=document.getElementById('credit-type').value||null;
+  const activity=(document.getElementById('credit-activity').value||'').trim()||null;
+  const address=(document.getElementById('credit-address').value||'').trim()||null;
+  const excludeAuto=document.getElementById('credit-exclude-automation')?.checked||false;
 
   const btn=document.getElementById('cf-btn-save');
   if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite"></div> Enregistrement…';}
@@ -945,18 +962,20 @@ async function saveCredit(){
     // 1. Créer ou trouver le client
     const{data:clientData,error:cErr}=await sb.from('clients').upsert([{
       full_name:name,email,phone1,phone2,activity,address,
-      total_portefeuille:amount,health:'Sain',is_active:true
+      total_portefeuille:amount,health:'Sain',is_active:true,
+      exclude_automation:excludeAuto
     }],{onConflict:'full_name,phone1'}).select('id').single();
     if(cErr&&!clientData)throw cErr;
     const clientId=clientData?.id||null;
 
     // 2. Créer le crédit
-    const{data:credit,error:crErr}=await sb.from('credits').insert([{
+    const{data:credit,error:crErr}=await sb.from('credits').upsert([{
       client_id:clientId||undefined,
       client_name:name,phone:phone1,email,activity,address,amount,type,
       status:'EN COURS',health:'SAIN',start_date:startVal,end_date:endVal,
-      manager_id:currentUser?.id||null
-    }]).select('id').single();
+      manager_id:currentUser?.id||null,
+      exclude_automation:excludeAuto
+    }],{onConflict:'client_name,amount,start_date'}).select('id').single();
     if(crErr)throw crErr;
 
     // 3. Générer l'échéancier mensuel (même algo que PC)
@@ -1002,6 +1021,141 @@ async function deleteCredit(id,name){
   });
 }
 
+async function openClientEditForm(creditId){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  try{
+    const{data:c,error}=await sb.from('credits')
+      .select('id,client_id,client_name,phone,email,activity,address,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .eq('id',creditId).single();
+    if(error)throw error;
+    const cl=c.clients||{};
+    const v=(a,b)=>a||b||'';
+    const name=v(cl.full_name,c.client_name);
+    const email=v(cl.email,c.email);
+    const phone1=v(cl.phone1,c.phone);
+    const phone2=cl.phone2||'';
+    const activity=v(cl.activity,c.activity);
+    const address=v(cl.address,c.address);
+    const clientId=c.client_id||'';
+    document.getElementById('modal-content').innerHTML=`
+      <div style="padding:0 20px 24px">
+        <div style="display:flex;align-items:center;gap:8px;padding:0 0 14px;border-bottom:1px solid var(--sep);margin-bottom:20px">
+          <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">manage_accounts</span>
+          <div>
+            <p style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">Modifier</p>
+            <p style="font-size:16px;font-weight:700;color:var(--text);margin:0">Informations Client</p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep)">
+            <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">info</span>
+            <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Identité</span>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
+            <div style="position:relative">
+              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">badge</span>
+              <input id="ce-name" class="m-input" type="text" placeholder="Nom complet" value="${name.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
+              <div style="position:relative">
+                <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
+                <input id="ce-phone1" class="m-input" type="tel" placeholder="+224 ..." value="${phone1.replace(/"/g,'&quot;')}" inputmode="tel" style="padding-left:38px"/>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
+              <div style="position:relative">
+                <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
+                <input id="ce-phone2" class="m-input" type="tel" placeholder="+224 ..." value="${phone2.replace(/"/g,'&quot;')}" inputmode="tel" style="padding-left:38px"/>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
+            <div style="position:relative">
+              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">mail</span>
+              <input id="ce-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${email.replace(/"/g,'&quot;')}" inputmode="email" style="padding-left:38px"/>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep);margin-top:4px">
+            <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">storefront</span>
+            <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Activité & Localisation</span>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
+            <div style="position:relative">
+              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">work</span>
+              <input id="ce-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${activity.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
+            <div style="position:relative">
+              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">location_on</span>
+              <input id="ce-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry…" value="${address.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
+            </div>
+          </div>
+          <!-- Exclusion d'automatisation -->
+          <div style="display:flex;align-items:center;justify-content:between;padding:12px;background:rgba(255,255,255,0.05);border-radius:12px;margin-top:4px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">notifications_off</span>
+              <div>
+                <p style="font-size:11px;font-weight:700;margin:0">Exclure des automatisations</p>
+                <p style="font-size:9px;color:rgba(255,255,255,0.4);margin:0">Désactiver les messages</p>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;justify-content:flex-end">
+              <label class="switch">
+                <input id="ce-exclude-automation" type="checkbox" ${cl.exclude_automation?'checked':''}>
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+            <button class="btn-primary" id="ce-btn-save" onclick="saveClientEdit('${creditId}','${clientId}')" style="flex:2">
+              <span class="material-symbols-outlined filled" style="font-size:18px">save</span>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function saveClientEdit(creditId,clientId){
+  const name=(document.getElementById('ce-name').value||'').trim();
+  if(!name){toast('Nom complet requis','err');document.getElementById('ce-name').focus();return;}
+  const btn=document.getElementById('ce-btn-save');
+  if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></div> Enregistrement…';}
+  try{
+    const phone1=(document.getElementById('ce-phone1').value||'').trim()||null;
+    const phone2=(document.getElementById('ce-phone2').value||'').trim()||null;
+    const email=(document.getElementById('ce-email').value||'').trim()||null;
+    const activity=(document.getElementById('ce-activity').value||'').trim()||null;
+    const address=(document.getElementById('ce-address').value||'').trim()||null;
+    const excludeAuto=document.getElementById('ce-exclude-automation')?.checked||false;
+    if(clientId){
+      const{error}=await sb.from('clients').update({full_name:name,phone1,phone2,email,activity,address,exclude_automation:excludeAuto}).eq('id',clientId);
+      if(error)throw error;
+    }
+    const{error:cErr}=await sb.from('credits').update({client_name:name,phone:phone1,email,activity,address,exclude_automation:excludeAuto}).eq('id',creditId);
+    if(cErr)throw cErr;
+    toast('Client mis à jour ✓','ok');
+    closeModal();
+    loadCredits();
+  }catch(e){
+    toast('Erreur : '+(e.message||'inconnue'),'err');
+    if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">save</span> Enregistrer';}
+  }
+}
+
 // ═══════════════════════════════════════════════
 //  ÉCRAN 4 : PROSPECTS
 // ═══════════════════════════════════════════════
@@ -1044,7 +1198,7 @@ async function loadProspects(){
     const{data,error}=await q;
     if(error)throw error;
     let rows=data||[];
-    if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone1||'').includes(s));}
+    if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone||'').includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">person_search</span><p>Aucun prospect trouvé</p></div>`;return;}
     list.innerHTML=`
       <div style="padding:0 16px 8px"><span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span></div>
@@ -1057,7 +1211,7 @@ async function loadProspects(){
 const STATUS_COLORS={'Nouveau':'badge-blue','À relancer':'badge-orange','Converti':'badge-green','Perdu':'badge-red'};
 function prosRow(p){
   const name=p.full_name||'Inconnu';
-  const phone=p.phone1||'';
+  const phone=p.phone||'';
   const sc=STATUS_COLORS[p.status]||'badge-gray';
   return`<div class="pros-item">
     <div class="pros-avatar">${initials(name)}</div>
@@ -1090,6 +1244,11 @@ function prosRow(p){
 function openProspectForm(p=null){
   const isEdit=!!p;
   const todayStr=today();
+  // Même localStorage que le SaaS PC
+  const prospectActivities=JSON.parse(localStorage.getItem('prospect_activities'))||['Commerce','Services','Industrie','Transport','Agro-Business'];
+  const prospectStatuses=JSON.parse(localStorage.getItem('prospect_statuses'))||[{label:'Nouveau'},{label:'En cours'},{label:'Qualifié'},{label:'Prioritaire'}];
+  const actOptions='<option value="">Sélectionner une activité</option>'+prospectActivities.map(a=>`<option value="${a}" ${p?.activity===a?'selected':''}>${a}</option>`).join('');
+  const statOptions=prospectStatuses.map(s=>{const l=typeof s==='string'?s:s.label;return`<option value="${l}" ${(p?.status||'Nouveau')===l?'selected':''}>${l}</option>`;}).join('');
   openModal(`
     <div style="padding:0 20px 24px">
       <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">${isEdit?'Modifier le prospect':'Nouveau Prospect'}</p>
@@ -1105,8 +1264,16 @@ function openProspectForm(p=null){
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom et Prénoms <span style="color:#ef4444">*</span></label>
           <div style="position:relative">
             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">badge</span>
-            <input id="pf-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${p?.full_name||''}" style="padding-left:38px"/>
+            <input id="prospect-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${p?.full_name||''}" style="padding-left:38px"/>
           </div>
+        </div>
+
+        <div>
+           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
+           <div style="position:relative">
+             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">mail</span>
+             <input id="prospect-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${p?.email||''}" inputmode="email" style="padding-left:38px"/>
+           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1114,14 +1281,14 @@ function openProspectForm(p=null){
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Date de création <span style="color:#ef4444">*</span></label>
             <div style="position:relative">
               <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">calendar_today</span>
-              <input id="pf-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:todayStr}" style="padding-left:38px"/>
+              <input id="prospect-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:todayStr}" style="padding-left:38px"/>
             </div>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1 <span style="color:#ef4444">*</span></label>
             <div style="position:relative">
               <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-              <input id="pf-phone" class="m-input" type="tel" placeholder="Numéro principal" value="${p?.phone1||''}" inputmode="tel" style="padding-left:38px"/>
+              <input id="prospect-phone" class="m-input" type="tel" placeholder="Numéro principal" value="${p?.phone||''}" inputmode="tel" style="padding-left:38px"/>
             </div>
           </div>
         </div>
@@ -1130,7 +1297,7 @@ function openProspectForm(p=null){
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
           <div style="position:relative">
             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-            <input id="pf-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel" style="padding-left:38px"/>
+            <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel" style="padding-left:38px"/>
           </div>
         </div>
 
@@ -1138,7 +1305,7 @@ function openProspectForm(p=null){
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse activité</label>
           <div style="position:relative">
             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">location_on</span>
-            <input id="pf-address" class="m-input" type="text" placeholder="Localisation précise de l'activité" value="${p?.address||''}" style="padding-left:38px"/>
+            <input id="prospect-address" class="m-input" type="text" placeholder="Localisation précise de l'activité" value="${p?.address||''}" style="padding-left:38px"/>
           </div>
         </div>
 
@@ -1151,22 +1318,34 @@ function openProspectForm(p=null){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Activité</label>
-            <input id="pf-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${p?.activity||''}"/>
+            <select id="prospect-activity" class="m-input m-select">${actOptions}</select>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Statut</label>
-            <select id="pf-status" class="m-input m-select">
-              <option value="Nouveau" ${(p?.status||'Nouveau')==='Nouveau'?'selected':''}>Nouveau</option>
-              <option value="À relancer" ${p?.status==='À relancer'?'selected':''}>À relancer</option>
-              <option value="Converti" ${p?.status==='Converti'?'selected':''}>Converti</option>
-              <option value="Perdu" ${p?.status==='Perdu'?'selected':''}>Perdu</option>
-            </select>
+            <select id="prospect-status" class="m-input m-select">${statOptions}</select>
           </div>
         </div>
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Avis / Observations</label>
-          <textarea id="pf-notes" class="m-input" rows="3" placeholder="Saisissez vos notes ou remarques particulières ici..." style="resize:none">${p?.notes||p?.observations||''}</textarea>
+          <textarea id="prospect-observations" class="m-input" rows="3" placeholder="Saisissez vos notes ou remarques particulières ici..." style="resize:none">${p?.notes||p?.observations||''}</textarea>
+        </div>
+
+        <!-- Exclusion d'automatisation -->
+        <div style="display:flex;align-items:center;justify-content:between;padding:12px;background:rgba(255,255,255,0.05);border-radius:12px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">notifications_off</span>
+            <div>
+              <p style="font-size:11px;font-weight:700;margin:0">Exclure des automatisations</p>
+              <p style="font-size:9px;color:rgba(255,255,255,0.4);margin:0">Désactiver les messages</p>
+            </div>
+          </div>
+          <div style="flex:1;display:flex;justify-content:flex-end">
+            <label class="switch">
+              <input id="prospect-exclude-automation" type="checkbox" ${p?.exclude_automation?'checked':''}>
+              <span class="slider round"></span>
+            </label>
+          </div>
         </div>
 
         <div style="display:flex;gap:10px;margin-top:6px">
@@ -1184,16 +1363,19 @@ function openProspectForm(p=null){
 }
 
 async function saveProspect(id=null){
-  const name=(document.getElementById('pf-name').value||'').trim();
-  if(!name){toast('Nom et Prénoms requis','err');document.getElementById('pf-name').focus();return;}
+  const name=(document.getElementById('prospect-name').value||'').trim();
+  if(!name){toast('Nom et Prénoms requis','err');document.getElementById('prospect-name').focus();return;}
   const payload={
     full_name:name,
-    phone1:document.getElementById('pf-phone').value.trim()||null,
-    phone2:document.getElementById('pf-phone2').value.trim()||null,
-    address:document.getElementById('pf-address').value.trim()||null,
-    activity:document.getElementById('pf-activity').value.trim()||null,
-    status:document.getElementById('pf-status').value,
-    notes:document.getElementById('pf-notes').value.trim()||null,
+    email:document.getElementById('prospect-email').value.trim()||null,
+    phone:document.getElementById('prospect-phone').value.trim()||null,
+    phone2:document.getElementById('prospect-phone2').value.trim()||null,
+    address:document.getElementById('prospect-address').value.trim()||null,
+    neighborhood:document.getElementById('prospect-address').value.trim()||null,
+    activity:document.getElementById('prospect-activity').value.trim()||null,
+    status:document.getElementById('prospect-status').value,
+    notes:document.getElementById('prospect-observations').value.trim()||null,
+    exclude_automation:document.getElementById('prospect-exclude-automation')?.checked||false
   };
   try{
     let error;
@@ -1201,7 +1383,7 @@ async function saveProspect(id=null){
       ({error}=await sb.from('prospects').update(payload).eq('id',id));
     }else{
       payload.created_by=currentUser?.id;
-      ({error}=await sb.from('prospects').insert([payload]));
+      ({error}=await sb.from('prospects').upsert([payload],{onConflict:'full_name,phone'}));
     }
     if(error)throw error;
     toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
