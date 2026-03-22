@@ -3543,8 +3543,8 @@ Reporter
                             <div class="relative">
                                 <select id="endterm-period-select" onchange="applyEndTermFilter(this.value)" class="appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none cursor-pointer min-w-[180px] shadow-sm">
                                     <option value="day">Aujourd'hui</option>
-                                    <option selected value="week">Cette semaine</option>
-                                    <option value="month">Ce mois</option>
+                                    <option value="week">Cette semaine</option>
+                                    <option selected value="month">Ce mois</option>
                                     <option value="custom">Période personnalisée</option>
                                 </select>
                                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
@@ -4476,7 +4476,7 @@ Suivant
         ];
 
         // States for Credits Filters
-        let endTermFilter = 'week';
+        let endTermFilter = 'month';
         let endTermSearch = '';
         let endTermPage = 1;
         const endTermItemsPerPage = 5;
@@ -6533,17 +6533,20 @@ Suivant
                 .from('credits')
                 .select(`
                     id,
+                    client_name,
                     amount,
                     end_date,
                     health,
                     status,
-                    clients!inner (
+                    phone,
+                    clients (
                         full_name,
                         phone1
                     )
                 `, { count: 'exact' })
                 .gte('end_date', startDate)
                 .lte('end_date', endDate)
+                .neq('status', 'SOLDÉ')
                 .neq('status', 'Soldé');
 
             if (endTermSearch) {
@@ -6580,17 +6583,17 @@ Suivant
             }
 
             tbody.innerHTML = data.map(c => {
-                const client = c.clients;
+                const displayName = c.clients?.full_name || c.client_name || 'Client Inconnu';
                 const isOverdue = new Date(c.end_date) < new Date();
                 return `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                ${client.full_name ? client.full_name.substring(0,2).toUpperCase() : '??'}
+                                ${displayName.substring(0,2).toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-bold text-slate-900 dark:text-slate-100">${client.full_name}</p>
+                                <p class="font-bold text-slate-900 dark:text-slate-100">${displayName}</p>
                                 <p class="text-xs text-slate-500 font-medium tracking-tight">ID: ${c.id.substring(0,8)}</p>
                             </div>
                         </div>
@@ -7076,7 +7079,9 @@ Suivant
                 .from('credits')
                 .select('amount', { count: 'exact' })
                 .gte('end_date', startOfMonthStr)
-                .lte('end_date', endOfMonthStr);
+                .lte('end_date', endOfMonthStr)
+                .neq('status', 'SOLDÉ')
+                .neq('status', 'Soldé');
 
             const totalEndTermAmount = creditsEndTerm?.reduce((acc, c) => acc + parseFloat(c.amount || 0), 0) || 0;
 
