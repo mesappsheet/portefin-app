@@ -6604,7 +6604,9 @@ Suivant
 
             tbody.innerHTML = data.map(c => {
                 const displayName = c.clients?.full_name || c.client_name || 'Client Inconnu';
+                const displayPhone = c.clients?.phone1 || c.phone || '';
                 const isOverdue = new Date(c.end_date) < new Date();
+                const safeName = displayName.replace(/'/g, "\\'");
                 return `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                     <td class="px-6 py-5">
@@ -6620,11 +6622,11 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex flex-col">
-                            <span class="font-semibold text-slate-700 dark:text-slate-300">${new Date(c.end_date).toLocaleDateString()}</span>
-                            ${isOverdue ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-600 w-fit">Échu</span>' : ''}
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">${new Date(c.end_date).toLocaleDateString('fr-FR')}</span>
+                            ${isOverdue ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-600 w-fit mt-1">Échu</span>' : ''}
                         </div>
                     </td>
-                    <td class="px-6 py-5 underline decoration-primary/20">
+                    <td class="px-6 py-5">
                         <span class="text-lg font-black text-slate-900 dark:text-slate-100">${parseInt(c.amount).toLocaleString('fr-FR')} <span class="text-sm font-medium text-slate-500">FCFA</span></span>
                     </td>
                     <td class="px-6 py-5">
@@ -6634,16 +6636,15 @@ Suivant
                                 <option value="Souffrance" ${c.health === 'Souffrance' ? 'selected' : ''}>Souffrance</option>
                             </select>
                             <select onchange="updateCreditStatus('${c.id}', this.value, this)" class="status-badge-select px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">
-                                <option value="En cours" ${c.status === 'En cours' ? 'selected' : ''}>En cours</option>
-                                <option value="Soldé" ${c.status === 'Soldé' ? 'selected' : ''}>Soldé</option>
+                                <option value="EN COURS" ${c.status === 'EN COURS' ? 'selected' : ''}>En cours</option>
+                                <option value="SOLDÉ" ${c.status === 'SOLDÉ' ? 'selected' : ''}>Soldé</option>
                             </select>
                         </div>
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-1.5 justify-end">
-                            <a href="tel:${client.phone1}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">call</span></a>
-                            <button onclick="sendWhatsAppMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${c.amount}', date: '${new Date(c.end_date).toLocaleDateString('fr-FR')}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">chat</span></button>
-                            <button onclick="sendSmsMessage('${client.phone1}', { name: '${client.full_name.replace(/'/g, "\\'")}', amount: '${c.amount}', date: '${new Date(c.end_date).toLocaleDateString('fr-FR')}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">sms</span></button>
+                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}', date: '${new Date(c.end_date).toLocaleDateString('fr-FR')}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
                             <button onclick="handleEditCreditFromExternal('${c.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm" title="Modifier">
                                 <span class="material-symbols-outlined text-[18px]">edit</span>
                             </button>
