@@ -5775,6 +5775,7 @@ Suivant
                     </td>
                     <td class="px-6 py-3 text-right">
                         ${buildStatusBadge(r, 'mini')}
+                        ${r.is_paid && r.actual_payment_date ? `<p class="text-[8px] text-slate-400 mt-0.5">Payé le ${new Date(r.actual_payment_date).toLocaleDateString('fr-FR')}</p>` : ''}
                     </td>
                 </tr>`
             ).join('');
@@ -6291,20 +6292,24 @@ Suivant
 
         // ── Badge statut cliquable EN ATTENTE / PAYÉ ────────────────────────
         function buildStatusBadge(r, context) {
+            const size = context === 'mini' ? 'px-2 py-1 text-[9px]' : 'px-3 py-1.5 text-[10px]';
+            
             if (r.is_paid) {
                 // PAYÉ → clic = annuler (remettre en attente)
                 return `<button onclick="toggleRepaymentPaid('${r.id}', true)"
-                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-600 transition-all group" title="Cliquer pour annuler le paiement">
-                    <span class="material-symbols-outlined text-[13px] group-hover:hidden">check_circle</span>
-                    <span class="material-symbols-outlined text-[13px] hidden group-hover:inline">undo</span>
+                    class="inline-flex items-center gap-1.5 ${size} rounded-full font-black uppercase tracking-wider bg-emerald-500 text-white hover:bg-red-500 transition-all duration-300 shadow-sm hover:shadow-md group active:scale-95" 
+                    title="Cliquer pour annuler le paiement">
+                    <span class="material-symbols-outlined text-[14px] group-hover:hidden leading-none">check_circle</span>
+                    <span class="material-symbols-outlined text-[14px] hidden group-hover:inline leading-none">rotate_left</span>
                     <span class="group-hover:hidden">PAYÉ</span>
                     <span class="hidden group-hover:inline">ANNULER</span>
                 </button>`;
             } else {
                 // EN ATTENTE → clic = marquer payé
                 return `<button onclick="toggleRepaymentPaid('${r.id}', false)"
-                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-emerald-100 hover:text-emerald-700 transition-all group" title="Cliquer pour marquer comme payé">
-                    <span class="material-symbols-outlined text-[13px]">schedule</span>
+                    class="inline-flex items-center gap-1.5 ${size} rounded-full font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-amber-600 border border-amber-200 dark:border-amber-900/30 hover:bg-amber-600 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md active:scale-95" 
+                    title="Cliquer pour marquer comme payé">
+                    <span class="material-symbols-outlined text-[14px] leading-none">schedule</span>
                     EN ATTENTE
                 </button>`;
             }
@@ -6312,26 +6317,51 @@ Suivant
 
         async function toggleRepaymentPaid(id, currentlyPaid) {
             if (currentlyPaid) {
-                if (!confirm("Annuler ce paiement et remettre l'échéance EN ATTENTE ?")) return;
+                if (!confirm("⚠️ Confirmation : Souhaitez-vous annuler ce paiement et remettre l'échéance EN ATTENTE ?")) return;
             }
+            
             const nowPaid = !currentlyPaid;
             const now = new Date().toISOString().split('T')[0];
 
-            const { error } = await _supabase.from('repayments').update({
-                is_paid: nowPaid,
-                status: nowPaid ? 'Payé' : 'En attente',
-                actual_payment_date: nowPaid ? now : null
-            }).eq('id', id);
+            try {
+                const { error } = await _supabase.from('repayments').update({
+                    is_paid: nowPaid,
+                    status: nowPaid ? 'Payé' : 'En attente',
+                    actual_payment_date: nowPaid ? now : null
+                }).eq('id', id);
 
-            if (error) {
-                alert("Erreur : " + error.message);
-                return;
+                if (error) {
+                    showNotification("Erreur lors de la mise à jour : " + error.message, "error");
+                    return;
+                }
+
+                showNotification(nowPaid ? "Échéance marquée comme PAYÉE ✅" : "Paiement annulé. Échéance remise EN ATTENTE 🔄", "success");
+
+                // Rafraîchissement intelligent de toutes les vues concernées
+                // 1. Échéancier mini (Détails)
+                if (currentCredit) {
+                    fetchCreditScheduleInDetails(currentCredit.id);
+                    
+                    // 2. Échéancier complet (si écran actif)
+                    if (currentScreen === 'credits_schedule') {
+                        populateScheduleView(currentCredit);
+                    }
+                }
+                
+                // 3. Vue progression (Remboursements)
+                if (typeof fetchProgressCredits === 'function' && document.getElementById('credits-progress-body')) {
+                    fetchProgressCredits();
+                }
+                
+                // 4. Statistiques Dashboard (si existantes)
+                if (typeof fetchDashboardStats === 'function') {
+                    fetchDashboardStats();
+                }
+
+            } catch (err) {
+                console.error("Toggle payment error:", err);
+                showNotification("Une erreur technique est survenue.", "error");
             }
-
-            // Rafraîchissement de toutes les vues concernées
-            if (currentCredit) populateScheduleView(currentCredit);
-            if (typeof fetchProgressCredits === 'function' && document.getElementById('credits-progress-body')) fetchProgressCredits();
-            if (typeof fetchDashboardStats === 'function' && document.getElementById('stat-repayments-day')) fetchDashboardStats();
         }
 
         async function updateRepaymentStatus(id, newStatus, el) {
