@@ -114,9 +114,9 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 (async()=>{
   try{
-    if(sessionStorage.getItem('portefin_session'))return window.location.replace('./index.html');
+    if(sessionStorage.getItem('portefin_session'))return window.location.replace('/mobile');
     const{data:{session}}=await sb.auth.getSession();
-    if(session)window.location.replace('./index.html');
+    if(session)window.location.replace('/mobile');
   }catch(e){}
 })();
 
@@ -163,7 +163,7 @@ async function doLogin(){
     }
     sessionStorage.setItem('portefin_session',JSON.stringify({name:'Administrateur',email:'admin@portefin.app',role:'Administrateur',id:'admin'}));
     toast('Bienvenue, Administrateur !','success');
-    setTimeout(()=>window.location.replace('./index.html'),600);
+    setTimeout(()=>window.location.replace('/mobile'),600);
     return;
   }
 
@@ -175,7 +175,7 @@ async function doLogin(){
     const name=user.user_metadata?.full_name||user.email.split('@')[0];
     sessionStorage.setItem('portefin_session',JSON.stringify({name,email:user.email,role:'Utilisateur',id:user.id}));
     toast('Connexion réussie !','success');
-    setTimeout(()=>window.location.replace('./index.html'),600);
+    setTimeout(()=>window.location.replace('/mobile'),600);
   }catch(e){
     btn.disabled=false;
     btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">login</span> Se connecter';

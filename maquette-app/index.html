@@ -308,10 +308,12 @@ let _fab=null;
     init();return;
   }
   // Session Supabase
-  const{data:{session}}=await sb.auth.getSession();
-  if(!session){window.location.replace('./login.html');return;}
-  currentUser=session.user;
-  init();
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.replace('/mobile/login');return;}
+    currentUser=session.user;
+    init();
+  }catch(e){window.location.replace('/mobile/login');}
 })();
 
 function init(){
@@ -2127,7 +2129,7 @@ function confirmLogout(){
   openConfirm('Se déconnecter ?','Vous serez redirigé vers la page de connexion.',async()=>{
     sessionStorage.removeItem('portefin_session');
     await sb.auth.signOut().catch(()=>{});
-    window.location.replace('./login.html');
+    window.location.replace('/mobile/login');
   });
 }
 
