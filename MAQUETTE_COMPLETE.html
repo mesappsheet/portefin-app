@@ -3167,7 +3167,7 @@
                         </button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse" data-no-scroll="true">
                             <thead>
                                 <tr class="bg-slate-50/30 dark:bg-slate-800/10 border-b border-slate-100 dark:border-slate-800">
                                     <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">N°</th>
@@ -7133,6 +7133,7 @@ Suivant
             document.querySelectorAll('table').forEach(table => {
                 if (!table.querySelector('thead')) return; // ignorer sans en-tête
                 if (table.closest('.tbl-scroll')) return; // déjà enveloppé
+                if (table.dataset.noScroll) return; // exclu explicitement (mini-vues)
                 // Insérer un nouveau div wrapper sans toucher aux classes existantes
                 const wrapper = document.createElement('div');
                 wrapper.className = 'tbl-scroll';
