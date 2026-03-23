@@ -1630,14 +1630,16 @@ function openDetailMenu(btn) {
 
 function renderProspectDetail(p) {
   const name = p.full_name || 'Inconnu';
-  const statusColor = statusMapPWA[p.status] || '#cbd5e1';
+  const labelKey = Object.keys(statusMapPWA).find(k=>k.toLowerCase()===(p.status||'').toLowerCase());
+  const rawStatusColor = statusMapPWA[labelKey] || '#cbd5e1';
+  const statusColor = twColor(rawStatusColor);
   const phone = p.phone || '';
   const phone2 = p.phone2 || '';
 
   const infoRow = (icon, label, value, color='#f27f0d') => !value ? '' : `
     <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--sep)">
-      <div style="width:36px;height:36px;border-radius:10px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <span class="material-symbols-outlined filled" style="font-size:18px;color:${color}">${icon}</span>
+      <div style="width:36px;height:36px;border-radius:10px;background:${twColor(color)}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined filled" style="font-size:18px;color:${twColor(color)}">${icon}</span>
       </div>
       <div style="flex:1;min-width:0">
         <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:0 0 2px">${label}</p>
@@ -1797,26 +1799,36 @@ async function bulkDeleteProsPWA(){
 }
 
 
+function twColor(c){
+  const map={blue:'#3b82f6',orange:'#f97316',emerald:'#10b981',green:'#22c55e',rose:'#f43f5e',red:'#ef4444',slate:'#64748b',gray:'#6b7280',amber:'#f59e0b',yellow:'#eab308'};
+  return map[c?.toLowerCase()]||c||'#cbd5e1';
+}
+
 function prosRow(p){
   const name=p.full_name||'Inconnu';
   const phone=p.phone||'';
-  const color = statusMapPWA[p.status] || '#cbd5e1';
+  const labelKey = Object.keys(statusMapPWA).find(k=>k.toLowerCase()===(p.status||'').toLowerCase());
+  const rawColor = statusMapPWA[labelKey] || '#cbd5e1';
+  const color = twColor(rawColor);
   const isSel = selectedProsPWA.has(p.id);
-  return`<div class="pros-item ${isSel?'selected':''}" style="${isSel?'background:linear-gradient(90deg, rgba(242,127,13,0.1) 0%, transparent 100%)':''}">
+  
+  return `<div class="pros-item ${isSel?'selected':''}" style="${isSel?'background:linear-gradient(90deg, rgba(242,127,13,0.1) 0%, transparent 100%)':''}">
     <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
       <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation(); toggleProSelPWA('${p.id}')" style="accent-color:#f27f0d">
       <div onclick="openProspectDetail('${p.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
         <div class="pros-avatar">${initials(name)}</div>
+        <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
             <span style="padding:3px 8px;border-radius:12px;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:${color}15;color:${color};border:1px solid ${color}40">${p.status||'—'}</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
             ${p.activity?`<span style="font-size:11px;color:#f27f0d;font-weight:600">${p.activity}</span>`:''}
-            ${p.activity&&phone?`<span style="font-size:9px;color:rgba(255,255,255,.2)">·</span>`:''}
-            ${phone?`<span style="font-size:11px;color:rgba(255,255,255,.4)">${phone}</span>`:''}
-            ${!p.activity&&!phone?`<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>`:''}
+            ${p.activity&&(p.activity_detail||phone)?`<span style="font-size:9px;color:rgba(255,255,255,.2)">·</span>`:''}
+            ${p.activity_detail?`<span style="font-size:11px;color:rgba(255,255,255,.55);font-style:italic">${p.activity_detail}</span>`:(phone?`<span style="font-size:11px;color:rgba(255,255,255,.4)">${phone}</span>`:'')}
+            ${!p.activity&&!p.activity_detail&&!phone?`<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>`:''}
           </div>
+          ${p.activity_detail&&phone?`<div style="margin-top:2px"><span style="font-size:11px;color:rgba(255,255,255,.35)">${phone}</span></div>`:''}
         </div>
       </div>
     </div>
