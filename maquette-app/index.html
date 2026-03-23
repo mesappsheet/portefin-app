@@ -1684,6 +1684,7 @@ function renderProspectDetail(p) {
       ${infoRow('call','Téléphone',phone,'#818cf8')}
       ${infoRow('call','Téléphone 2',phone2,'#818cf8')}
       ${infoRow('storefront','Secteur d\'activité',p.activity||'','#f27f0d')}
+      ${infoRow('work','Détail de l\'activité',p.activity_detail||'','#f27f0d')}
       ${infoRow('location_on','Quartier / Adresse',p.address||'','#10b981')}
       <div style="display:flex;align-items:center;gap:14px;padding:13px 0">
         <div style="width:36px;height:36px;border-radius:10px;background:rgba(148,163,184,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -1806,12 +1807,11 @@ function prosRow(p){
       <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation(); toggleProSelPWA('${p.id}')" style="accent-color:#f27f0d">
       <div onclick="openProspectDetail('${p.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
         <div class="pros-avatar">${initials(name)}</div>
-        <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
-            <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
+            <span style="padding:3px 8px;border-radius:12px;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:${color}15;color:${color};border:1px solid ${color}40">${p.status||'—'}</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap">
             ${p.activity?`<span style="font-size:11px;color:#f27f0d;font-weight:600">${p.activity}</span>`:''}
             ${p.activity&&phone?`<span style="font-size:9px;color:rgba(255,255,255,.2)">·</span>`:''}
             ${phone?`<span style="font-size:11px;color:rgba(255,255,255,.4)">${phone}</span>`:''}
@@ -2028,6 +2028,7 @@ async function openProspectForm(p=null){
               <button onclick="openManageProspectActivities()" style="background:none;border:none;color:var(--p);font-size:10px;font-weight:700;text-transform:uppercase;padding:0">Gérer</button>
             </div>
             <select id="prospect-activity" class="m-input m-select">${actOptions}</select>
+            <input id="prospect-activity-detail" class="m-input" type="text" placeholder="Ex: Vente de pain, Transport de marchandises…" value="${p?.activity_detail||''}" style="margin-top:8px;font-size:13px"/>
           </div>
           <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2085,6 +2086,7 @@ async function saveProspect(id=null){
     address:document.getElementById('prospect-address').value.trim()||null,
     neighborhood:document.getElementById('prospect-address').value.trim()||null,
     activity:document.getElementById('prospect-activity').value.trim()||null,
+    activity_detail:document.getElementById('prospect-activity-detail').value.trim()||null,
     status:document.getElementById('prospect-status').value,
     notes:document.getElementById('prospect-observations').value.trim()||null,
     exclude_automation:document.getElementById('prospect-exclude-automation')?.checked||false

@@ -1932,6 +1932,10 @@
                         <span id="detail-prospect-activity" class="text-base font-bold text-slate-900 dark:text-slate-100">-</span>
                     </div>
                     <div class="flex flex-col gap-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-xs">Détail de l'activité</span>
+                        <span id="detail-prospect-activity-detail" class="text-base font-bold text-slate-900 dark:text-slate-100">-</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-xs">Adresse complète</span>
                         <span id="detail-prospect-address" class="text-base font-bold text-slate-900 dark:text-slate-100">-</span>
                     </div>
@@ -2082,6 +2086,7 @@
                 <select id="prospect-activity" class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none">
                     <!-- Dynamic Options -->
                 </select>
+                <input id="prospect-activity-detail" type="text" placeholder="Ex: Vente de pain, Transport de marchandises…" class="w-full mt-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm placeholder:text-slate-400"/>
             </div>
             <!-- Statut -->
             <div class="flex flex-col gap-1.5">
@@ -6178,6 +6183,7 @@ Suivant
                     created_at: date,
                     address: address,
                     activity: activity,
+                    activity_detail: document.getElementById('prospect-activity-detail')?.value?.trim() || null,
                     status: statusText
                 })
                 .eq('id', id);
@@ -7585,6 +7591,7 @@ Suivant
                 created_at: date,
                 address: address,
                 activity: activity,
+                activity_detail: document.getElementById('prospect-activity-detail')?.value?.trim() || null,
                 status: status || 'Nouveau',
                 neighborhood: address,
                 exclude_automation: excludeAuto
@@ -7834,6 +7841,7 @@ Suivant
                 document.getElementById('prospect-phone').value = currentProspect.phone || '';
                 document.getElementById('prospect-phone2').value = currentProspect.phone2 || '';
                 document.getElementById('prospect-activity').value = currentProspect.activity || '';
+                if (document.getElementById('prospect-activity-detail')) document.getElementById('prospect-activity-detail').value = currentProspect.activity_detail || '';
                 document.getElementById('prospect-status').value = currentProspect.status || '';
                 if (document.getElementById('prospect-exclude-automation')) {
                     document.getElementById('prospect-exclude-automation').checked = currentProspect.exclude_automation || false;
@@ -8285,6 +8293,7 @@ Suivant
                 'detail-prospect-phone': data.phone || '-',
                 'detail-prospect-phone2': data.phone2 || '-',
                 'detail-prospect-activity': data.activity || '-',
+                'detail-prospect-activity-detail': data.activity_detail || '-',
                 'detail-prospect-address': data.address || '-',
                 'detail-prospect-date': new Date(data.created_at).toLocaleDateString('fr-FR')
             };
