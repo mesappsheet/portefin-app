@@ -449,6 +449,9 @@ function applyMobileResponsiveFixes() {
         r.style.display = "none";
     });
 
+    // Skip section/container handling for prospect list — handled by applyMobileProspectDetailView
+    const isProspectList = (currentModule === "prospection" && currentScreen === "01");
+
     // Make fixed-width sections full-width on mobile
     dom.viewContainer.querySelectorAll("section").forEach(sec => {
         const cls = sec.className || "";
@@ -457,6 +460,9 @@ function applyMobileResponsiveFixes() {
             sec.style.maxWidth = "100%";
             sec.style.borderRight = "none";
             sec.style.position = "relative";
+
+            // Prospect list: skip collapsible/Android handling — CSS classes handle it
+            if (isProspectList) return;
 
             if (android) {
                 // Android: liste et détails sur une même vue scrollable, pas de collapsible
@@ -522,19 +528,21 @@ function applyMobileResponsiveFixes() {
         }
     });
 
-    // Make flex master-detail layouts stack vertically
-    const masterDetailContainers = dom.viewContainer.querySelectorAll(".flex-1.flex.overflow-hidden");
-    masterDetailContainers.forEach(container => {
-        if (container.children.length > 1) {
-            container.style.flexDirection = "column";
-            if (android) {
-                // Android: allow full scroll of both list + details together
-                container.style.overflow = "auto";
-                container.style.height = "auto";
-                container.style.minHeight = "0";
+    // Make flex master-detail layouts stack vertically (skip for prospect list)
+    if (!isProspectList) {
+        const masterDetailContainers = dom.viewContainer.querySelectorAll(".flex-1.flex.overflow-hidden");
+        masterDetailContainers.forEach(container => {
+            if (container.children.length > 1) {
+                container.style.flexDirection = "column";
+                if (android) {
+                    // Android: allow full scroll of both list + details together
+                    container.style.overflow = "auto";
+                    container.style.height = "auto";
+                    container.style.minHeight = "0";
+                }
             }
-        }
-    });
+        });
+    }
 
     // Make grid-cols-6 responsive
     dom.viewContainer.querySelectorAll("[class*='grid-cols-6']").forEach(grid => {
@@ -578,6 +586,11 @@ function applyMobileProspectDetailView() {
     listSection.setAttribute("data-prospect-list", "");
     detailSection.setAttribute("data-prospect-detail", "");
     masterDetail.setAttribute("data-prospect-master", "");
+
+    // Clear any residual inline styles that could conflict
+    listSection.style.cssText = "";
+    detailSection.style.cssText = "";
+    masterDetail.style.cssText = "";
 
     // Enter list mode (CSS handles display via !important)
     vc.classList.remove("prospect-detail-mode");

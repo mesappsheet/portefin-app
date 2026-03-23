@@ -125,9 +125,9 @@
                 flex-direction: column !important;
             }
             /* Fixed-width list panels become full width */
-            #view-container section[class*="w-[450px]"],
-            #view-container section[class*="w-[500px]"],
-            #view-container section[id="list-sidebar"] {
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[450px]"],
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[500px]"],
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[id="list-sidebar"] {
                 width: 100% !important;
                 max-height: 45vh !important;
                 border-right: none !important;
@@ -161,9 +161,9 @@
             #view-container .grid-cols-6 {
                 grid-template-columns: repeat(2, 1fr) !important;
             }
-            #view-container section[class*="w-[450px]"],
-            #view-container section[class*="w-[500px]"],
-            #view-container section[id="list-sidebar"] {
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[450px]"],
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[500px]"],
+            #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[id="list-sidebar"] {
                 max-height: 35vh !important;
             }
         }
@@ -173,14 +173,14 @@
             #view-container {
                 padding-bottom: 64px;
             }
-            /* Android: single scrollable view for list + details */
-            .android-device #view-container .flex-1.flex.overflow-hidden {
+            /* Android: single scrollable view for list + details (NOT in prospect mode) */
+            .android-device #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) .flex-1.flex.overflow-hidden {
                 overflow: auto !important;
                 height: auto !important;
             }
-            .android-device #view-container section[class*="w-[450px]"],
-            .android-device #view-container section[class*="w-[500px]"],
-            .android-device #view-container section[id="list-sidebar"] {
+            .android-device #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[450px]"],
+            .android-device #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[class*="w-[500px]"],
+            .android-device #view-container:not(.prospect-list-mode):not(.prospect-detail-mode) section[id="list-sidebar"] {
                 max-height: none !important;
                 overflow: visible !important;
             }
