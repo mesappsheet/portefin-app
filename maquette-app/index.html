@@ -205,7 +205,8 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
 .section-h span{font-size:12px;color:rgba(255,255,255,.4)}
 
 /* Prospect Detail View (Mobile Fullscreen) */
-#prospect-detail-view {
+/* Detail Views (Mobile Fullscreen) */
+#prospect-detail-view, #credit-detail-view {
   position: fixed;
   inset: 0;
   background: var(--bg);
@@ -214,7 +215,7 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
   flex-direction: column;
   animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-#prospect-detail-view.open { display: flex; }
+#prospect-detail-view.open, #credit-detail-view.open { display: flex; }
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
@@ -333,9 +334,23 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
       <span class="material-symbols-outlined">more_horiz</span>
     </button>
   </div>
-  <div id="prospect-detail-content" class="detail-content">
-    <!-- Rempli par JS -->
+  <div id="prospect-detail-content" class="detail-content"></div>
+</div>
+
+<!-- Credit Detail (Fullscreen) -->
+<div id="credit-detail-view">
+  <div class="detail-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="closeCreditDetail()" style="width:36px;height:36px;border-radius:50%;background:var(--close-bg);border:none;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <p style="font-size:17px;font-weight:800;margin:0;color:var(--text)">Détails Crédit</p>
+    </div>
+    <button id="credit-detail-more-btn" class="action-btn" style="background:var(--close-bg);border:none" onclick="openCreditDetailMenu(this)">
+      <span class="material-symbols-outlined">more_horiz</span>
+    </button>
   </div>
+  <div id="credit-detail-content" class="detail-content"></div>
 </div>
 
 <!-- App -->
@@ -741,39 +756,55 @@ async function viewDashboard(){
       <!-- Stats grid -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
 
-        <div class="glass stat-card" style="grid-column:1/-1">
+        <div class="glass stat-card" style="grid-column:1/-1;cursor:pointer;transition:opacity .15s" onclick="navTo('repayments')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <div class="stat-lbl">Remboursements aujourd'hui</div>
               <div class="stat-val" style="color:#f27f0d;font-size:28px;margin-top:4px">${reps.length}</div>
               <div class="stat-sub">${paid} encaissé${paid>1?'s':''} · <span style="color:#fb923c">${pending} en attente</span></div>
             </div>
-            <div style="width:52px;height:52px;border-radius:14px;background:rgba(242,127,13,.12);display:flex;align-items:center;justify-content:center">
-              <span class="material-symbols-outlined filled" style="color:#f27f0d;font-size:28px">payments</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div style="width:52px;height:52px;border-radius:14px;background:rgba(242,127,13,.12);display:flex;align-items:center;justify-content:center">
+                <span class="material-symbols-outlined filled" style="color:#f27f0d;font-size:28px">payments</span>
+              </div>
+              <span style="font-size:9px;color:#f27f0d;font-weight:700">Voir →</span>
             </div>
           </div>
         </div>
 
-        <div class="glass stat-card">
-          <div class="stat-lbl">Encours total</div>
-          <div class="stat-val" style="color:#60a5fa;font-size:16px;margin-top:4px">${fmt(encours)}</div>
-          <div class="stat-sub">FCFA actifs</div>
+        <div class="glass stat-card" style="cursor:pointer;transition:opacity .15s" onclick="credFilter='encours';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="stat-lbl">Encours total</div>
+              <div class="stat-val" style="color:#60a5fa;font-size:16px;margin-top:4px">${fmt(encours)}</div>
+              <div class="stat-sub">FCFA actifs</div>
+            </div>
+            <span style="font-size:9px;color:#60a5fa;font-weight:700;margin-top:2px">Voir →</span>
+          </div>
         </div>
 
-        <div class="glass stat-card">
-          <div class="stat-lbl">Impayés</div>
-          <div class="stat-val" style="color:#f87171;font-size:20px;margin-top:4px">${(overdueR||[]).length}</div>
-          <div class="stat-sub">échéances dépassées</div>
+        <div class="glass stat-card" style="cursor:pointer;transition:opacity .15s;border-color:${(overdueR||[]).length>0?'rgba(248,113,113,.2)':'var(--border)'}" onclick="credFilter='souffrance';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="stat-lbl">Impayés</div>
+              <div class="stat-val" style="color:#f87171;font-size:20px;margin-top:4px">${(overdueR||[]).length}</div>
+              <div class="stat-sub">échéances dépassées</div>
+            </div>
+            <span style="font-size:9px;color:#f87171;font-weight:700;margin-top:2px">Voir →</span>
+          </div>
         </div>
 
         ${(souff||[]).length>0?`
-        <div class="glass stat-card" style="grid-column:1/-1;border-color:rgba(239,68,68,.2)">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="material-symbols-outlined filled" style="color:#f87171;font-size:20px">warning</span>
-            <div>
-              <div class="stat-lbl" style="color:#f87171">Dossiers en souffrance</div>
-              <div class="stat-val" style="color:#f87171;font-size:18px;margin-top:2px">${souff.length} dossier${souff.length>1?'s':''}</div>
+        <div class="glass stat-card" style="grid-column:1/-1;border-color:rgba(239,68,68,.2);cursor:pointer;transition:opacity .15s" onclick="credFilter='souffrance';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="material-symbols-outlined filled" style="color:#f87171;font-size:20px">warning</span>
+              <div>
+                <div class="stat-lbl" style="color:#f87171">Dossiers en souffrance</div>
+                <div class="stat-val" style="color:#f87171;font-size:18px;margin-top:2px">${souff.length} dossier${souff.length>1?'s':''}</div>
+              </div>
             </div>
+            <span style="font-size:9px;color:#f87171;font-weight:700">Voir →</span>
           </div>
         </div>`:''}
 
@@ -997,7 +1028,7 @@ async function loadCredits(){
   list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
     let q=sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
       .order('status', { ascending: true })
       .order('health', { ascending: false })
       .order('created_at', { ascending: false });
@@ -1016,7 +1047,6 @@ async function loadCredits(){
       rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));
     }
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
-    rows.forEach(c=>_credCache[c.id]=c);
 
     // Pour chaque crédit, compter les remboursements
     const ids=rows.map(c=>c.id);
@@ -1028,38 +1058,55 @@ async function loadCredits(){
       if(r.is_paid)repsMap[r.credit_id].paid++;
     });
 
+    rows.forEach(c=>{
+      c.reps=repsMap[c.id]||{total:0,paid:0};
+      _credCache[c.id]=c;
+    });
+
     list.innerHTML=`
       <div style="padding:0 16px 8px">
         <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} dossier${rows.length>1?'s':''}</span>
       </div>
       <div class="glass" style="margin:0 16px;overflow:hidden">
-        ${rows.map(c=>credRow(c,repsMap[c.id]||{total:0,paid:0})).join('')}
+        ${rows.map(c=>credRow(c)).join('')}
       </div>`;
   }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
 }
 
-function credRow(c,reps){
+function credRow(c){
   const name=getName(c);
-  const phone=getPhone(c);
+  const reps=c.reps||{total:0,paid:0};
   const pct=reps.total>0?Math.round(reps.paid/reps.total*100):0;
   const isS=c.health==='Souffrance';
-  return`<div class="cred-item">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;cursor:pointer" onclick="toggleCreditHealth('${c.id}','${c.health||'Sain'}')" title="Changer santé">${c.health||'Sain'}</span>
-          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px;cursor:pointer" onclick="toggleCreditStatus('${c.id}','${c.status||'En cours'}')" title="Changer statut">${c.status||'EN COURS'}</span>
+  const startD=c.start_date?c.start_date.split('T')[0]:'—';
+  const endD=c.end_date?c.end_date.split('T')[0]:'—';
+  
+  return `<div class="cred-item" onclick="openCreditDetail('${c.id}')" style="cursor:pointer;position:relative;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--border);margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="flex:1;min-width:0;padding-right:8px;display:flex;align-items:center;gap:8px">
+        <p style="font-size:15px;font-weight:800;color:var(--text);margin:0;letter-spacing:-.2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 6px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">${c.health||'Sain'}</span>
+          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px;padding:3px 6px" onclick="event.stopPropagation();toggleCreditStatus('${c.id}','${c.status||'En cours'}')">${c.status||'En cours'}</span>
         </div>
-        <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(c.amount)} FCFA · ${c.type||'—'}</p>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-        <p style="font-size:10px;color:rgba(255,255,255,.3);margin:4px 0 0">${reps.paid}/${reps.total} échéances · ${pct}%</p>
       </div>
-      <div style="display:flex;align-items:center">
-        <button class="action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
-          <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
-        </button>
+      <button class="action-btn" style="background:var(--card2);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
+        <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
+      </button>
+    </div>
+    
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
+      <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text3)">FCFA</span></p>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:4px">
+        <span class="material-symbols-outlined" style="font-size:13px;color:var(--text3)">calendar_month</span>
+        ${fmtDate(startD)} &nbsp;→&nbsp; ${fmtDate(endD)}
       </div>
+    </div>
+
+    <div class="progress-bar-bg" style="height:6px;margin-bottom:6px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <p style="font-size:10px;color:var(--text3);margin:0;font-weight:600">${reps.paid}/${reps.total} échéances</p>
+      <p style="font-size:10px;font-weight:800;color:var(--text2);margin:0">${pct}% payé</p>
     </div>
   </div>`;
 }
@@ -1338,23 +1385,35 @@ async function saveCredit(){
 
   try{
     // 1. Créer ou trouver le client
-    const{data:clientData,error:cErr}=await sb.from('clients').upsert([{
-      full_name:name,email,phone1,phone2,activity,address,
-      total_portefeuille:amount,health:'Sain',is_active:true,
-      exclude_automation:excludeAuto
-    }],{onConflict:'full_name,phone1'}).select('id').single();
-    if(cErr&&!clientData)throw cErr;
-    const clientId=clientData?.id||null;
+    let q=sb.from('clients').select('id').eq('full_name',name);
+    if(phone1) q=q.eq('phone1',phone1);
+    else q=q.is('phone1',null);
+    const {data: existingClient} = await q.maybeSingle();
 
-    // 2. Créer le crédit
-    const{data:credit,error:crErr}=await sb.from('credits').upsert([{
-      client_id:clientId||undefined,
+    let clientId = existingClient?.id;
+    if(!clientId){
+      const {data: newClient, error:cErr} = await sb.from('clients').insert([{
+        full_name:name,email,phone1,phone2,activity,address,
+        total_portefeuille:amount,health:'Sain',is_active:true,
+        exclude_automation:excludeAuto
+      }]).select('id').single();
+      if(cErr) throw cErr;
+      clientId = newClient.id;
+    }else{
+      await sb.from('clients').update({
+        email,phone2,activity,address,total_portefeuille:amount,exclude_automation:excludeAuto
+      }).eq('id',clientId);
+    }
+
+    // 2. Créer le crédit (pas de onConflict qui plante sur les nulls)
+    const {data: credit, error:crErr} = await sb.from('credits').insert([{
+      client_id:clientId,
       client_name:name,phone:phone1,email,activity,address,amount,type,
       status:'EN COURS',health:'SAIN',start_date:startVal,end_date:endVal,
       manager_id:currentUser?.id||null,
       exclude_automation:excludeAuto
-    }],{onConflict:'client_name,amount,start_date'}).select('id').single();
-    if(crErr)throw crErr;
+    }]).select('id').single();
+    if(crErr) throw crErr;
 
     // 3. Générer l'échéancier mensuel (même algo que PC)
     const start=new Date(startVal+'T12:00:00');
@@ -1824,11 +1883,11 @@ function prosRow(p){
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
             ${p.activity?`<span style="font-size:11px;color:#f27f0d;font-weight:600">${p.activity}</span>`:''}
-            ${p.activity&&(p.activity_detail||phone)?`<span style="font-size:9px;color:rgba(255,255,255,.2)">·</span>`:''}
-            ${p.activity_detail?`<span style="font-size:11px;color:rgba(255,255,255,.55);font-style:italic">${p.activity_detail}</span>`:(phone?`<span style="font-size:11px;color:rgba(255,255,255,.4)">${phone}</span>`:'')}
-            ${!p.activity&&!p.activity_detail&&!phone?`<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>`:''}
+            ${p.activity&&(p.activity_detail||phone)?`<span style="font-size:9px;color:var(--text3)">·</span>`:''}
+            ${p.activity_detail?`<span style="font-size:11px;color:var(--text2);font-style:italic">${p.activity_detail}</span>`:(phone?`<span style="font-size:11px;color:var(--text2)">${phone}</span>`:'')}
+            ${!p.activity&&!p.activity_detail&&!phone?`<span style="font-size:11px;color:var(--text3)">—</span>`:''}
           </div>
-          ${p.activity_detail&&phone?`<div style="margin-top:2px"><span style="font-size:11px;color:rgba(255,255,255,.35)">${phone}</span></div>`:''}
+          ${p.activity_detail&&phone?`<div style="margin-top:2px"><span style="font-size:11px;color:var(--text3)">${phone}</span></div>`:''}
         </div>
       </div>
     </div>
@@ -2665,6 +2724,120 @@ async function saveModel(id,isNew){
   closeModal();
   viewModels();
 }
+
+// ─── LOGOUT / DETAILS CREDIT ──────────────────
+
+let currentCreditId = null;
+
+function closeCreditDetail() {
+  document.getElementById('credit-detail-view').classList.remove('open');
+  currentCreditId = null;
+}
+
+function openCreditDetailMenu(btn) {
+  if (!currentCreditId) return;
+  credMenu(btn, currentCreditId); 
+}
+
+function openCreditDetail(id) {
+  const c = _credCache[id];
+  if(!c){ toast('Credit introuvable', 'err'); return; }
+  currentCreditId = id;
+  
+  const content = document.getElementById('credit-detail-content');
+  content.innerHTML = renderCreditDetail(c);
+  document.getElementById('credit-detail-view').classList.add('open');
+}
+
+function renderCreditDetail(c) {
+  const name = getName(c);
+  // On récupère toutes les informations disponibles
+  const phone1 = c.phone || c.clients?.phone1 || '';
+  const phone2 = c.clients?.phone2 || '';
+  const email = c.email || c.clients?.email || '';
+  const activity = c.activity || c.clients?.activity || '';
+  const address = c.address || c.clients?.address || '';
+  const startD = c.start_date ? fmtDate(c.start_date.split('T')[0]) : '—';
+  const endD = c.end_date ? fmtDate(c.end_date.split('T')[0]) : '—';
+
+  const isS = c.health === 'Souffrance';
+  const pct = c.reps.total > 0 ? Math.round(c.reps.paid / c.reps.total * 100) : 0;
+  
+  // Affiche TOUS les champs "sans exception" (même vides = "Non renseigné")
+  const infoRow = (icon, label, value, color='#f27f0d') => `
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--sep)">
+      <div style="width:36px;height:36px;border-radius:10px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined filled" style="font-size:18px;color:${color}">${icon}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:0 0 2px">${label}</p>
+        <p style="font-size:14px;font-weight:600;color:${value?'var(--text)':'var(--text3)'};margin:0;font-style:${value?'normal':'italic'}">${value||'Non renseigné'}</p>
+      </div>
+    </div>`;
+
+  return `
+    <!-- HERO -->
+    <div style="background:linear-gradient(160deg,rgba(16,185,129,.12) 0%,rgba(242,127,13,.07) 100%);border-radius:20px;padding:28px 20px 22px;margin-bottom:16px;text-align:center;border:1px solid rgba(255,255,255,.06)">
+      <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,.4),rgba(16,185,129,.15));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 14px;box-shadow:0 8px 24px rgba(16,185,129,.25)">${initials(name)}</div>
+      <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text);letter-spacing:-.3px">${name}</h2>
+      
+      <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px">
+        <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:10px;padding:4px 10px">${c.health||'Sain'}</span>
+        <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:10px;padding:4px 10px">${c.status||'EN COURS'}</span>
+      </div>
+
+      <p style="font-size:28px;font-weight:900;color:#f27f0d;margin:10px 0 0;line-height:1">${fmt(c.amount)} <span style="font-size:14px;color:var(--text3)">FCFA</span></p>
+      ${c.type ? `<p style="font-size:13px;color:var(--text2);margin:6px 0 0;font-weight:500">${c.type}</p>` : ''}
+
+      <!-- Actions compactes -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">
+        <button onclick="viewEcheancier('${c.id}', '${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#f27f0d">list_alt</span>
+          <span style="font-size:10px;font-weight:700;color:#f27f0d">Échéancier</span>
+        </button>
+        ${phone1 ? `
+        <button onclick="call('${phone1}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#818cf8">call</span>
+          <span style="font-size:10px;font-weight:700;color:#818cf8">Appeler</span>
+        </button>
+        <button onclick="wa('${phone1}','${name.replace(/'/g,"\\'")}','Relance Crédit',${c.amount},'${c.status||''}','','${c.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#25d366">chat</span>
+          <span style="font-size:10px;font-weight:700;color:#25d366">WhatsApp</span>
+        </button>` : ''}
+      </div>
+    </div>
+
+    <!-- INFOS -->
+    <div class="detail-card" style="margin-bottom:16px;padding:6px 16px 4px">
+      <!-- Coordonnées -->
+      <div style="display:flex;align-items:center;gap:7px;padding:10px 0 8px;border-bottom:1px solid var(--sep)">
+        <span class="material-symbols-outlined" style="font-size:15px;color:var(--text3)">person</span>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Coordonnées Client</span>
+      </div>
+      ${infoRow('call','Téléphone 1', phone1, '#818cf8')}
+      ${infoRow('phone','Téléphone 2', phone2, '#818cf8')}
+      ${infoRow('mail','Email', email, '#f43f5e')}
+      ${infoRow('location_on','Adresse', address, '#10b981')}
+      ${infoRow('storefront','Secteur d\'activité', activity, '#10b981')}
+
+      <!-- Détails Financiers -->
+      <div style="display:flex;align-items:center;gap:7px;padding:24px 0 8px;border-bottom:1px solid var(--sep)">
+        <span class="material-symbols-outlined" style="font-size:15px;color:var(--text3)">account_balance</span>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Détails Financiers</span>
+      </div>
+      ${infoRow('event_available','Date de début', startD, '#f27f0d')}
+      ${infoRow('event_upcoming','Date de fin (Échéance)', endD, '#f27f0d')}
+      
+      <div style="padding:14px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <p style="font-size:12px;font-weight:700;color:var(--text);margin:0">Progression globale</p>
+          <p style="font-size:12px;font-weight:700;color:var(--text2);margin:0">${c.reps.paid}/${c.reps.total}</p>
+        </div>
+        <div class="progress-bar-bg" style="height:8px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+}
+
 
 // ─── LOGOUT ───────────────────────────────────
 function confirmLogout(){
