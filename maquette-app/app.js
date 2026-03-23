@@ -403,6 +403,7 @@ async function loadScreen(moduleKey, screenId) {
 
             hookInternalButtons();
             applyMobileResponsiveFixes();
+            applyMobileProspectDetailView();
         } else {
             dom.viewContainer.innerHTML = `<div class="p-8 text-red-500">Erreur: Élément &lt;main&gt; non trouvé dans le fichier : ${screen.name}</div>`;
         }
@@ -535,12 +536,185 @@ function applyMobileResponsiveFixes() {
     });
 }
 
+/* ═══════════════════════════════════════════
+   MOBILE PROSPECT DETAIL VIEW
+   ═══════════════════════════════════════════ */
+function applyMobileProspectDetailView() {
+    if (window.innerWidth >= 1024) return;
+    if (currentModule !== "prospection" || currentScreen !== "01") return;
+
+    const container = dom.viewContainer;
+    const masterDetail = container.querySelector(".flex-1.flex.overflow-hidden");
+    if (!masterDetail) return;
+
+    const listSection = masterDetail.querySelector("section:first-of-type, #list-sidebar");
+    const detailSection = masterDetail.querySelector("section:last-of-type");
+    if (!listSection || !detailSection || listSection === detailSection) return;
+
+    // Hide detail section initially on mobile
+    detailSection.style.display = "none";
+
+    // Make the master-detail container full-height
+    masterDetail.style.flexDirection = "column";
+    listSection.style.maxHeight = "none";
+    listSection.style.overflow = "auto";
+    listSection.style.width = "100%";
+    listSection.style.flex = "1";
+
+    // Find all clickable rows (table rows or card-like elements)
+    const rows = listSection.querySelectorAll("tbody tr, .prospect-card");
+    rows.forEach(row => {
+        row.style.cursor = "pointer";
+        row.addEventListener("click", (e) => {
+            // Don't trigger if clicking checkbox or "..." menu
+            if (e.target.closest("input[type='checkbox']") || e.target.closest(".menu-btn") || e.target.closest("[data-action]")) return;
+
+            // Extract prospect name from the row
+            const nameEl = row.querySelector(".font-bold, .font-medium, h3, h4");
+            const prospectName = nameEl ? nameEl.textContent.trim() : "Prospect";
+
+            showMobileDetailView(listSection, detailSection, masterDetail, prospectName);
+        });
+    });
+}
+
+function showMobileDetailView(listSection, detailSection, masterDetail, prospectName) {
+    // Add class to body for CSS targeting (hide bottom bar & top bar)
+    document.body.classList.add("mobile-detail-active");
+
+    // Hide list, show detail
+    listSection.style.display = "none";
+    detailSection.style.display = "block";
+    detailSection.style.overflow = "auto";
+    detailSection.style.flex = "1";
+    detailSection.style.padding = "0";
+
+    // Remove max-height constraints
+    detailSection.style.maxHeight = "none";
+    detailSection.style.width = "100%";
+
+    // Create mobile detail header with back button + name + "..." menu
+    const existingHeader = detailSection.querySelector(".mobile-detail-header");
+    if (existingHeader) existingHeader.remove();
+
+    const header = document.createElement("div");
+    header.className = "mobile-detail-header";
+    header.innerHTML = `
+        <button class="back-btn" aria-label="Retour à la liste">
+            <span class="material-symbols-outlined" style="font-size:24px">arrow_back</span>
+        </button>
+        <span class="detail-title">${prospectName}</span>
+        <div class="more-btn" style="position:relative">
+            <span class="material-symbols-outlined" style="font-size:24px">more_vert</span>
+            <div class="mobile-actions-menu" id="mobile-prospect-actions">
+                <button data-action="call">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#1763cf">call</span>
+                    Appeler
+                </button>
+                <button data-action="whatsapp">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#22c55e">chat</span>
+                    WhatsApp
+                </button>
+                <button data-action="sms">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#3b82f6">sms</span>
+                    Envoyer SMS
+                </button>
+                <button data-action="note">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#f59e0b">sticky_note_2</span>
+                    Ajouter une note
+                </button>
+                <div class="action-divider"></div>
+                <button data-action="convert">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#1763cf">how_to_reg</span>
+                    Convertir en client
+                </button>
+                <button data-action="edit">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#64748b">edit</span>
+                    Modifier
+                </button>
+                <div class="action-divider"></div>
+                <button data-action="delete" class="action-danger">
+                    <span class="material-symbols-outlined" style="font-size:20px">delete</span>
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    `;
+
+    detailSection.insertBefore(header, detailSection.firstChild);
+
+    // Add padding to content below header
+    const contentChildren = Array.from(detailSection.children).filter(el => !el.classList.contains("mobile-detail-header"));
+    contentChildren.forEach(el => {
+        if (el.style) el.style.padding = el.style.padding || "";
+    });
+
+    // Back button handler
+    header.querySelector(".back-btn").addEventListener("click", () => {
+        hideMobileDetailView(listSection, detailSection, header);
+    });
+
+    // "..." menu toggle
+    const moreBtn = header.querySelector(".more-btn");
+    const actionsMenu = header.querySelector(".mobile-actions-menu");
+
+    moreBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        actionsMenu.classList.toggle("open");
+    });
+
+    // Close menu when clicking outside
+    const closeMenu = (e) => {
+        if (!moreBtn.contains(e.target)) {
+            actionsMenu.classList.remove("open");
+        }
+    };
+    document.addEventListener("click", closeMenu);
+
+    // Store cleanup ref
+    detailSection._cleanupMenuListener = closeMenu;
+
+    // Action handlers (close menu after action)
+    actionsMenu.querySelectorAll("button[data-action]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            actionsMenu.classList.remove("open");
+            // Actions can be hooked up to real logic later
+        });
+    });
+
+    // Scroll to top of detail view
+    detailSection.scrollTop = 0;
+    masterDetail.scrollTop = 0;
+}
+
+function hideMobileDetailView(listSection, detailSection, header) {
+    document.body.classList.remove("mobile-detail-active");
+
+    // Clean up menu listener
+    if (detailSection._cleanupMenuListener) {
+        document.removeEventListener("click", detailSection._cleanupMenuListener);
+        delete detailSection._cleanupMenuListener;
+    }
+
+    // Remove header
+    if (header && header.parentNode) header.remove();
+
+    // Show list, hide detail
+    detailSection.style.display = "none";
+    listSection.style.display = "";
+    listSection.style.flex = "1";
+    listSection.style.maxHeight = "none";
+    listSection.style.overflow = "auto";
+}
+
 // Re-apply on resize
 let resizeTimeout;
 window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
         applyMobileResponsiveFixes();
+        applyMobileProspectDetailView();
     }, 150);
 });
 
