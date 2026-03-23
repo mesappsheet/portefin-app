@@ -155,16 +155,17 @@ body:not(.light) .pros-avatar{color:#818cf8}
 .search-inp::placeholder{color:var(--text3)}
 .search-inp:focus{border-color:rgba(242,127,13,.5)}
 
-/* Modal bottom sheet */
-#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+/* Modal Popup */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;animation:fadeIn .2s}
 #modal-overlay.open{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-#modal-sheet{background:var(--sheet-bg);border-radius:24px 24px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:0 0 calc(20px + env(safe-area-inset-bottom));animation:slideSheet .3s ease-out}
-@keyframes slideSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-handle-row{display:flex;align-items:center;justify-content:center;padding:12px 16px 4px;position:relative}
-.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px}
-.sheet-close{position:absolute;right:16px;top:8px;width:32px;height:32px;border-radius:50%;background:var(--close-bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .2s}
-.sheet-close:active{background:var(--ghost-hover)}
+#modal-sheet{background:var(--sheet-bg);border:1px solid rgba(255,255,255,.1);box-shadow:0 15px 40px rgba(0,0,0,.5);border-radius:24px;width:92%;max-width:500px;max-height:90vh;overflow-y:auto;padding:0 0 10px;animation:popIn .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative}
+body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px rgba(0,0,0,.25)}
+@keyframes popIn{from{transform:scale(0.95) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.sheet-handle-row{display:flex;align-items:center;justify-content:flex-end;padding:12px 16px 0;position:sticky;top:0;background:var(--sheet-bg);z-index:10;border-radius:24px 24px 0 0}
+.sheet-handle{display:none}
+.sheet-close{width:36px;height:36px;border-radius:50%;background:var(--close-bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:all .2s;flex-shrink:0}
+.sheet-close:active{background:var(--ghost-hover);transform:scale(.95)}
 .sheet-title{font-size:17px;font-weight:700;color:var(--text);padding:12px 20px 14px;border-bottom:1px solid var(--sep)}
 
 /* Context menu */
@@ -307,14 +308,13 @@ body:not(.light) .pros-avatar{color:#818cf8}
 </div>
 
 <!-- Modal bottom sheet -->
-<div id="modal-overlay" onclick="e=>{ if(e.target===this)closeModal(); }">
-  <div id="modal-sheet" onclick="e=>e.stopPropagation()">
+<div id="modal-overlay" onclick="if(event.target===this)closeModal();">
+  <div id="modal-sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle-row">
       <div class="sheet-handle"></div>
       <button class="sheet-close" onclick="closeModal()">
         <span class="material-symbols-outlined" style="font-size:18px">close</span>
       </button>
-    </div>
     </div>
     <div id="modal-content"></div>
   </div>
@@ -1429,54 +1429,36 @@ async function openClientEditForm(creditId){
             <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">info</span>
             <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Identité</span>
           </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
+          <input id="ce-name" class="m-input" type="text" placeholder="Nom complet" value="${name.replace(/"/g,'&quot;')}"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">badge</span>
-              <input id="ce-name" class="m-input" type="text" placeholder="Nom complet" value="${name.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-              <div style="position:relative">
-                <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-                <input id="ce-phone1" class="m-input" type="tel" placeholder="+224 ..." value="${phone1.replace(/"/g,'&quot;')}" inputmode="tel" style="padding-left:38px"/>
-              </div>
-            </div>
-            <div>
-              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-              <div style="position:relative">
-                <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-                <input id="ce-phone2" class="m-input" type="tel" placeholder="+224 ..." value="${phone2.replace(/"/g,'&quot;')}" inputmode="tel" style="padding-left:38px"/>
-              </div>
-            </div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
+            <input id="ce-phone1" class="m-input" type="tel" placeholder="+224 ..." value="${phone1.replace(/"/g,'&quot;')}" inputmode="tel"/>
           </div>
           <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">mail</span>
-              <input id="ce-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${email.replace(/"/g,'&quot;')}" inputmode="email" style="padding-left:38px"/>
-            </div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
+            <input id="ce-phone2" class="m-input" type="tel" placeholder="+224 ..." value="${phone2.replace(/"/g,'&quot;')}" inputmode="tel"/>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep);margin-top:4px">
-            <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">storefront</span>
-            <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Activité & Localisation</span>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">work</span>
-              <input id="ce-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${activity.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
-            </div>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">location_on</span>
-              <input id="ce-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry…" value="${address.replace(/"/g,'&quot;')}" style="padding-left:38px"/>
-            </div>
-          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
+          <input id="ce-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${email.replace(/"/g,'&quot;')}" inputmode="email"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep);margin-top:4px">
+          <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">storefront</span>
+          <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Activité & Localisation</span>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
+          <input id="ce-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${activity.replace(/"/g,'&quot;')}"/>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
+          <input id="ce-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry…" value="${address.replace(/"/g,'&quot;')}"/>
+        </div>
           <!-- Exclusion d'automatisation -->
           <div style="display:flex;align-items:center;justify-content:between;padding:12px;background:rgba(255,255,255,0.05);border-radius:12px;margin-top:4px">
             <div style="display:flex;align-items:center;gap:10px">
@@ -1829,7 +1811,12 @@ function prosRow(p){
             <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
             <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
           </div>
-          <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+            ${p.activity?`<span style="font-size:11px;color:#f27f0d;font-weight:600">${p.activity}</span>`:''}
+            ${p.activity&&phone?`<span style="font-size:9px;color:rgba(255,255,255,.2)">·</span>`:''}
+            ${phone?`<span style="font-size:11px;color:rgba(255,255,255,.4)">${phone}</span>`:''}
+            ${!p.activity&&!phone?`<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>`:''}
+          </div>
         </div>
       </div>
     </div>
@@ -1999,51 +1986,33 @@ async function openProspectForm(p=null){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom et Prénoms <span style="color:#ef4444">*</span></label>
-          <div style="position:relative">
-            <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">badge</span>
-            <input id="prospect-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${p?.full_name||''}" style="padding-left:38px"/>
-          </div>
+          <input id="prospect-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${p?.full_name||''}"/>
         </div>
 
         <div>
            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-           <div style="position:relative">
-             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">mail</span>
-             <input id="prospect-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${p?.email||''}" inputmode="email" style="padding-left:38px"/>
-           </div>
+           <input id="prospect-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${p?.email||''}" inputmode="email"/>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Date de création <span style="color:#ef4444">*</span></label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">calendar_today</span>
-              <input id="prospect-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:today()}" style="padding-left:38px"/>
-            </div>
+            <input id="prospect-date" class="m-input" type="date" value="${p?.created_at?p.created_at.split('T')[0]:today()}"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1 <span style="color:#ef4444">*</span></label>
-            <div style="position:relative">
-              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-              <input id="prospect-phone" class="m-input" type="tel" placeholder="Numéro principal" value="${p?.phone||''}" inputmode="tel" style="padding-left:38px"/>
-            </div>
+            <input id="prospect-phone" class="m-input" type="tel" placeholder="Numéro principal" value="${p?.phone||''}" inputmode="tel"/>
           </div>
         </div>
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-          <div style="position:relative">
-            <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">call</span>
-            <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel" style="padding-left:38px"/>
-          </div>
+          <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel"/>
         </div>
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse activité</label>
-          <div style="position:relative">
-            <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none">location_on</span>
-            <input id="prospect-address" class="m-input" type="text" placeholder="Localisation précise de l'activité" value="${p?.address||''}" style="padding-left:38px"/>
-          </div>
+          <input id="prospect-address" class="m-input" type="text" placeholder="Localisation précise de l'activité" value="${p?.address||''}"/>
         </div>
 
         <!-- Étape 2 -->
