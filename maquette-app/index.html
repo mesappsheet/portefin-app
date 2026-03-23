@@ -202,6 +202,89 @@ body:not(.light) .pros-avatar{color:#818cf8}
 .section-h{padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between}
 .section-h h2{font-size:15px;font-weight:700;margin:0;color:white}
 .section-h span{font-size:12px;color:rgba(255,255,255,.4)}
+
+/* Prospect Detail View (Mobile Fullscreen) */
+#prospect-detail-view {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 150;
+  display: none;
+  flex-direction: column;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#prospect-detail-view.open { display: flex; }
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.detail-header {
+  flex-shrink: 0;
+  padding: 12px 16px 10px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  background: var(--top-bg);
+  border-bottom: 1px solid var(--top-border);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px 100px;
+  -webkit-overflow-scrolling: touch;
+}
+.detail-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.detail-label {
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.detail-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.detail-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.detail-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all .2s;
+}
+.detail-action-btn:active { background: var(--ghost-hover); transform: scale(0.96); }
+.detail-status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
 </style>
 </head>
 <body>
@@ -232,7 +315,26 @@ body:not(.light) .pros-avatar{color:#818cf8}
         <span class="material-symbols-outlined" style="font-size:18px">close</span>
       </button>
     </div>
+    </div>
     <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- Prospect Detail (Fullscreen) -->
+<div id="prospect-detail-view">
+  <div class="detail-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="closeProspectDetail()" style="width:36px;height:36px;border-radius:50%;background:var(--close-bg);border:none;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <p style="font-size:17px;font-weight:800;margin:0;color:var(--text)">Détails Prospect</p>
+    </div>
+    <button id="detail-more-btn" class="action-btn" style="background:var(--close-bg);border:none" onclick="openDetailMenu(this)">
+      <span class="material-symbols-outlined">more_horiz</span>
+    </button>
+  </div>
+  <div id="prospect-detail-content" class="detail-content">
+    <!-- Rempli par JS -->
   </div>
 </div>
 
@@ -1430,14 +1532,23 @@ async function saveClientEdit(creditId,clientId){
 // ═══════════════════════════════════════════════
 let prosSearch='';
 let prosFilter='all';
+let prosActFilter='';
+let prosDateFrom='';
+let prosDateTo='';
 
 async function viewProspects(){
   document.getElementById('view').innerHTML=`
   <div style="padding-top:12px;padding-bottom:80px">
-    <div class="search-wrap">
-      <span class="material-symbols-outlined">search</span>
-      <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
-        oninput="prosSearch=this.value;loadProspects()"/>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px;margin-bottom:12px">
+      <div class="search-wrap" style="flex:1;margin:0">
+        <span class="material-symbols-outlined">search</span>
+        <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
+          oninput="prosSearch=this.value;loadProspects()" style="padding-right:12px"/>
+      </div>
+      <button onclick="openProsFilterSheet()" style="width:42px;height:42px;border-radius:10px;border:1.5px solid ${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.5)':'var(--input-border)'};background:${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.12)':'var(--input-bg)'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative">
+        <span class="material-symbols-outlined" style="font-size:20px;color:${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--text3)'}">tune</span>
+        ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#f27f0d;border:1.5px solid var(--bg)"></span>':''}
+      </button>
     </div>
     <div class="tab-bar" id="pros-tabs">
       <div class="tab-btn ${prosFilter==='all'?'active':''}" data-f="all" onclick="setProsFilter('all')">Tous</div>
@@ -1471,6 +1582,9 @@ async function loadProspects(){
     }
     let q=sb.from('prospects').select('*').order('created_at',{ascending:false});
     if(prosFilter!=='all')q=q.eq('status',prosFilter);
+    if(prosActFilter)q=q.eq('activity',prosActFilter);
+    if(prosDateFrom)q=q.gte('created_at',prosDateFrom);
+    if(prosDateTo)q=q.lte('created_at',prosDateTo+'T23:59:59');
     const{data,error}=await q;
     if(error)throw error;
     let rows=data||[];
@@ -1498,6 +1612,156 @@ async function loadProspects(){
         ${rows.map(p=>prosRow(p)).join('')}
       </div>`;
   }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+}
+
+// ─── PROSPECT DETAIL (MOBILE) ───────────────────
+let currentProspectId = null;
+
+function openProspectDetail(pid) {
+  const p = _prosCache[pid];
+  if (!p) return;
+  currentProspectId = pid;
+  const content = document.getElementById('prospect-detail-content');
+  content.innerHTML = renderProspectDetail(p);
+  document.getElementById('prospect-detail-view').classList.add('open');
+  loadProspectFullHistory(pid);
+}
+
+function closeProspectDetail() {
+  document.getElementById('prospect-detail-view').classList.remove('open');
+  currentProspectId = null;
+}
+
+function openDetailMenu(btn) {
+  if (!currentProspectId) return;
+  prosMenu(btn, currentProspectId);
+}
+
+function renderProspectDetail(p) {
+  const name = p.full_name || 'Inconnu';
+  const statusColor = statusMapPWA[p.status] || '#cbd5e1';
+  const phone = p.phone || '';
+  
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px">
+      <div class="pros-avatar" style="width:72px;height:72px;font-size:24px;margin-bottom:12px;box-shadow: 0 8px 16px rgba(0,0,0,0.1);background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(99,102,241,.15))">${initials(name)}</div>
+      <h2 style="font-size:20px;font-weight:800;margin:0;color:var(--text)">${name}</h2>
+      <div style="margin-top:8px">
+        <span class="detail-status-badge" style="background:${statusColor}20;color:${statusColor}">${p.status || 'NOUVEAU'}</span>
+      </div>
+    </div>
+
+    <div class="detail-action-grid">
+      <button class="detail-action-btn" onclick="call('${phone}')">
+        <span class="material-symbols-outlined" style="color:#6366f1">call</span>Appeler
+      </button>
+      <button class="detail-action-btn" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${p.activity||''}', '${p.id}')">
+        <span class="material-symbols-outlined" style="color:#25d366">chat</span>WhatsApp
+      </button>
+      <button class="detail-action-btn" onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')">
+        <span class="material-symbols-outlined" style="color:#f27f0d">sticky_note_2</span>Notes
+      </button>
+      <button class="detail-action-btn" onclick="convertProspect('${p.id}','${name.replace(/'/g,"\\'")}', '${phone}')">
+        <span class="material-symbols-outlined" style="color:#f27f0d">person_add</span>Convertir
+      </button>
+    </div>
+
+    <div class="detail-card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--sep);padding-bottom:10px">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#f27f0d">info</span>
+        <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Informations</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <p class="detail-label">Téléphone</p>
+          <p class="detail-value">${phone || '—'}</p>
+        </div>
+        <div>
+          <p class="detail-label">Secteur d'activité</p>
+          <p class="detail-value">${p.activity || '—'}</p>
+        </div>
+        <div>
+          <p class="detail-label">Quartier / Adresse</p>
+          <p class="detail-value">${p.address || '—'}</p>
+        </div>
+        <div>
+          <p class="detail-label">Date d'ajout</p>
+          <p class="detail-value">${fmtDate(p.created_at?.split('T')[0])}</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px">
+      <h3 style="font-size:14px;font-weight:700;margin:0">Historique des com.</h3>
+      <span style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700">Archives</span>
+    </div>
+    <div id="detail-history-list">
+       <div class="loader" style="padding:20px"><div class="spin"></div></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;padding:0 4px">
+      <h3 style="font-size:14px;font-weight:700;margin:0">Notes & Observations</h3>
+    </div>
+    <div id="detail-notes-list">
+       <div class="loader" style="padding:20px"><div class="spin"></div></div>
+    </div>
+    <button onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')" class="btn-ghost" style="width:100%;margin-top:10px;font-size:12px">
+      <span class="material-symbols-outlined" style="font-size:16px">add</span> Ajouter une note
+    </button>
+  `;
+}
+
+async function loadProspectFullHistory(pid) {
+  const hList = document.getElementById('detail-history-list');
+  const nList = document.getElementById('detail-notes-list');
+  
+  try {
+    // Charger Historique Com
+    const { data: logs } = await sb.from('communication_logs')
+      .select('*')
+      .eq('prospect_id', pid)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (!logs || logs.length === 0) {
+      hList.innerHTML = '<p style="text-align:center;color:var(--text3);font-size:12px;padding:20px 0">Aucun historique de communication</p>';
+    } else {
+      hList.innerHTML = `<div class="glass" style="overflow:hidden">` + logs.map(l => `
+        <div style="padding:12px;border-bottom:1px solid var(--sep);display:flex;gap:10px;align-items:flex-start">
+          <div style="width:30px;height:30px;border-radius:8px;background:${l.type==='WhatsApp'?'rgba(37,211,102,0.1)':'rgba(99,102,241,0.1)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span class="material-symbols-outlined" style="font-size:16px;color:${l.type==='WhatsApp'?'#25d366':'#818cf8'}">${l.type==='WhatsApp'?'chat':'call'}</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+              <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">${l.type}</span>
+              <span style="font-size:9px;color:var(--text3)">${fmtDate(l.created_at?.split('T')[0])}</span>
+            </div>
+            <p style="font-size:12px;color:var(--text);margin:0;line-height:1.4">${l.message_body || 'Communication effectuée'}</p>
+          </div>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    // Charger Notes
+    const { data: notes } = await sb.from('prospect_notes')
+      .select('*')
+      .eq('prospect_id', pid)
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (!notes || notes.length === 0) {
+      nList.innerHTML = '<p style="text-align:center;color:var(--text3);font-size:12px;padding:20px 0">Aucune note enregistrée</p>';
+    } else {
+      nList.innerHTML = notes.map(n => `
+        <div class="glass-sm" style="padding:12px;margin-bottom:8px">
+          <p style="font-size:13px;margin:0 0 6px;line-height:1.5;font-style:italic;color:var(--text)">"${n.content}"</p>
+          <p style="font-size:10px;color:var(--text2);margin:0">${fmtDate(n.created_at?.split('T')[0])} · ${n.author_name || 'Admin'}</p>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    hList.innerHTML = nList.innerHTML = '<p style="padding:20px;font-size:12px;color:var(--text3)">Erreur de chargement des données</p>';
+  }
 }
 
 function toggleSelectAllProsPWA(ids){
@@ -1530,13 +1794,15 @@ function prosRow(p){
   return`<div class="pros-item ${isSel?'selected':''}" style="${isSel?'background:linear-gradient(90deg, rgba(242,127,13,0.1) 0%, transparent 100%)':''}">
     <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
       <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation(); toggleProSelPWA('${p.id}')" style="accent-color:#f27f0d">
-      <div class="pros-avatar">${initials(name)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
-          <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
+      <div onclick="openProspectDetail('${p.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
+        <div class="pros-avatar">${initials(name)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <p style="font-size:14px;font-weight:700;margin:0">${name}</p>
+            <span class="badge" style="font-size:9px;background:${color}20;color:${color}">${p.status||'—'}</span>
+          </div>
+          <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
         </div>
-        <p style="font-size:12px;color:rgba(255,255,255,.4);margin:2px 0 0">${phone||p.activity||'—'}</p>
       </div>
     </div>
     <div style="display:flex;align-items:center">
@@ -1894,6 +2160,49 @@ async function saveCreditNote(creditId, clientName){
   else{toast('Note ajoutée ✓','ok');openCreditNotes(creditId,clientName);}
 }
 
+async function openProspectNotes(prospectId, name){
+  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
+  try{
+    const{data}=await sb.from('prospect_notes').select('*').eq('prospect_id',prospectId).order('created_at',{ascending:false});
+    const rows=data||[];
+    document.getElementById('modal-content').innerHTML=`
+      <div style="padding:0 20px 24px">
+        <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">Notes — ${name}</p>
+        <div style="margin-bottom:16px">
+          <textarea id="new-prospect-note" class="m-input" rows="3" placeholder="Saisir une remarque, avis..." style="resize:none"></textarea>
+          <button class="btn-primary" style="width:100%;margin-top:8px" onclick="saveProspectNote('${prospectId}','${name.replace(/'/g,"\\'")}')">
+            <span class="material-symbols-outlined filled" style="font-size:18px">note_add</span> Ajouter la note
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${rows.length?rows.map(n=>`
+            <div class="glass-sm" style="padding:12px">
+              <p style="font-size:13px;margin:0 0 6px;line-height:1.5">${n.content}</p>
+              <p style="font-size:10px;color:var(--text2);margin:0">${fmtDate(n.created_at?.split('T')[0]||'')} · ${n.author_name||'Gestionnaire'}</p>
+            </div>`).join('')
+          :`<div class="empty" style="padding:20px 0"><span class="material-symbols-outlined">note</span><p>Aucune note pour ce prospect</p></div>`}
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
+}
+
+async function saveProspectNote(prospectId, name){
+  const content=(document.getElementById('new-prospect-note').value||'').trim();
+  if(!content){toast('Note vide','err');return;}
+  const{error}=await sb.from('prospect_notes').insert({
+    prospect_id:prospectId, content,
+    author_name: (typeof currentUser !== 'undefined' && currentUser ? (currentUser.name || currentUser.email?.split('@')[0]) : 'Gestionnaire')
+  });
+  if(error)toast('Erreur lors de l\'ajout','err');
+  else{
+    toast('Note ajoutée ✓','ok');
+    openProspectNotes(prospectId,name);
+    if(currentProspectId === prospectId) loadProspectFullHistory(prospectId);
+  }
+}
+
 // ═══════════════════════════════════════════════
 //  NOTES PROSPECT
 // ═══════════════════════════════════════════════
@@ -2053,6 +2362,7 @@ async function convertProspect(prospectId, name, phone){
     'Le statut du prospect passera à "Converti" et le formulaire de dossier s\'ouvrira pré-rempli.',
     async()=>{
       await sb.from('prospects').update({status:'Converti'}).eq('id',prospectId);
+      closeProspectDetail();
       navTo('credits');
       setTimeout(async()=>{
         await openCreditForm({name, phone1:phone||''});
@@ -2197,6 +2507,65 @@ async function previewModel(id){
         </button>
       </div>
     </div>`);
+}
+
+// ─── PROSPECT FILTERS ─────────────────────────
+async function openProsFilterSheet(){
+  const{data:acts}=await sb.from('prospect_activities').select('name').order('name');
+  const activities=(acts||[]).map(a=>a.name);
+  const{data:sts}=await sb.from('prospect_statuses').select('label,color').order('label');
+  const statuses=(sts||[]).map(s=>s.label);
+  const activeCount=[prosActFilter,prosDateFrom,prosDateTo].filter(Boolean).length;
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+        <p class="sheet-title" style="margin:0;padding:0">Filtrer les prospects</p>
+        ${activeCount?`<span style="padding:3px 10px;border-radius:20px;background:rgba(242,127,13,.15);color:#f27f0d;font-size:11px;font-weight:700">${activeCount} filtre${activeCount>1?'s':''} actif${activeCount>1?'s':''}</span>`:''}
+      </div>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Activité / Secteur</label>
+      <select id="pf-act" class="m-input" style="margin:6px 0 16px">
+        <option value="">Toutes les activités</option>
+        ${activities.map(a=>`<option value="${a}" ${prosActFilter===a?'selected':''}>${a}</option>`).join('')}
+      </select>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Statut</label>
+      <select id="pf-status" class="m-input" style="margin:6px 0 16px">
+        <option value="">Tous les statuts</option>
+        ${statuses.map(s=>`<option value="${s}" ${prosFilter===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Date d'ajout — Du</label>
+      <input id="pf-from" class="m-input" type="date" value="${prosDateFrom}" style="margin:6px 0 14px"/>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Au</label>
+      <input id="pf-to" class="m-input" type="date" value="${prosDateTo}" style="margin:6px 0 20px"/>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost" onclick="resetProsFilters()" style="flex:1">
+          <span class="material-symbols-outlined" style="font-size:16px">filter_list_off</span> Réinitialiser
+        </button>
+        <button class="m-btn btn-p" onclick="applyProsFilters()" style="flex:2">
+          <span class="material-symbols-outlined" style="font-size:16px">tune</span> Appliquer
+        </button>
+      </div>
+    </div>`);
+}
+
+function resetProsFilters(){
+  prosActFilter=''; prosDateFrom=''; prosDateTo=''; prosFilter='all';
+  closeModal();
+  viewProspects();
+}
+
+function applyProsFilters(){
+  prosActFilter=document.getElementById('pf-act').value;
+  prosDateFrom=document.getElementById('pf-from').value;
+  prosDateTo=document.getElementById('pf-to').value;
+  const st=document.getElementById('pf-status').value;
+  if(st) prosFilter=st; else prosFilter='all';
+  closeModal();
+  viewProspects();
 }
 
 // ─── EDIT MODEL ───────────────────────────────
