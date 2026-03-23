@@ -373,6 +373,14 @@ async function loadScreen(moduleKey, screenId) {
     const screen = config.screens.find(s => s.id === screenId);
     if (!screen) return;
 
+    // Clean up prospect detail mode when navigating away
+    dom.viewContainer.classList.remove("prospect-list-mode", "prospect-detail-mode");
+    document.body.classList.remove("prospect-detail-open");
+    if (dom.viewContainer._prospectMenuCleanup) {
+        document.removeEventListener("click", dom.viewContainer._prospectMenuCleanup);
+        dom.viewContainer._prospectMenuCleanup = null;
+    }
+
     dom.viewContainer.classList.add("view-loading");
 
     try {
@@ -538,66 +546,75 @@ function applyMobileResponsiveFixes() {
 
 /* ═══════════════════════════════════════════
    MOBILE PROSPECT DETAIL VIEW
+   Uses CSS classes + data attributes to avoid
+   conflicts with !important rules.
    ═══════════════════════════════════════════ */
 function applyMobileProspectDetailView() {
     if (window.innerWidth >= 1024) return;
     if (currentModule !== "prospection" || currentScreen !== "01") return;
 
-    const container = dom.viewContainer;
-    const masterDetail = container.querySelector(".flex-1.flex.overflow-hidden");
-    if (!masterDetail) return;
+    const vc = dom.viewContainer;
 
-    const listSection = masterDetail.querySelector("section:first-of-type, #list-sidebar");
-    const detailSection = masterDetail.querySelector("section:last-of-type");
-    if (!listSection || !detailSection || listSection === detailSection) return;
+    // Find the master-detail container (the div wrapping list + detail sections)
+    const sections = vc.querySelectorAll("section");
+    if (sections.length < 2) return;
 
-    // Hide detail section initially on mobile
-    detailSection.style.display = "none";
+    // Identify list and detail sections
+    let listSection = vc.querySelector("#list-sidebar") || sections[0];
+    let detailSection = null;
+    for (let i = 0; i < sections.length; i++) {
+        if (sections[i] !== listSection) {
+            detailSection = sections[i];
+            break;
+        }
+    }
+    if (!detailSection) return;
 
-    // Make the master-detail container full-height
-    masterDetail.style.flexDirection = "column";
-    listSection.style.maxHeight = "none";
-    listSection.style.overflow = "auto";
-    listSection.style.width = "100%";
-    listSection.style.flex = "1";
+    // Find the parent container of both sections
+    const masterDetail = listSection.parentElement;
+    if (!masterDetail || !masterDetail.contains(detailSection)) return;
 
-    // Find all clickable rows (table rows or card-like elements)
-    const rows = listSection.querySelectorAll("tbody tr, .prospect-card");
+    // Mark elements with data attributes for CSS targeting
+    listSection.setAttribute("data-prospect-list", "");
+    detailSection.setAttribute("data-prospect-detail", "");
+    masterDetail.setAttribute("data-prospect-master", "");
+
+    // Enter list mode (CSS handles display via !important)
+    vc.classList.remove("prospect-detail-mode");
+    vc.classList.add("prospect-list-mode");
+
+    // Find all clickable rows: table rows, card divs, or any list items
+    const rows = listSection.querySelectorAll("tbody tr, .prospect-card, [data-prospect-row]");
     rows.forEach(row => {
-        row.style.cursor = "pointer";
-        row.addEventListener("click", (e) => {
-            // Don't trigger if clicking checkbox or "..." menu
-            if (e.target.closest("input[type='checkbox']") || e.target.closest(".menu-btn") || e.target.closest("[data-action]")) return;
+        // Prevent duplicate listeners
+        if (row._prospectClickBound) return;
+        row._prospectClickBound = true;
 
-            // Extract prospect name from the row
-            const nameEl = row.querySelector(".font-bold, .font-medium, h3, h4");
+        row.addEventListener("click", (e) => {
+            // Don't trigger on checkbox or context menu button
+            if (e.target.closest("input[type='checkbox']")) return;
+            if (e.target.closest("[data-action]")) return;
+            if (e.target.closest(".menu-btn")) return;
+
+            const nameEl = row.querySelector(".font-bold, .font-medium, h3, h4, .text-sm.font-bold, .text-sm.font-medium");
             const prospectName = nameEl ? nameEl.textContent.trim() : "Prospect";
 
-            showMobileDetailView(listSection, detailSection, masterDetail, prospectName);
+            showMobileProspectDetail(vc, listSection, detailSection, masterDetail, prospectName);
         });
     });
 }
 
-function showMobileDetailView(listSection, detailSection, masterDetail, prospectName) {
-    // Add class to body for CSS targeting (hide bottom bar & top bar)
-    document.body.classList.add("mobile-detail-active");
+function showMobileProspectDetail(vc, listSection, detailSection, masterDetail, prospectName) {
+    // Switch CSS mode: hide list, show detail
+    vc.classList.remove("prospect-list-mode");
+    vc.classList.add("prospect-detail-mode");
+    document.body.classList.add("prospect-detail-open");
 
-    // Hide list, show detail
-    listSection.style.display = "none";
-    detailSection.style.display = "block";
-    detailSection.style.overflow = "auto";
-    detailSection.style.flex = "1";
-    detailSection.style.padding = "0";
+    // Inject mobile detail header (back + title + "..." menu)
+    let header = detailSection.querySelector(".mobile-detail-header");
+    if (header) header.remove();
 
-    // Remove max-height constraints
-    detailSection.style.maxHeight = "none";
-    detailSection.style.width = "100%";
-
-    // Create mobile detail header with back button + name + "..." menu
-    const existingHeader = detailSection.querySelector(".mobile-detail-header");
-    if (existingHeader) existingHeader.remove();
-
-    const header = document.createElement("div");
+    header = document.createElement("div");
     header.className = "mobile-detail-header";
     header.innerHTML = `
         <button class="back-btn" aria-label="Retour à la liste">
@@ -606,7 +623,7 @@ function showMobileDetailView(listSection, detailSection, masterDetail, prospect
         <span class="detail-title">${prospectName}</span>
         <div class="more-btn" style="position:relative">
             <span class="material-symbols-outlined" style="font-size:24px">more_vert</span>
-            <div class="mobile-actions-menu" id="mobile-prospect-actions">
+            <div class="mobile-actions-menu">
                 <button data-action="call">
                     <span class="material-symbols-outlined" style="font-size:20px;color:#1763cf">call</span>
                     Appeler
@@ -640,18 +657,19 @@ function showMobileDetailView(listSection, detailSection, masterDetail, prospect
             </div>
         </div>
     `;
-
     detailSection.insertBefore(header, detailSection.firstChild);
 
-    // Add padding to content below header
-    const contentChildren = Array.from(detailSection.children).filter(el => !el.classList.contains("mobile-detail-header"));
-    contentChildren.forEach(el => {
-        if (el.style) el.style.padding = el.style.padding || "";
-    });
-
-    // Back button handler
+    // Back button → return to list
     header.querySelector(".back-btn").addEventListener("click", () => {
-        hideMobileDetailView(listSection, detailSection, header);
+        vc.classList.remove("prospect-detail-mode");
+        vc.classList.add("prospect-list-mode");
+        document.body.classList.remove("prospect-detail-open");
+        header.remove();
+        // Clean up menu listener
+        if (vc._prospectMenuCleanup) {
+            document.removeEventListener("click", vc._prospectMenuCleanup);
+            vc._prospectMenuCleanup = null;
+        }
     });
 
     // "..." menu toggle
@@ -663,49 +681,26 @@ function showMobileDetailView(listSection, detailSection, masterDetail, prospect
         actionsMenu.classList.toggle("open");
     });
 
-    // Close menu when clicking outside
+    // Close menu on outside click
     const closeMenu = (e) => {
         if (!moreBtn.contains(e.target)) {
             actionsMenu.classList.remove("open");
         }
     };
     document.addEventListener("click", closeMenu);
+    vc._prospectMenuCleanup = closeMenu;
 
-    // Store cleanup ref
-    detailSection._cleanupMenuListener = closeMenu;
-
-    // Action handlers (close menu after action)
+    // Close menu after action click
     actionsMenu.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             actionsMenu.classList.remove("open");
-            // Actions can be hooked up to real logic later
         });
     });
 
-    // Scroll to top of detail view
+    // Scroll to top
     detailSection.scrollTop = 0;
     masterDetail.scrollTop = 0;
-}
-
-function hideMobileDetailView(listSection, detailSection, header) {
-    document.body.classList.remove("mobile-detail-active");
-
-    // Clean up menu listener
-    if (detailSection._cleanupMenuListener) {
-        document.removeEventListener("click", detailSection._cleanupMenuListener);
-        delete detailSection._cleanupMenuListener;
-    }
-
-    // Remove header
-    if (header && header.parentNode) header.remove();
-
-    // Show list, hide detail
-    detailSection.style.display = "none";
-    listSection.style.display = "";
-    listSection.style.flex = "1";
-    listSection.style.maxHeight = "none";
-    listSection.style.overflow = "auto";
 }
 
 // Re-apply on resize

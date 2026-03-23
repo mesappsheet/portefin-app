@@ -185,20 +185,71 @@
                 overflow: visible !important;
             }
 
-            /* ── Mobile Prospect Detail View ── */
-            .mobile-detail-active #bottom-tab-bar { display: none; }
-            .mobile-detail-active #mobile-topbar { display: none; }
+            /* ══════════════════════════════════════════════
+               MOBILE PROSPECT: LIST ↔ DETAIL VIEW TOGGLE
+               ══════════════════════════════════════════════ */
 
+            /* --- LIST MODE: show list, hide detail --- */
+            #view-container.prospect-list-mode [data-prospect-detail] {
+                display: none !important;
+            }
+            #view-container.prospect-list-mode [data-prospect-list] {
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 1 auto !important;
+                max-height: none !important;
+                overflow: auto !important;
+                width: 100% !important;
+                border-bottom: none !important;
+            }
+            #view-container.prospect-list-mode [data-prospect-master] {
+                flex-direction: column !important;
+                overflow: hidden !important;
+                flex: 1 1 auto !important;
+            }
+            /* Row tap highlight */
+            #view-container.prospect-list-mode [data-prospect-list] tbody tr {
+                cursor: pointer;
+            }
+            #view-container.prospect-list-mode [data-prospect-list] tbody tr:active {
+                background: rgba(23, 99, 207, 0.08) !important;
+            }
+
+            /* --- DETAIL MODE: hide list, show detail fullscreen --- */
+            #view-container.prospect-detail-mode [data-prospect-list] {
+                display: none !important;
+            }
+            #view-container.prospect-detail-mode [data-prospect-detail] {
+                display: block !important;
+                flex: 1 1 auto !important;
+                max-height: none !important;
+                overflow: auto !important;
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            #view-container.prospect-detail-mode [data-prospect-master] {
+                flex-direction: column !important;
+                overflow: auto !important;
+                flex: 1 1 auto !important;
+                height: auto !important;
+            }
+            /* Hide bottom bar & top bar in detail mode */
+            body.prospect-detail-open #bottom-tab-bar { display: none !important; }
+            body.prospect-detail-open #mobile-topbar { display: none !important; }
+            body.prospect-detail-open #view-container { padding-bottom: 0 !important; }
+
+            /* --- Detail header bar --- */
             .mobile-detail-header {
                 display: flex;
                 align-items: center;
                 gap: 12px;
                 padding: 12px 16px;
-                background: var(--tw-bg-opacity, white);
+                background: white;
                 border-bottom: 1px solid rgba(148,163,184,0.2);
                 position: sticky;
                 top: 0;
                 z-index: 20;
+                flex-shrink: 0;
             }
             .dark .mobile-detail-header {
                 background: #111821;
@@ -211,6 +262,8 @@
                 background: none;
                 border: none;
                 color: inherit;
+                display: flex;
+                align-items: center;
             }
             .mobile-detail-header .back-btn:active {
                 background: rgba(148,163,184,0.15);
@@ -231,12 +284,14 @@
                 border: none;
                 color: inherit;
                 position: relative;
+                display: flex;
+                align-items: center;
             }
             .mobile-detail-header .more-btn:active {
                 background: rgba(148,163,184,0.15);
             }
 
-            /* Actions dropdown */
+            /* --- Actions dropdown menu --- */
             .mobile-actions-menu {
                 position: absolute;
                 top: 100%;
@@ -274,55 +329,39 @@
             .mobile-actions-menu button:active {
                 background: rgba(148,163,184,0.1);
             }
-            .mobile-actions-menu .action-danger {
-                color: #ef4444;
-            }
+            .mobile-actions-menu .action-danger { color: #ef4444; }
             .mobile-actions-menu .action-divider {
                 height: 1px;
                 background: rgba(148,163,184,0.15);
                 margin: 4px 8px;
             }
 
-            /* Detail view content adjustments for mobile */
-            .mobile-detail-active #view-container {
-                padding-bottom: 0;
-                overflow: auto;
-            }
-            .mobile-detail-active #view-container section:last-of-type {
-                max-height: none !important;
-                overflow: auto !important;
-            }
-            /* Shrink profile header on mobile */
-            .mobile-detail-active #view-container .w-24.h-24 {
+            /* --- Detail content mobile adjustments --- */
+            #view-container.prospect-detail-mode .w-24.h-24 {
                 width: 56px !important;
                 height: 56px !important;
             }
-            .mobile-detail-active #view-container section:last-of-type > .bg-white:first-of-type,
-            .mobile-detail-active #view-container section:last-of-type > .dark\:bg-slate-900:first-of-type {
-                padding: 16px !important;
-            }
-            .mobile-detail-active #view-container .text-2xl {
+            #view-container.prospect-detail-mode .text-2xl {
                 font-size: 1.125rem !important;
             }
-            /* Stack info cards vertically */
-            .mobile-detail-active #view-container .grid.grid-cols-1.lg\\:grid-cols-2 {
+            #view-container.prospect-detail-mode .grid.grid-cols-1 {
                 grid-template-columns: 1fr !important;
             }
-            /* Quick action buttons: scroll horizontally */
-            .mobile-detail-active #view-container .flex.flex-wrap.gap-3 {
+            #view-container.prospect-detail-mode .flex.flex-wrap.gap-3 {
                 flex-wrap: nowrap !important;
                 overflow-x: auto !important;
                 padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
             }
-            .mobile-detail-active #view-container .flex.flex-wrap.gap-3 button {
+            #view-container.prospect-detail-mode .flex.flex-wrap.gap-3 button {
                 flex-shrink: 0;
                 font-size: 11px !important;
                 padding: 8px 14px !important;
             }
-
-            /* Highlight row on tap */
-            .mobile-detail-active-ready tbody tr:active {
-                background: rgba(23, 99, 207, 0.08) !important;
+            /* Detail section inner padding */
+            #view-container.prospect-detail-mode [data-prospect-detail] > *:not(.mobile-detail-header) {
+                padding-left: 16px;
+                padding-right: 16px;
             }
         }
     </style>
