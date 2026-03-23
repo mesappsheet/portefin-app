@@ -847,22 +847,26 @@ let repFilter='all'; // all | pending | paid
 async function viewRepayments(){
   document.getElementById('view').innerHTML=`
   <div style="padding-top:12px;padding-bottom:80px">
-    <!-- Sélecteur date -->
-    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:10px">
-      <button class="btn-ghost" style="padding:8px 10px" onclick="shiftDate(-1)">
-        <span class="material-symbols-outlined" style="font-size:18px">chevron_left</span>
-      </button>
-      <input type="date" id="rep-date-inp" class="m-input" style="flex:1;padding:10px 12px;text-align:center"
-        value="${repDate}" onchange="repDate=this.value;loadRepayments()"/>
-      <button class="btn-ghost" style="padding:8px 10px" onclick="shiftDate(1)">
-        <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
-      </button>
-    </div>
-    <!-- Filtres -->
-    <div class="tab-bar" id="rep-tabs">
-      <div class="tab-btn ${repFilter==='all'?'active':''}" data-f="all" onclick="setRepFilter('all')">Tous</div>
-      <div class="tab-btn ${repFilter==='pending'?'active':''}" data-f="pending" onclick="setRepFilter('pending')">En attente</div>
-      <div class="tab-btn ${repFilter==='paid'?'active':''}" data-f="paid" onclick="setRepFilter('paid')">Payés</div>
+    <!-- Sélecteur date & Filtres -->
+    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;flex:1;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;overflow:hidden">
+        <button class="btn-ghost" style="padding:10px 12px;border-radius:0" onclick="shiftDate(-1)">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_left</span>
+        </button>
+        <input type="date" id="rep-date-inp" style="flex:1;text-align:center;background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none"
+          value="${repDate}" onchange="repDate=this.value;loadRepayments()"/>
+        <button class="btn-ghost" style="padding:10px 12px;border-radius:0" onclick="shiftDate(1)">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
+        </button>
+      </div>
+      <div style="position:relative;flex-shrink:0">
+        <select class="m-input" style="padding:10px 32px 10px 14px; appearance:none; background:${repFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1px solid ${repFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'}; color:${repFilter==='all'?'var(--text3)':'#f27f0d'}; border-radius:10px; font-weight:600; font-size:13px;" onchange="setRepFilter(this.value)">
+          <option value="all" ${repFilter==='all'?'selected':''}>Tous</option>
+          <option value="pending" ${repFilter==='pending'?'selected':''}>En attente</option>
+          <option value="paid" ${repFilter==='paid'?'selected':''}>Payés</option>
+        </select>
+        <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${repFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
+      </div>
     </div>
     <!-- Liste -->
     <div id="rep-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
@@ -879,8 +883,7 @@ function shiftDate(n){
 }
 function setRepFilter(f){
   repFilter=f;
-  document.querySelectorAll('#rep-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
-  loadRepayments();
+  viewRepayments();
 }
 
 async function loadRepayments(){
@@ -961,16 +964,21 @@ let credFilter='all';
 async function viewCredits(){
   document.getElementById('view').innerHTML=`
   <div style="padding-top:12px;padding-bottom:80px">
-    <div class="search-wrap">
-      <span class="material-symbols-outlined">search</span>
-      <input class="search-inp" type="search" placeholder="Rechercher un client…" value="${credSearch}"
-        oninput="credSearch=this.value;loadCredits()"/>
-    </div>
-    <div class="tab-bar" id="cred-tabs">
-      <div class="tab-btn ${credFilter==='all'?'active':''}" data-f="all" onclick="setCredFilter('all')">Tous</div>
-      <div class="tab-btn ${credFilter==='encours'?'active':''}" data-f="encours" onclick="setCredFilter('encours')">En cours</div>
-      <div class="tab-btn ${credFilter==='souffrance'?'active':''}" data-f="souffrance" onclick="setCredFilter('souffrance')">Souffrance</div>
-      <div class="tab-btn ${credFilter==='solde'?'active':''}" data-f="solde" onclick="setCredFilter('solde')">Soldés</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px;margin-bottom:12px">
+      <div class="search-wrap" style="flex:1;margin:0">
+        <span class="material-symbols-outlined">search</span>
+        <input class="search-inp" type="search" placeholder="Rechercher un dossier…" value="${credSearch}"
+          oninput="credSearch=this.value;loadCredits()"/>
+      </div>
+      <div style="position:relative;flex-shrink:0">
+        <select class="m-input" style="padding:10px 32px 10px 14px; appearance:none; background:${credFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1px solid ${credFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'}; color:${credFilter==='all'?'var(--text3)':'#f27f0d'}; border-radius:10px; font-weight:600; font-size:13px;" onchange="setCredFilter(this.value)">
+          <option value="all" ${credFilter==='all'?'selected':''}>Tous</option>
+          <option value="encours" ${credFilter==='encours'?'selected':''}>En cours</option>
+          <option value="souffrance" ${credFilter==='souffrance'?'selected':''}>Souffrance</option>
+          <option value="solde" ${credFilter==='solde'?'selected':''}>Soldés</option>
+        </select>
+        <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${credFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
+      </div>
     </div>
     <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -980,8 +988,7 @@ async function viewCredits(){
 
 function setCredFilter(f){
   credFilter=f;
-  document.querySelectorAll('#cred-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
-  loadCredits();
+  viewCredits();
 }
 
 async function loadCredits(){
@@ -1545,16 +1552,19 @@ async function viewProspects(){
         <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
           oninput="prosSearch=this.value;loadProspects()" style="padding-right:12px"/>
       </div>
-      <button onclick="openProsFilterSheet()" style="width:42px;height:42px;border-radius:10px;border:1.5px solid ${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.5)':'var(--input-border)'};background:${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.12)':'var(--input-bg)'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative">
+      <div style="position:relative;flex-shrink:0">
+        <select class="m-input" style="padding:10px 32px 10px 14px; appearance:none; background:${prosFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1px solid ${prosFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'}; color:${prosFilter==='all'?'var(--text3)':'#f27f0d'}; border-radius:10px; font-weight:600; font-size:13px;" onchange="setProsFilter(this.value)">
+          <option value="all" ${prosFilter==='all'?'selected':''}>Tous</option>
+          <option value="Nouveau" ${prosFilter==='Nouveau'?'selected':''}>Nouveaux</option>
+          <option value="À relancer" ${prosFilter==='À relancer'?'selected':''}>À relancer</option>
+          <option value="Converti" ${prosFilter==='Converti'?'selected':''}>Convertis</option>
+        </select>
+        <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${prosFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
+      </div>
+      <button onclick="openProsFilterSheet()" style="width:40px;height:40px;border-radius:10px;border:1.5px solid ${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.5)':'var(--input-border)'};background:${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.12)':'var(--input-bg)'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative">
         <span class="material-symbols-outlined" style="font-size:20px;color:${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--text3)'}">tune</span>
-        ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#f27f0d;border:1.5px solid var(--bg)"></span>':''}
+        ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#f27f0d;border:2px solid var(--bg)"></span>':''}
       </button>
-    </div>
-    <div class="tab-bar" id="pros-tabs">
-      <div class="tab-btn ${prosFilter==='all'?'active':''}" data-f="all" onclick="setProsFilter('all')">Tous</div>
-      <div class="tab-btn ${prosFilter==='Nouveau'?'active':''}" data-f="Nouveau" onclick="setProsFilter('Nouveau')">Nouveaux</div>
-      <div class="tab-btn ${prosFilter==='À relancer'?'active':''}" data-f="À relancer" onclick="setProsFilter('À relancer')">À relancer</div>
-      <div class="tab-btn ${prosFilter==='Converti'?'active':''}" data-f="Converti" onclick="setProsFilter('Converti')">Convertis</div>
     </div>
     <div id="pros-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -1564,8 +1574,7 @@ async function viewProspects(){
 
 function setProsFilter(f){
   prosFilter=f;
-  document.querySelectorAll('#pros-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
-  loadProspects();
+  viewProspects();
 }
 let statusMapPWA = {};
 let selectedProsPWA = new Set();
@@ -1641,73 +1650,92 @@ function renderProspectDetail(p) {
   const name = p.full_name || 'Inconnu';
   const statusColor = statusMapPWA[p.status] || '#cbd5e1';
   const phone = p.phone || '';
-  
+  const phone2 = p.phone2 || '';
+
+  const infoRow = (icon, label, value, color='#f27f0d') => !value ? '' : `
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--sep)">
+      <div style="width:36px;height:36px;border-radius:10px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined filled" style="font-size:18px;color:${color}">${icon}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:0 0 2px">${label}</p>
+        <p style="font-size:14px;font-weight:600;color:var(--text);margin:0">${value}</p>
+      </div>
+    </div>`;
+
   return `
-    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px">
-      <div class="pros-avatar" style="width:72px;height:72px;font-size:24px;margin-bottom:12px;box-shadow: 0 8px 16px rgba(0,0,0,0.1);background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(99,102,241,.15))">${initials(name)}</div>
-      <h2 style="font-size:20px;font-weight:800;margin:0;color:var(--text)">${name}</h2>
-      <div style="margin-top:8px">
-        <span class="detail-status-badge" style="background:${statusColor}20;color:${statusColor}">${p.status || 'NOUVEAU'}</span>
+    <!-- HERO -->
+    <div style="background:linear-gradient(160deg,rgba(99,102,241,.12) 0%,rgba(242,127,13,.07) 100%);border-radius:20px;padding:28px 20px 22px;margin-bottom:16px;text-align:center;border:1px solid rgba(255,255,255,.06)">
+      <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,.4),rgba(99,102,241,.15));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 14px;box-shadow:0 8px 24px rgba(99,102,241,.25)">${initials(name)}</div>
+      <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text);letter-spacing:-.3px">${name}</h2>
+      <span style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44">${p.status || 'NOUVEAU'}</span>
+      ${p.activity ? `<p style="font-size:13px;color:var(--text2);margin:10px 0 0;font-weight:500">${p.activity}</p>` : ''}
+
+      <!-- Actions compactes -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">
+        ${phone ? `
+        <button onclick="call('${phone}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#818cf8">call</span>
+          <span style="font-size:10px;font-weight:700;color:#818cf8">Appeler</span>
+        </button>
+        <button onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#25d366">chat</span>
+          <span style="font-size:10px;font-weight:700;color:#25d366">WhatsApp</span>
+        </button>` : ''}
+        <button onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#f27f0d">sticky_note_2</span>
+          <span style="font-size:10px;font-weight:700;color:#f27f0d">Notes</span>
+        </button>
+        <button onclick="convertProspect('${p.id}','${name.replace(/'/g,"\\'")}','${phone}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#10b981">person_add</span>
+          <span style="font-size:10px;font-weight:700;color:#10b981">Convertir</span>
+        </button>
       </div>
     </div>
 
-    <div class="detail-action-grid">
-      <button class="detail-action-btn" onclick="call('${phone}')">
-        <span class="material-symbols-outlined" style="color:#6366f1">call</span>Appeler
-      </button>
-      <button class="detail-action-btn" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${p.activity||''}', '${p.id}')">
-        <span class="material-symbols-outlined" style="color:#25d366">chat</span>WhatsApp
-      </button>
-      <button class="detail-action-btn" onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')">
-        <span class="material-symbols-outlined" style="color:#f27f0d">sticky_note_2</span>Notes
-      </button>
-      <button class="detail-action-btn" onclick="convertProspect('${p.id}','${name.replace(/'/g,"\\'")}', '${phone}')">
-        <span class="material-symbols-outlined" style="color:#f27f0d">person_add</span>Convertir
-      </button>
-    </div>
-
-    <div class="detail-card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--sep);padding-bottom:10px">
-        <span class="material-symbols-outlined" style="font-size:18px;color:#f27f0d">info</span>
-        <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em">Informations</span>
+    <!-- INFOS -->
+    <div class="detail-card" style="margin-bottom:16px;padding:6px 16px 4px">
+      <div style="display:flex;align-items:center;gap:7px;padding:10px 0 8px;border-bottom:1px solid var(--sep)">
+        <span class="material-symbols-outlined" style="font-size:15px;color:var(--text3)">info</span>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Informations</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <p class="detail-label">Téléphone</p>
-          <p class="detail-value">${phone || '—'}</p>
+      ${infoRow('call','Téléphone',phone,'#818cf8')}
+      ${infoRow('call','Téléphone 2',phone2,'#818cf8')}
+      ${infoRow('storefront','Secteur d\'activité',p.activity||'','#f27f0d')}
+      ${infoRow('location_on','Quartier / Adresse',p.address||'','#10b981')}
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 0">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(148,163,184,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span class="material-symbols-outlined filled" style="font-size:18px;color:var(--text3)">calendar_today</span>
         </div>
         <div>
-          <p class="detail-label">Secteur d'activité</p>
-          <p class="detail-value">${p.activity || '—'}</p>
-        </div>
-        <div>
-          <p class="detail-label">Quartier / Adresse</p>
-          <p class="detail-value">${p.address || '—'}</p>
-        </div>
-        <div>
-          <p class="detail-label">Date d'ajout</p>
-          <p class="detail-value">${fmtDate(p.created_at?.split('T')[0])}</p>
+          <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:0 0 2px">Date d'ajout</p>
+          <p style="font-size:14px;font-weight:600;color:var(--text);margin:0">${fmtDate(p.created_at?.split('T')[0])}</p>
         </div>
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px">
-      <h3 style="font-size:14px;font-weight:700;margin:0">Historique des com.</h3>
-      <span style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700">Archives</span>
-    </div>
-    <div id="detail-history-list">
-       <div class="loader" style="padding:20px"><div class="spin"></div></div>
+    <!-- HISTORIQUE COM -->
+    <div class="detail-card" style="padding:6px 16px 12px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:7px;padding:10px 0 12px;border-bottom:1px solid var(--sep)">
+        <span class="material-symbols-outlined" style="font-size:15px;color:var(--text3)">forum</span>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Historique com.</span>
+      </div>
+      <div id="detail-history-list" style="margin-top:4px"><div class="loader" style="padding:16px"><div class="spin"></div></div></div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;padding:0 4px">
-      <h3 style="font-size:14px;font-weight:700;margin:0">Notes & Observations</h3>
+    <!-- NOTES -->
+    <div class="detail-card" style="padding:6px 16px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 12px;border-bottom:1px solid var(--sep)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span class="material-symbols-outlined" style="font-size:15px;color:var(--text3)">sticky_note_2</span>
+          <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Notes & Observations</span>
+        </div>
+        <button onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1px solid rgba(242,127,13,.3);background:rgba(242,127,13,.08);color:#f27f0d;font-size:11px;font-weight:700;cursor:pointer">
+          <span class="material-symbols-outlined" style="font-size:14px">add</span> Ajouter
+        </button>
+      </div>
+      <div id="detail-notes-list" style="margin-top:4px"><div class="loader" style="padding:16px"><div class="spin"></div></div></div>
     </div>
-    <div id="detail-notes-list">
-       <div class="loader" style="padding:20px"><div class="spin"></div></div>
-    </div>
-    <button onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')" class="btn-ghost" style="width:100%;margin-top:10px;font-size:12px">
-      <span class="material-symbols-outlined" style="font-size:16px">add</span> Ajouter une note
-    </button>
   `;
 }
 
