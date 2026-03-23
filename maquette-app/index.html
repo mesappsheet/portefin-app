@@ -933,10 +933,27 @@ async function loadRepayments(){
     const rows=data||[];
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">event_busy</span><p>Aucun remboursement pour cette date</p></div>`;return;}
     const paid=rows.filter(r=>r.is_paid).length;
+    const pending=rows.length-paid;
+    const pct=rows.length?Math.round(paid/rows.length*100):0;
+    const totalAmt=rows.reduce((s,r)=>s+(r.amount||0),0);
+    const paidAmt=rows.filter(r=>r.is_paid).reduce((s,r)=>s+(r.amount||0),0);
     list.innerHTML=`
-      <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} remboursement${rows.length>1?'s':''}</span>
-        <span style="font-size:12px;color:#4ade80">${paid} payé${paid>1?'s':''}</span>
+      <!-- Barre de progression -->
+      <div style="margin:0 16px 14px;background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <span style="font-size:22px;font-weight:800;color:var(--text)">${paid}</span>
+            <span style="font-size:13px;color:var(--text2);font-weight:500"> / ${rows.length} encaissés</span>
+          </div>
+          <span style="font-size:13px;font-weight:800;color:${pct===100?'#4ade80':'#f27f0d'}">${pct}%</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${pct===100?'linear-gradient(90deg,#4ade80,#22c55e)':'linear-gradient(90deg,#f27f0d,#c96a00)'};border-radius:10px;transition:width .6s ease"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <span style="font-size:10px;color:#4ade80;font-weight:700">${paid} encaissé${paid>1?'s':''} · ${fmt(paidAmt)} FCFA</span>
+          <span style="font-size:10px;color:#fb923c;font-weight:700">${pending} en attente · ${fmt(totalAmt-paidAmt)} FCFA</span>
+        </div>
       </div>
       <div class="glass" style="margin:0 16px;overflow:hidden">
         ${rows.map(r=>repRow(r)).join('')}
