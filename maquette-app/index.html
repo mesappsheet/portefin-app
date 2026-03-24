@@ -1107,23 +1107,23 @@ function credRow(c){
           <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px;padding:3px 6px" onclick="event.stopPropagation();toggleCreditStatus('${c.id}','${c.status||'En cours'}')">${c.status||'En cours'}</span>
         </div>
       </div>
-      <button class="action-btn" style="background:var(--card2);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
+      <button class="action-btn" style="background:var(--bg);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0;color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
         <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
       </button>
     </div>
     
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
-      <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text3)">FCFA</span></p>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:4px">
-        <span class="material-symbols-outlined" style="font-size:13px;color:var(--text3)">calendar_month</span>
+      <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:4px">
+        <span class="material-symbols-outlined" style="font-size:14px;color:var(--text2)">calendar_month</span>
         ${fmtDate(startD)} &nbsp;→&nbsp; ${fmtDate(endD)}
       </div>
     </div>
 
     <div class="progress-bar-bg" style="height:6px;margin-bottom:6px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <p style="font-size:10px;color:var(--text3);margin:0;font-weight:600">${reps.paid}/${reps.total} échéances</p>
-      <p style="font-size:10px;font-weight:800;color:var(--text2);margin:0">${pct}% payé</p>
+      <p style="font-size:11px;color:var(--text2);margin:0;font-weight:700">${reps.paid}/${reps.total} échéances</p>
+      <p style="font-size:11px;font-weight:900;color:var(--text);margin:0">${pct}% payé</p>
     </div>
   </div>`;
 }
@@ -2386,21 +2386,63 @@ async function setCreditStatus(creditId, status, health){
 
 async function toggleCreditHealth(id, current){
   const next = (current||'Sain').toLowerCase() === 'souffrance' ? 'Sain' : 'Souffrance';
+  
+  // Mise à jour optimiste (l'interface change instantanément)
+  const c = credits.find(x => x.id === id);
+  if (c) {
+    c.health = next;
+    viewCredits(credits); // Rafraîchit visuellement instantanément
+    if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+  }
+  
+  // Requête en arrière-plan
   const{error}=await sb.from('credits').update({health:next}).eq('id',id);
-  if(error)toast('Erreur','err');
-  else{toast(`Santé → ${next}`,'ok');loadCredits();}
+  if(error) {
+    // En cas d'erreur on annule
+    if(c){ 
+       c.health = current; 
+       viewCredits(credits); 
+       if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+    }
+    toast('Erreur de mise à jour','err');
+  } else {
+    toast(`Santé → ${next}`,'ok');
+    // Actualisation silencieuse en arrière plan pour resync globale si nécessaire
+    loadCredits(); 
+  }
 }
 
 async function toggleCreditStatus(id, current){
   const isS = (current||'En cours').toLowerCase() === 'soldé';
   const next = isS ? 'En cours' : 'Soldé';
   
+  const c = credits.find(x => x.id === id);
+
   if(next === 'Soldé'){
+     if(c) { 
+        c.status = next; 
+        viewCredits(credits); 
+        if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+     }
      await setCreditStatus(id, 'Soldé', _credCache[id]?.health || 'Sain');
   } else {
+     if(c) { 
+        c.status = next; c.end_date = null; 
+        viewCredits(credits); 
+        if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+     }
      const{error}=await sb.from('credits').update({status:next, end_date:null}).eq('id',id);
-     if(error)toast('Erreur','err');
-     else{toast(`Statut → ${next}`,'ok');loadCredits();}
+     if(error) {
+       if(c) { 
+          c.status = current; 
+          viewCredits(credits); 
+          if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+       }
+       toast('Erreur de mise à jour','err');
+     } else {
+       toast(`Statut → ${next}`,'ok');
+       loadCredits();
+     }
   }
 }
 
@@ -2798,9 +2840,29 @@ function renderCreditDetail(c) {
       <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,.4),rgba(16,185,129,.15));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 14px;box-shadow:0 8px 24px rgba(16,185,129,.25)">${initials(name)}</div>
       <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text);letter-spacing:-.3px">${name}</h2>
       
-      <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px">
-        <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:10px;padding:4px 10px">${c.health||'Sain'}</span>
-        <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:10px;padding:4px 10px">${c.status||'EN COURS'}</span>
+      <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <!-- Badge ÉTAT — clic bascule Sain↔Souffrance -->
+        <button onclick="toggleCreditHealth('${c.id}','${c.health||'Sain'}')" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1.5px solid ${isS?'rgba(239,68,68,.4)':'rgba(34,197,94,.4)'};background:${isS?'rgba(239,68,68,.12)':'rgba(34,197,94,.12)'};cursor:pointer;transition:all .15s">
+          <span class="material-symbols-outlined filled" style="font-size:13px;color:${isS?'#f87171':'#4ade80'}">${isS?'warning':'check_circle'}</span>
+          <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:${isS?'#f87171':'#4ade80'}">${c.health||'Sain'}</span>
+          <span style="font-size:10px;color:${isS?'#f87171':'#4ade80'};opacity:.7">↻</span>
+        </button>
+        <!-- Badge STATUT — clic ouvre modal de changement -->
+        ${(()=>{
+          const st=c.status||'En cours';
+          const isSolde=['Soldé','SOLDÉ','soldé'].includes(st);
+          const isEchu=st==='Échu';
+          const isSouft=st==='Souffrance';
+          const col=isSolde?'#4ade80':isEchu||isSouft?'#f87171':'#60a5fa';
+          const bg=isSolde?'rgba(34,197,94,.12)':isEchu||isSouft?'rgba(239,68,68,.12)':'rgba(96,165,250,.12)';
+          const border=isSolde?'rgba(34,197,94,.4)':isEchu||isSouft?'rgba(239,68,68,.4)':'rgba(96,165,250,.4)';
+          const ico=isSolde?'task_alt':isEchu||isSouft?'error':'sync';
+          return `<button onclick="changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1.5px solid ${border};background:${bg};cursor:pointer;transition:all .15s">
+            <span class="material-symbols-outlined filled" style="font-size:13px;color:${col}">${ico}</span>
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:${col}">${st}</span>
+            <span style="font-size:10px;color:${col};opacity:.7">▾</span>
+          </button>`;
+        })()}
       </div>
 
       <p style="font-size:28px;font-weight:900;color:#f27f0d;margin:10px 0 0;line-height:1">${fmt(c.amount)} <span style="font-size:14px;color:var(--text3)">FCFA</span></p>
