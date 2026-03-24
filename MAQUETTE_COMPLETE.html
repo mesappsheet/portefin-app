@@ -5896,14 +5896,14 @@ Suivant
                 const isEchu = s === 'Échu';
                 const isSouff = s === 'Souffrance';
                 const col = isSolde ? '#16a34a' : (isEchu||isSouff) ? '#dc2626' : '#2563eb';
-                const colD = isSolde ? '#4ade80' : (isEchu||isSouff) ? '#f87171' : '#60a5fa';
-                const bg  = isSolde ? 'rgba(34,197,94,.1)' : (isEchu||isSouff) ? 'rgba(239,68,68,.1)' : 'rgba(96,165,250,.1)';
-                const br  = isSolde ? 'rgba(34,197,94,.35)' : (isEchu||isSouff) ? 'rgba(239,68,68,.35)' : 'rgba(96,165,250,.35)';
+                const bg  = isSolde ? 'rgba(34,197,94,.12)' : (isEchu||isSouff) ? 'rgba(239,68,68,.12)' : 'rgba(37,99,235,.1)';
+                const br  = isSolde ? '#16a34a55' : (isEchu||isSouff) ? '#dc262655' : '#2563eb55';
                 const ico = isSolde ? 'task_alt' : (isEchu||isSouff) ? 'error' : 'sync';
-                statusBadge.innerHTML = `<span class="material-symbols-outlined filled" style="font-size:12px">${ico}</span>${s}<span style="opacity:.6">▾</span>`;
-                statusBadge.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;border:1.5px solid ${br};background:${bg};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s;color:var(--tw-prose-body,${col})`;
-                statusBadge.classList.remove(...statusBadge.classList);
-                statusBadge.style.color = window.matchMedia('(prefers-color-scheme:dark)').matches ? colD : col;
+                statusBadge.className = '';
+                statusBadge.setAttribute('style',
+                  `display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid ${br};background:${bg};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;color:${col};transition:opacity .15s;font-family:inherit`
+                );
+                statusBadge.innerHTML = `<span class="material-symbols-outlined filled" style="font-size:13px;color:${col}">${ico}</span>${s}<span style="opacity:.5;font-size:10px">▾</span>`;
             }
 
             // Badge ÉTAT (health) cliquable avec icône
@@ -5911,15 +5911,15 @@ Suivant
             if (healthPill) {
                 const h = credit.health || 'Sain';
                 const isSouffH = h === 'Souffrance';
-                const colH  = isSouffH ? '#d97706' : '#16a34a';
-                const colHD = isSouffH ? '#fbbf24' : '#4ade80';
-                const bgH   = isSouffH ? 'rgba(245,158,11,.1)' : 'rgba(34,197,94,.1)';
-                const brH   = isSouffH ? 'rgba(245,158,11,.35)' : 'rgba(34,197,94,.35)';
-                const icoH  = isSouffH ? 'warning' : 'check_circle';
-                healthPill.innerHTML = `<span class="material-symbols-outlined filled" style="font-size:12px">${icoH}</span>${h}<span style="opacity:.6">↻</span>`;
-                healthPill.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;border:1.5px solid ${brH};background:${bgH};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s`;
-                healthPill.classList.remove(...healthPill.classList);
-                healthPill.style.color = window.matchMedia('(prefers-color-scheme:dark)').matches ? colHD : colH;
+                const colH = isSouffH ? '#b45309' : '#15803d';
+                const bgH  = isSouffH ? 'rgba(245,158,11,.12)' : 'rgba(34,197,94,.12)';
+                const brH  = isSouffH ? '#b4530955' : '#15803d55';
+                const icoH = isSouffH ? 'warning' : 'check_circle';
+                healthPill.className = '';
+                healthPill.setAttribute('style',
+                  `display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid ${brH};background:${bgH};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;color:${colH};transition:opacity .15s;font-family:inherit`
+                );
+                healthPill.innerHTML = `<span class="material-symbols-outlined filled" style="font-size:13px;color:${colH}">${icoH}</span>${h}<span style="opacity:.5;font-size:10px">↻</span>`;
             }
 
             // Update automation toggle
