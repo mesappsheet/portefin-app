@@ -5497,14 +5497,17 @@ Suivant
             fetchCredits();
         }
 
-        async function toggleCreditHealthPC() {
-            if (!currentCredit) return;
-            const newHealth = (currentCredit.health === 'Souffrance') ? 'Sain' : 'Souffrance';
-            const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', currentCredit.id);
+        async function toggleCreditHealthPC(id, currentHealth) {
+            const newHealth = (currentHealth === 'Souffrance') ? 'Sain' : 'Souffrance';
+            const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
             if (error) { showNotification('Erreur : ' + error.message, 'error'); return; }
             showNotification(`État → ${newHealth} ✓`, 'success');
-            currentCredit.health = newHealth;
-            showCreditDetails(currentCredit);
+            
+            // Refresh details if open
+            if (currentCredit && currentCredit.id === id) {
+                currentCredit.health = newHealth;
+                showCreditDetails(currentCredit);
+            }
             fetchCredits();
         }
 
@@ -5584,8 +5587,8 @@ Suivant
                                 ${credit.exclude_automation ? '<span class="material-symbols-outlined text-[13px] text-red-400 align-middle ml-1">notifications_off</span>' : ''}
                             </h3>
                             <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-                                <span onclick="event.stopPropagation(); toggleCreditHealth('${credit.id}', '${credit.health}')" class="px-2 py-0.5 rounded-full text-[9px] font-black ${healthClass} uppercase tracking-wide cursor-help hover:opacity-80 transition-all border border-black/5">${credit.health || '-'}</span>
-                                <span onclick="event.stopPropagation(); toggleCreditStatus('${credit.id}', '${credit.status?.replace(/'/g, "\\'")}')" class="px-2 py-0.5 rounded-full text-[9px] font-black ${credit.status === 'Soldé' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'} uppercase tracking-wide cursor-pointer hover:bg-primary hover:text-white transition-all border border-black/5">${credit.status || 'En cours'}</span>
+                                <span onclick="event.stopPropagation(); toggleCreditHealthPC('${credit.id}', '${credit.health}')" class="px-2 py-0.5 rounded-full text-[9px] font-black ${healthClass} uppercase tracking-wide cursor-help hover:opacity-80 transition-all border border-black/5 flex items-center gap-1">${credit.health || '-'} <span class="opacity-50">↻</span></span>
+                                <span onclick="event.stopPropagation(); currentCredit=${JSON.stringify(credit).replace(/'/g, "&#39;")}; openCreditStatusModalPC()" class="px-2 py-0.5 rounded-full text-[9px] font-black ${credit.status === 'Soldé' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'} uppercase tracking-wide cursor-pointer hover:bg-primary hover:text-white transition-all border border-black/5 flex items-center gap-1">${credit.status || 'En cours'} <span class="opacity-50">▾</span></span>
                             </div>
                         </div>
                         <p class="text-xs font-semibold text-primary mt-1">${parseInt(credit.amount || 0).toLocaleString('fr-FR')} FCFA</p>
@@ -5865,6 +5868,24 @@ Suivant
             fetchSettledCredits();
         }
 
+
+        async function goToCredit(creditId) {
+            if (!creditId) return;
+            switchModule('credits');
+            loadScreen('credits_clients');
+            const { data, error } = await _supabase
+                .from('credits')
+                .select('id,amount,health,status,start_date,end_date,type,client_id,client_name,phone,email,activity,address,exclude_automation,clients(id,full_name,phone1,phone2,email,activity,address)')
+                .eq('id', creditId)
+                .single();
+            if (!error && data) {
+                showCreditDetails(data);
+                setTimeout(() => {
+                    const row = document.getElementById('credit-row-' + creditId);
+                    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 800);
+            }
+        }
 
         function showCreditDetails(creditStr) {
             let credit = creditStr;
@@ -6761,7 +6782,7 @@ Suivant
                 let rowBg = r.is_paid ? 'bg-emerald-50/20 dark:bg-emerald-900/5' : 'bg-white dark:bg-slate-900';
 
                 return `
-                <tr class="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all border-b border-slate-100 dark:border-slate-800/50 ${rowBg}">
+                <tr class="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all border-b border-slate-100 dark:border-slate-800/50 ${rowBg} cursor-pointer" onclick="goToCredit('${r.credits?.id||''}')">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-black text-sm shadow-sm group-hover:scale-105 transition-transform">${initials}</div>
@@ -6788,16 +6809,16 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex flex-col items-center gap-2">
-                            <button onclick="togglePayment('${r.id}', ${r.is_paid})" class="px-4 py-1.5 rounded-full text-[11px] font-black uppercase transition-all shadow-sm ${r.is_paid ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-primary hover:text-white'}">
+                            <button onclick="event.stopPropagation();togglePayment('${r.id}', ${r.is_paid})" class="px-4 py-1.5 rounded-full text-[11px] font-black uppercase transition-all shadow-sm ${r.is_paid ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-primary hover:text-white'}">
                                 ${r.is_paid ? '✓ PAYÉ' : 'EN ATTENTE'}
                             </button>
                         </div>
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex justify-center items-center gap-1.5">
-                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100/50 dark:border-blue-800/30" title="Appeler"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
-                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-800/30" title="WhatsApp"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
-                            ${displayPhone ? `<button onclick="sendSmsMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg hover:bg-sky-500 hover:text-white transition-all shadow-sm border border-sky-100/50 dark:border-sky-800/30" title="SMS"><span class="material-symbols-outlined text-[18px]">sms</span></button>` : ''}
+                            ${displayPhone ? `<a href="tel:${displayPhone}" onclick="event.stopPropagation()" class="w-8 h-8 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100/50 dark:border-blue-800/30" title="Appeler"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="event.stopPropagation();sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100/50 dark:border-emerald-800/30" title="WhatsApp"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
+                            ${displayPhone ? `<button onclick="event.stopPropagation();sendSmsMessage('${displayPhone}', { name: '${safeName}', amount: '${r.amount}', date: '${scheduledDate.toLocaleDateString('fr-FR')}', activity: '${creditType.replace(/'/g, "\\'")}', id: '${r.credits?.id || ''}' })" class="w-8 h-8 flex items-center justify-center bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg hover:bg-sky-500 hover:text-white transition-all shadow-sm border border-sky-100/50 dark:border-sky-800/30" title="SMS"><span class="material-symbols-outlined text-[18px]">sms</span></button>` : ''}
                         </div>
                     </td>
                 </tr>`;
@@ -6946,7 +6967,7 @@ Suivant
                 const isOverdue = new Date(c.end_date) < new Date();
                 const safeName = displayName.replace(/'/g, "\\'");
                 return `
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors cursor-pointer" onclick="goToCredit('${c.id}')">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
@@ -6969,11 +6990,11 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex flex-wrap gap-1.5">
-                            <select onchange="updateCreditHealth('${c.id}', this.value, this)" class="status-badge-select px-2 py-1 rounded-lg text-[10px] font-bold ${c.health === 'Sain' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} uppercase tracking-wide">
+                            <select onchange="event.stopPropagation();updateCreditHealth('${c.id}', this.value, this)" onclick="event.stopPropagation()" class="status-badge-select px-2 py-1 rounded-lg text-[10px] font-bold ${c.health === 'Sain' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} uppercase tracking-wide">
                                 <option value="Sain" ${c.health === 'Sain' ? 'selected' : ''}>Sain</option>
                                 <option value="Souffrance" ${c.health === 'Souffrance' ? 'selected' : ''}>Souffrance</option>
                             </select>
-                            <select onchange="updateCreditStatus('${c.id}', this.value, this)" class="status-badge-select px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">
+                            <select onchange="event.stopPropagation();updateCreditStatus('${c.id}', this.value, this)" onclick="event.stopPropagation()" class="status-badge-select px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wide">
                                 <option value="EN COURS" ${c.status === 'EN COURS' ? 'selected' : ''}>En cours</option>
                                 <option value="SOLDÉ" ${c.status === 'SOLDÉ' ? 'selected' : ''}>Soldé</option>
                             </select>
@@ -6981,9 +7002,9 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-1.5 justify-end">
-                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
-                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}', date: '${new Date(c.end_date).toLocaleDateString('fr-FR')}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
-                            <button onclick="handleEditCreditFromExternal('${c.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm" title="Modifier">
+                            ${displayPhone ? `<a href="tel:${displayPhone}" onclick="event.stopPropagation()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="event.stopPropagation();sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}', date: '${new Date(c.end_date).toLocaleDateString('fr-FR')}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
+                            <button onclick="event.stopPropagation();handleEditCreditFromExternal('${c.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-600 hover:text-white transition-all shadow-sm" title="Modifier">
                                 <span class="material-symbols-outlined text-[18px]">edit</span>
                             </button>
                         </div>
@@ -7074,7 +7095,7 @@ Suivant
 
             tbody.innerHTML = rows.map(c => {
                 const phoneClean = (c.phone || '').replace(/\s/g, '');
-                return `<tr class="hover:bg-rose-50/40 dark:hover:bg-rose-900/10 transition-colors">
+                return `<tr class="hover:bg-rose-50/40 dark:hover:bg-rose-900/10 transition-colors cursor-pointer" onclick="goToCredit('${c.id}')">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-black text-sm flex-shrink-0">${(c.client_name?.[0]||'?').toUpperCase()}</div>
@@ -7095,10 +7116,10 @@ Suivant
                     <td class="px-6 py-4">
                         <div class="flex items-center justify-center gap-2">
                             ${phoneClean ? `
-                            <a href="tel:${phoneClean}" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
+                            <a href="tel:${phoneClean}" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
                                 <span class="material-symbols-outlined text-sm">call</span>
                             </a>
-                            <a href="https://wa.me/${phoneClean}" target="_blank" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                            <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
                                 <span class="material-symbols-outlined text-sm">chat</span>
                             </a>` : ''}
                         </div>
@@ -7212,7 +7233,7 @@ Suivant
                                 c.maxDays >= 7  ? 'text-orange-700 bg-orange-100' :
                                                   'text-yellow-700 bg-yellow-100';
                 const phoneClean = c.phone.replace(/\s/g,'');
-                return `<tr class="hover:bg-red-50/40 dark:hover:bg-red-900/10 transition-colors">
+                return `<tr class="hover:bg-red-50/40 dark:hover:bg-red-900/10 transition-colors cursor-pointer" onclick="goToCredit('${c.credit_id}')">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm flex-shrink-0">${(c.name[0]||'?').toUpperCase()}</div>
@@ -7234,10 +7255,10 @@ Suivant
                     <td class="px-6 py-4">
                         <div class="flex items-center justify-center gap-2">
                             ${c.phone ? `
-                            <a href="tel:${phoneClean}" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
+                            <a href="tel:${phoneClean}" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
                                 <span class="material-symbols-outlined text-sm">call</span>
                             </a>
-                            <a href="https://wa.me/${phoneClean}" target="_blank" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                            <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
                                 <span class="material-symbols-outlined text-sm">chat</span>
                             </a>` : ''}
                         </div>
@@ -7340,7 +7361,7 @@ Suivant
                 const displayPhone = c.clients?.phone1 || c.phone || '';
                 const safeName = displayName.replace(/'/g, "\\'");
                 return `
-                <tr class="hover:bg-slate-50/50 transition-colors">
+                <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="goToCredit('${c.id}')">
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">${displayName.substring(0,2).toUpperCase()}</div>
@@ -7361,8 +7382,8 @@ Suivant
                     </td>
                     <td class="px-6 py-5">
                         <div class="flex justify-end gap-1.5">
-                            ${displayPhone ? `<a href="tel:${displayPhone}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary transition-all shadow-sm hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
-                            ${displayPhone ? `<button onclick="sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all shadow-sm hover:bg-green-600 hover:text-white"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
+                            ${displayPhone ? `<a href="tel:${displayPhone}" onclick="event.stopPropagation()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary transition-all shadow-sm hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">call</span></a>` : ''}
+                            ${displayPhone ? `<button onclick="event.stopPropagation();sendWhatsAppMessage('${displayPhone}', { name: '${safeName}', amount: '${c.amount}' })" class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 transition-all shadow-sm hover:bg-green-600 hover:text-white"><span class="material-symbols-outlined text-[18px]">chat</span></button>` : ''}
                         </div>
                     </td>
                 </tr>`;

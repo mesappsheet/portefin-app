@@ -965,7 +965,8 @@ function repRow(r){
   const name=getName(r.credits);
   const phone=getPhone(r.credits);
   const isPaid=r.is_paid;
-  return`<div class="rep-item" id="rep-${r.id}">
+  const cid=r.credits?.id||'';
+  return`<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'}">
     <div class="rep-avatar">${initials(name)}</div>
     <div style="flex:1;min-width:0">
       <p style="font-size:14px;font-weight:600;margin:0 0 2px">${name}</p>
@@ -973,15 +974,15 @@ function repRow(r){
       ${r.is_reported?`<span class="badge badge-blue" style="margin-top:4px;font-size:9px">Reporté</span>`:''}
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="toggleRepPaid('${r.id}',${isPaid},this)">
+      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)">
         <span class="material-symbols-outlined" style="font-size:13px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
         ${isPaid?'Payé':'En attente'}
       </button>
       ${phone?`<div style="display:flex;gap:4px">
-        <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')">
+        <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')">
           <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>
         </button>
-        <button class="action-btn ab-call" onclick="call('${phone}')">
+        <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')">
           <span class="material-symbols-outlined filled" style="font-size:18px">call</span>
         </button>
       </div>`:''}
@@ -1102,9 +1103,21 @@ function credRow(c){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="flex:1;min-width:0;padding-right:8px;display:flex;align-items:center;gap:8px">
         <p style="font-size:15px;font-weight:800;color:var(--text);margin:0;letter-spacing:-.2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 6px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">${c.health||'Sain'}</span>
-          <span class="badge ${c.status==='Soldé'?'badge-blue':'badge-orange'}" style="font-size:9px;padding:3px 6px" onclick="event.stopPropagation();toggleCreditStatus('${c.id}','${c.status||'En cours'}')">${c.status||'En cours'}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:4px">
+          <!-- Badge SANTÉ — ↻ Bascule directe -->
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
+            ${c.health||'Sain'} <span style="font-size:10px;opacity:.7">↻</span>
+          </span>
+          <!-- Badge STATUT — ▾ Menu modal -->
+          ${(() => {
+            const st = c.status || 'En cours';
+            const isSolde = ['Soldé','SOLDÉ','soldé'].includes(st);
+            const isEchu = st === 'Échu';
+            const bClass = isSolde ? 'badge-blue' : (isEchu ? 'badge-red' : 'badge-orange');
+            return `<span class="badge ${bClass}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')">
+              ${st} <span style="font-size:10px;opacity:.7">▾</span>
+            </span>`;
+          })()}
         </div>
       </div>
       <button class="action-btn" style="background:var(--bg);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0;color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
