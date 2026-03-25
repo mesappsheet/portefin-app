@@ -2811,11 +2811,23 @@ function openCreditDetailMenu(btn) {
   credMenu(btn, currentCreditId); 
 }
 
-function openCreditDetail(id) {
-  const c = _credCache[id];
-  if(!c){ toast('Credit introuvable', 'err'); return; }
+async function openCreditDetail(id) {
+  if(!id){ toast('Crédit introuvable', 'err'); return; }
+  let c = _credCache[id];
+  if(!c){
+    // Pas dans le cache (ex: ouvert depuis Remboursements) → fetch Supabase
+    const{data,error}=await sb.from('credits')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .eq('id',id).single();
+    if(error||!data){ toast('Crédit introuvable', 'err'); return; }
+    // Compter les remboursements
+    const{data:repsAll}=await sb.from('repayments').select('is_paid').eq('credit_id',id);
+    const paid=(repsAll||[]).filter(r=>r.is_paid).length;
+    data.reps={total:(repsAll||[]).length,paid};
+    _credCache[id]=data;
+    c=data;
+  }
   currentCreditId = id;
-  
   const content = document.getElementById('credit-detail-content');
   content.innerHTML = renderCreditDetail(c);
   document.getElementById('credit-detail-view').classList.add('open');
