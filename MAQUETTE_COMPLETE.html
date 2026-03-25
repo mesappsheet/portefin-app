@@ -319,6 +319,10 @@
                     <span class="material-symbols-outlined">payments</span>
                     <span class="sidebar-text">Crédits</span>
                 </button>
+                <button onclick="switchModule('tasks')" data-module="tasks" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold uppercase text-xs tracking-wide">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    <span class="sidebar-text">Tâches</span>
+                </button>
             </nav>
 
             <!-- Sub-screens Navigation -->
@@ -478,6 +482,82 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Task Drawer (slide-in right panel) -->
+    <div id="task-drawer-overlay" onclick="if(event.target===this)closeTaskDrawer()" class="fixed inset-0 z-[9997] hidden bg-slate-900/40 backdrop-blur-sm" style="display:none!important">
+      <div id="task-drawer" class="absolute top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-slate-900 shadow-2xl flex flex-col" style="transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+          <h3 id="task-drawer-title" style="font-size:18px;font-weight:900;color:#0f172a;margin:0">Nouvelle tâche</h3>
+          <button onclick="closeTaskDrawer()" style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748b;transition:all .15s" class="hover:bg-slate-200">
+            <span class="material-symbols-outlined" style="font-size:20px">close</span>
+          </button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px">
+          <!-- Entity search -->
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Client / Prospect</label>
+            <div style="position:relative">
+              <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:#94a3b8;pointer-events:none">person_search</span>
+              <input id="task-entity-search" oninput="searchTaskEntityPC(this.value)" autocomplete="off" placeholder="Rechercher un client ou prospect…" style="width:100%;padding:12px 16px 12px 40px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit"/>
+              <div id="task-entity-results" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:10;max-height:200px;overflow-y:auto"></div>
+            </div>
+            <input type="hidden" id="task-entity-id"/>
+            <input type="hidden" id="task-entity-type"/>
+          </div>
+          <!-- Date + Priority -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Date échéance</label>
+              <input type="date" id="task-due-date" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Priorité</label>
+              <select id="task-priority" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit;font-weight:700">
+                <option value="low">⚪ Basse</option>
+                <option value="normal" selected>🔵 Normale</option>
+                <option value="high">🟠 Haute</option>
+                <option value="urgent">🔴 Urgente</option>
+              </select>
+            </div>
+          </div>
+          <!-- Status -->
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Statut</label>
+            <div style="display:flex;gap:8px">
+              <button type="button" onclick="setTaskStatusFormPC('todo')" id="ts-todo" style="flex:1;padding:10px;border-radius:12px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;font-family:inherit">À faire</button>
+              <button type="button" onclick="setTaskStatusFormPC('in_progress')" id="ts-in_progress" style="flex:1;padding:10px;border-radius:12px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;font-family:inherit">En cours</button>
+              <button type="button" onclick="setTaskStatusFormPC('done')" id="ts-done" style="flex:1;padding:10px;border-radius:12px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;font-family:inherit">Terminée</button>
+            </div>
+          </div>
+          <!-- Subtasks -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <label style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">Sous-tâches</label>
+              <button onclick="addSubtaskFormPC()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:rgba(242,127,13,.1);color:#f27f0d;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">
+                <span class="material-symbols-outlined" style="font-size:14px">add</span> Ajouter
+              </button>
+            </div>
+            <div id="task-subtasks-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <!-- Notes -->
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Notes</label>
+            <textarea id="task-notes" rows="3" placeholder="Notes, contexte, informations…" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;resize:none;box-sizing:border-box;font-family:inherit"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:16px 24px;border-top:1px solid #e2e8f0;flex-shrink:0;background:#f8fafc">
+          <button id="task-delete-btn" onclick="deleteTaskPC()" style="display:none;align-items:center;gap:6px;padding:10px 16px;border-radius:12px;border:1.5px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">
+            <span class="material-symbols-outlined" style="font-size:15px">delete</span> Supprimer
+          </button>
+          <button id="task-gcal-btn" onclick="exportTaskToGCalPC(null)" style="display:none;align-items:center;gap:6px;padding:10px 16px;border-radius:12px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">
+            <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span> Google Agenda
+          </button>
+          <div style="flex:1"></div>
+          <button onclick="closeTaskDrawer()" style="padding:10px 20px;border-radius:12px;border:1.5px solid #e2e8f0;background:white;color:#64748b;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Annuler</button>
+          <button onclick="saveTaskPC()" style="padding:10px 24px;border-radius:12px;border:none;background:#f27f0d;color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(242,127,13,.35)">Enregistrer</button>
+        </div>
+      </div>
     </div>
 
     <div id="modal-overlay" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4 lg:p-12 overflow-y-auto bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
@@ -4572,6 +4652,50 @@ Suivant
     </div>
 </div>
 `,
+        tasks_main: `
+<header class="h-16 flex-shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-8 flex items-center justify-between z-10">
+  <div class="flex items-center gap-4 flex-1">
+    <button onclick="toggleSidebar('main-sidebar')" class="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors mr-2">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <h2 class="text-lg font-bold">Gestionnaire de Tâches</h2>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">search</span>
+      <input id="task-search-pc" oninput="filterTasksPC(this.value)" placeholder="Rechercher…" class="pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 w-52 outline-none"/>
+    </div>
+    <button onclick="openTaskDrawer()" class="bg-primary px-4 py-2 rounded-lg text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-primary/90 transition shadow-lg shadow-primary/20">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      Nouvelle tâche
+    </button>
+  </div>
+</header>
+<main class="flex-1 overflow-y-auto p-6" style="background:rgba(248,250,252,.5)">
+  <div id="tasks-kpi-bar" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+  <div class="flex items-center gap-3 mb-5 flex-wrap">
+    <div style="display:flex;background:white;border:1px solid #e2e8f0;border-radius:14px;padding:4px;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <button onclick="setTaskFilterPC('all')" id="tpf-all" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:#f27f0d;color:white;font-family:inherit;transition:all .15s">Toutes</button>
+      <button onclick="setTaskFilterPC('todo')" id="tpf-todo" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;transition:all .15s">À faire</button>
+      <button onclick="setTaskFilterPC('in_progress')" id="tpf-in_progress" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;transition:all .15s">En cours</button>
+      <button onclick="setTaskFilterPC('done')" id="tpf-done" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;transition:all .15s">Terminées</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="setTaskPriorityPC('urgent')" id="tpp-urgent" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid rgba(239,68,68,.25);background:rgba(239,68,68,.07);color:#ef4444;cursor:pointer;font-family:inherit;transition:all .15s">● Urgent</button>
+      <button onclick="setTaskPriorityPC('high')" id="tpp-high" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid rgba(249,115,22,.25);background:rgba(249,115,22,.07);color:#f97316;cursor:pointer;font-family:inherit;transition:all .15s">● Haute</button>
+      <button onclick="setTaskPriorityPC('normal')" id="tpp-normal" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid rgba(59,130,246,.25);background:rgba(59,130,246,.07);color:#3b82f6;cursor:pointer;font-family:inherit;transition:all .15s">● Normale</button>
+      <button onclick="setTaskPriorityPC('low')" id="tpp-low" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid rgba(148,163,184,.25);background:rgba(148,163,184,.07);color:#94a3b8;cursor:pointer;font-family:inherit;transition:all .15s">● Basse</button>
+      <button onclick="setTaskPriorityPC(null)" id="tpp-null" style="padding:7px 14px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid #e2e8f0;background:white;color:#94a3b8;cursor:pointer;font-family:inherit;transition:all .15s">✕ Toutes</button>
+    </div>
+  </div>
+  <div id="tasks-list-pc" style="display:flex;flex-direction:column;gap:10px;max-width:900px">
+    <div style="text-align:center;padding:64px 0;color:#cbd5e1">
+      <span class="material-symbols-outlined" style="font-size:56px;display:block;margin-bottom:12px;color:#e2e8f0">task_alt</span>
+      <p style="font-weight:600;color:#94a3b8;margin:0">Chargement…</p>
+    </div>
+  </div>
+</main>
+`,
         };
 
         const CONFIG = {
@@ -4610,6 +4734,12 @@ Suivant
                     { id: 'credits_comm', label: 'Communications crédits' },
                     { id: 'credits_report', label: 'Report échéance', isModal: true },
                     { id: 'credits_new_dossier', label: 'Nouveau dossier client', isModal: true }
+                ]
+            },
+            tasks: {
+                name: "Tâches",
+                screens: [
+                    { id: 'tasks_main', label: 'Toutes les tâches' }
                 ]
             }
         };
@@ -4706,6 +4836,7 @@ Suivant
 
             if (moduleKey === 'credits') fetchCreditHeroStats?.();
             if (moduleKey === 'prospection') fetchProspectHeroStats?.();
+            if (moduleKey === 'tasks') loadTasksPC();
 
 
             // Auto-close main sidebar on small screens or when it's an overlay
@@ -5070,6 +5201,338 @@ Suivant
             overlay.classList.remove('flex');
             document.body.style.overflow = '';
         }
+
+        // ═══════════════════════════════════════════════════════
+        //  GESTIONNAIRE DE TÂCHES — PC
+        // ═══════════════════════════════════════════════════════
+        let _tasksData = [];
+        let _taskFilterPC = 'all';
+        let _taskPriorityFilterPC = null;
+        let _taskSearchPC = '';
+        let _editingTaskId = null;
+        let _taskFormStatus = 'todo';
+        let _taskSubtasksForm = [];
+
+        const TASK_PRIORITY_CFG = {
+            urgent: { label: 'Urgente', color: '#ef4444', bg: 'rgba(239,68,68,.08)', border: 'rgba(239,68,68,.3)' },
+            high:   { label: 'Haute',   color: '#f97316', bg: 'rgba(249,115,22,.08)', border: 'rgba(249,115,22,.3)' },
+            normal: { label: 'Normale', color: '#3b82f6', bg: 'rgba(59,130,246,.08)', border: 'rgba(59,130,246,.3)' },
+            low:    { label: 'Basse',   color: '#94a3b8', bg: 'rgba(148,163,184,.08)', border: 'rgba(148,163,184,.3)' }
+        };
+        const TASK_STATUS_CFG = {
+            todo:        { label: 'À faire',  color: '#64748b', bg: '#f1f5f9' },
+            in_progress: { label: 'En cours', color: '#3b82f6', bg: '#eff6ff' },
+            done:        { label: 'Terminée', color: '#22c55e', bg: '#f0fdf4' }
+        };
+
+        async function loadTasksPC() {
+            const list = document.getElementById('tasks-list-pc');
+            if (!list) return;
+            list.innerHTML = `<div style="text-align:center;padding:48px 0"><span class="material-symbols-outlined" style="font-size:48px;display:block;color:#e2e8f0;margin-bottom:8px">hourglass_empty</span><p style="color:#94a3b8;font-weight:600;margin:0">Chargement…</p></div>`;
+            const { data, error } = await _supabase.from('tasks').select('*').order('due_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+            if (error) { list.innerHTML = `<p style="color:#ef4444;text-align:center;padding:32px">Erreur : ${error.message}</p>`; return; }
+            _tasksData = data || [];
+            renderTasksPC();
+            renderTasksKPIPC();
+        }
+
+        function renderTasksKPIPC() {
+            const bar = document.getElementById('tasks-kpi-bar');
+            if (!bar) return;
+            const today = new Date().toISOString().split('T')[0];
+            const todo = _tasksData.filter(t => t.status === 'todo').length;
+            const inP  = _tasksData.filter(t => t.status === 'in_progress').length;
+            const done = _tasksData.filter(t => t.status === 'done').length;
+            const overdue = _tasksData.filter(t => t.due_date && t.due_date < today && t.status !== 'done').length;
+            const kpi = (icon, label, val, color) => `
+              <div style="background:white;border-radius:16px;padding:16px 20px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;align-items:center;gap:14px">
+                <div style="width:42px;height:42px;border-radius:12px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span class="material-symbols-outlined" style="font-size:22px;color:${color}">${icon}</span>
+                </div>
+                <div>
+                  <p style="font-size:24px;font-weight:900;margin:0;color:#0f172a;line-height:1">${val}</p>
+                  <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin:4px 0 0">${label}</p>
+                </div>
+              </div>`;
+            bar.innerHTML = kpi('radio_button_unchecked','À faire', todo,'#64748b') + kpi('sync','En cours', inP,'#3b82f6') + kpi('check_circle','Terminées', done,'#22c55e') + (overdue ? kpi('warning','En retard', overdue,'#ef4444') : kpi('task_alt','Total', _tasksData.length,'#f27f0d'));
+        }
+
+        function getTasksFilteredPC() {
+            const today = new Date().toISOString().split('T')[0];
+            return _tasksData.filter(t => {
+                if (_taskFilterPC !== 'all' && t.status !== _taskFilterPC) return false;
+                if (_taskPriorityFilterPC && t.priority !== _taskPriorityFilterPC) return false;
+                if (_taskSearchPC) {
+                    const s = _taskSearchPC.toLowerCase();
+                    if (!(t.title || '').toLowerCase().includes(s) && !(t.notes || '').toLowerCase().includes(s)) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderTasksPC() {
+            const list = document.getElementById('tasks-list-pc');
+            if (!list) return;
+            const rows = getTasksFilteredPC();
+            if (!rows.length) {
+                list.innerHTML = `<div style="text-align:center;padding:64px 0"><span class="material-symbols-outlined" style="font-size:56px;display:block;color:#e2e8f0;margin-bottom:12px">task_alt</span><p style="color:#94a3b8;font-weight:600;margin:0">Aucune tâche</p></div>`;
+                return;
+            }
+            list.innerHTML = rows.map(t => renderTaskCardPC(t)).join('');
+        }
+
+        function renderTaskCardPC(t) {
+            const p = TASK_PRIORITY_CFG[t.priority] || TASK_PRIORITY_CFG.normal;
+            const s = TASK_STATUS_CFG[t.status] || TASK_STATUS_CFG.todo;
+            const subs = Array.isArray(t.subtasks) ? t.subtasks : (t.subtasks ? JSON.parse(t.subtasks) : []);
+            const doneCount = subs.filter(x => x.done).length;
+            const pct = subs.length ? Math.round(doneCount / subs.length * 100) : (t.status === 'done' ? 100 : 0);
+            const isDone = t.status === 'done';
+            const today = new Date().toISOString().split('T')[0];
+            let dateLabel = '', dateColor = '#94a3b8';
+            if (t.due_date) {
+                const diff = Math.round((new Date(t.due_date) - new Date(today)) / 86400000);
+                if (diff < 0)        { dateLabel = `En retard (${Math.abs(diff)}j)`;       dateColor = '#ef4444'; }
+                else if (diff === 0) { dateLabel = `Aujourd'hui`;                           dateColor = '#f97316'; }
+                else if (diff === 1) { dateLabel = `Demain`;                                dateColor = '#eab308'; }
+                else                 { dateLabel = new Date(t.due_date + 'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
+            }
+            return `
+            <div onclick="openTaskDrawer('${t.id}')" style="background:white;border-radius:16px;border:1px solid #e2e8f0;border-left:4px solid ${p.color};box-shadow:0 2px 8px rgba(0,0,0,.04);padding:16px 20px;display:flex;align-items:flex-start;gap:16px;cursor:pointer;transition:all .2s;opacity:${isDone?.6:1}" class="hover:shadow-lg" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+              <button onclick="event.stopPropagation();quickToggleTaskDonePC('${t.id}')" style="width:24px;height:24px;border-radius:50%;border:2px solid ${isDone?'#22c55e':p.color};background:${isDone?'#22c55e':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:2px;transition:all .2s">
+                ${isDone?`<span class="material-symbols-outlined" style="font-size:14px;color:white">check</span>`:''}
+              </button>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+                  <p style="font-size:15px;font-weight:800;color:#0f172a;margin:0;${isDone?'text-decoration:line-through;color:#94a3b8':''}">${t.title || '—'}</p>
+                  <span style="padding:2px 8px;border-radius:20px;background:${p.bg};color:${p.color};border:1px solid ${p.border};font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${p.label}</span>
+                  <span style="padding:2px 8px;border-radius:20px;background:${s.bg};color:${s.color};font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${s.label}</span>
+                </div>
+                ${subs.length ? `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <div style="height:4px;flex:1;background:#f1f5f9;border-radius:10px;overflow:hidden;max-width:200px">
+                    <div style="height:100%;width:${pct}%;background:${p.color};border-radius:10px;transition:width .4s ease"></div>
+                  </div>
+                  <span style="font-size:11px;font-weight:700;color:#64748b;white-space:nowrap">${doneCount}/${subs.length} sous-tâches</span>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  ${subs.slice(0,4).map(sub=>`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${sub.done?'#f0fdf4':'#f8fafc'};color:${sub.done?'#16a34a':'#64748b'};border:1px solid ${sub.done?'#bbf7d0':'#e2e8f0'};font-weight:600">${sub.done?'✓ ':''}${sub.text}</span>`).join('')}
+                  ${subs.length > 4 ? `<span style="font-size:10px;color:#94a3b8;font-weight:600;padding:2px 6px">+${subs.length-4}</span>` : ''}
+                </div>` : ''}
+                ${t.notes ? `<p style="font-size:12px;color:#64748b;margin:6px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px">${t.notes}</p>` : ''}
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                ${t.due_date ? `<div style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:14px;color:${dateColor}">calendar_month</span><span style="font-size:11px;font-weight:700;color:${dateColor}">${dateLabel}</span></div>` : ''}
+                <button onclick="event.stopPropagation();exportTaskToGCalPC('${t.id}')" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1px solid #bfdbfe;background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" class="hover:bg-blue-100">
+                  <span class="material-symbols-outlined" style="font-size:12px">open_in_new</span> Google
+                </button>
+              </div>
+            </div>`;
+        }
+
+        function setTaskFilterPC(f) {
+            _taskFilterPC = f;
+            ['all','todo','in_progress','done'].forEach(k => {
+                const btn = document.getElementById('tpf-'+k);
+                if (!btn) return;
+                btn.style.background = k === f ? '#f27f0d' : 'transparent';
+                btn.style.color = k === f ? 'white' : '#64748b';
+            });
+            renderTasksPC();
+        }
+
+        function setTaskPriorityPC(p) {
+            _taskPriorityFilterPC = p;
+            ['urgent','high','normal','low'].forEach(k => {
+                const btn = document.getElementById('tpp-'+k);
+                if (!btn) return;
+                btn.style.outline = k === p ? `2px solid ${TASK_PRIORITY_CFG[k].color}` : 'none';
+                btn.style.outlineOffset = '2px';
+            });
+            renderTasksPC();
+        }
+
+        function filterTasksPC(q) { _taskSearchPC = q; renderTasksPC(); }
+
+        // === DRAWER ===
+        function openTaskDrawer(taskId = null) {
+            _editingTaskId = taskId;
+            _taskSubtasksForm = [];
+            const overlay = document.getElementById('task-drawer-overlay');
+            const drawer  = document.getElementById('task-drawer');
+            if (!overlay || !drawer) return;
+            if (taskId) {
+                const t = _tasksData.find(x => x.id === taskId);
+                if (!t) return;
+                document.getElementById('task-drawer-title').textContent = 'Modifier la tâche';
+                document.getElementById('task-entity-search').value = t.title || '';
+                document.getElementById('task-entity-id').value = t.entity_id || '';
+                document.getElementById('task-entity-type').value = t.entity_type || '';
+                document.getElementById('task-due-date').value = t.due_date || '';
+                document.getElementById('task-priority').value = t.priority || 'normal';
+                document.getElementById('task-notes').value = t.notes || '';
+                _taskFormStatus = t.status || 'todo';
+                _taskSubtasksForm = Array.isArray(t.subtasks) ? JSON.parse(JSON.stringify(t.subtasks)) : (t.subtasks ? JSON.parse(t.subtasks) : []);
+                document.getElementById('task-delete-btn').style.display = 'flex';
+                document.getElementById('task-gcal-btn').style.display = 'flex';
+            } else {
+                document.getElementById('task-drawer-title').textContent = 'Nouvelle tâche';
+                document.getElementById('task-entity-search').value = '';
+                document.getElementById('task-entity-id').value = '';
+                document.getElementById('task-entity-type').value = '';
+                document.getElementById('task-due-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('task-priority').value = 'normal';
+                document.getElementById('task-notes').value = '';
+                _taskFormStatus = 'todo';
+                document.getElementById('task-delete-btn').style.display = 'none';
+                document.getElementById('task-gcal-btn').style.display = 'none';
+            }
+            setTaskStatusFormPC(_taskFormStatus);
+            renderSubtasksFormPC();
+            overlay.style.removeProperty('display');
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => { drawer.style.transform = 'translateX(0)'; });
+        }
+
+        function openTaskForEntityPC(id, name, type) {
+            if (currentModule !== 'tasks') switchModule('tasks');
+            setTimeout(() => {
+                openTaskDrawer();
+                document.getElementById('task-entity-search').value = name || '';
+                document.getElementById('task-entity-id').value = id || '';
+                document.getElementById('task-entity-type').value = type || 'client';
+            }, currentModule !== 'tasks' ? 500 : 0);
+        }
+
+        function closeTaskDrawer() {
+            const overlay = document.getElementById('task-drawer-overlay');
+            const drawer  = document.getElementById('task-drawer');
+            drawer.style.transform = 'translateX(100%)';
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+
+        function setTaskStatusFormPC(s) {
+            _taskFormStatus = s;
+            ['todo','in_progress','done'].forEach(k => {
+                const btn = document.getElementById('ts-'+k);
+                if (!btn) return;
+                const sc = TASK_STATUS_CFG[k];
+                if (k === s) {
+                    btn.style.background = sc.bg; btn.style.color = sc.color;
+                    btn.style.borderColor = sc.color; btn.style.fontWeight = '900';
+                } else {
+                    btn.style.background = '#f8fafc'; btn.style.color = '#94a3b8';
+                    btn.style.borderColor = '#e2e8f0'; btn.style.fontWeight = '700';
+                }
+            });
+        }
+
+        function renderSubtasksFormPC() {
+            const list = document.getElementById('task-subtasks-list');
+            if (!list) return;
+            if (!_taskSubtasksForm.length) {
+                list.innerHTML = `<p style="font-size:12px;color:#cbd5e1;font-style:italic;text-align:center;padding:8px 0">Aucune sous-tâche — cliquez sur Ajouter</p>`;
+                return;
+            }
+            list.innerHTML = _taskSubtasksForm.map((sub, i) => `
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:${sub.done?'#f0fdf4':'#f8fafc'};border:1px solid ${sub.done?'#bbf7d0':'#e2e8f0'};border-radius:12px">
+                <input type="checkbox" ${sub.done?'checked':''} onchange="_taskSubtasksForm[${i}].done=this.checked;renderSubtasksFormPC()" style="cursor:pointer;width:16px;height:16px;accent-color:#22c55e;flex-shrink:0"/>
+                <input type="text" value="${(sub.text||'').replace(/"/g,'&quot;')}" oninput="_taskSubtasksForm[${i}].text=this.value" placeholder="Décrire la sous-tâche…" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:600;color:${sub.done?'#16a34a':'#374151'};outline:none;${sub.done?'text-decoration:line-through;':''}font-family:inherit"/>
+                <button onclick="_taskSubtasksForm.splice(${i},1);renderSubtasksFormPC()" style="width:26px;height:26px;border-radius:8px;border:none;background:#fee2e2;color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span class="material-symbols-outlined" style="font-size:14px">close</span>
+                </button>
+              </div>`).join('');
+        }
+
+        function addSubtaskFormPC() {
+            _taskSubtasksForm.push({ id: Date.now().toString(), text: '', done: false });
+            renderSubtasksFormPC();
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('#task-subtasks-list input[type=text]');
+                if (inputs.length) inputs[inputs.length-1].focus();
+            }, 50);
+        }
+
+        async function saveTaskPC() {
+            const title = (document.getElementById('task-entity-search').value || '').trim();
+            if (!title) { alert('Veuillez saisir un nom de client / prospect ou un titre de tâche.'); return; }
+            const payload = {
+                title,
+                entity_id:   document.getElementById('task-entity-id').value || null,
+                entity_type: document.getElementById('task-entity-type').value || 'free',
+                due_date:    document.getElementById('task-due-date').value || null,
+                priority:    document.getElementById('task-priority').value || 'normal',
+                status:      _taskFormStatus,
+                subtasks:    _taskSubtasksForm,
+                notes:       (document.getElementById('task-notes').value || '').trim() || null,
+                updated_at:  new Date().toISOString()
+            };
+            let error;
+            if (_editingTaskId) {
+                ({ error } = await _supabase.from('tasks').update(payload).eq('id', _editingTaskId));
+            } else {
+                ({ error } = await _supabase.from('tasks').insert([{ ...payload, created_at: new Date().toISOString() }]));
+            }
+            if (error) { alert('Erreur : ' + error.message); return; }
+            closeTaskDrawer();
+            await loadTasksPC();
+        }
+
+        async function deleteTaskPC() {
+            if (!_editingTaskId) return;
+            if (!confirm('Supprimer cette tâche définitivement ?')) return;
+            const { error } = await _supabase.from('tasks').delete().eq('id', _editingTaskId);
+            if (error) { alert('Erreur : ' + error.message); return; }
+            closeTaskDrawer();
+            await loadTasksPC();
+        }
+
+        async function quickToggleTaskDonePC(taskId) {
+            const t = _tasksData.find(x => x.id === taskId);
+            if (!t) return;
+            const newStatus = t.status === 'done' ? 'todo' : 'done';
+            const { error } = await _supabase.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', taskId);
+            if (!error) { t.status = newStatus; renderTasksPC(); renderTasksKPIPC(); }
+        }
+
+        function exportTaskToGCalPC(taskId) {
+            const tid = taskId || _editingTaskId;
+            const t = _tasksData.find(x => x.id === tid);
+            if (!t) return;
+            const subs = Array.isArray(t.subtasks) ? t.subtasks : (t.subtasks ? JSON.parse(t.subtasks) : []);
+            const details = subs.map(s => (s.done?'✓ ':'○ ') + s.text).join('\n') + (t.notes ? '\n\n' + t.notes : '');
+            const d = (t.due_date || new Date().toISOString().split('T')[0]).replace(/-/g,'');
+            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title||'Tâche')}&dates=${d}/${d}&details=${encodeURIComponent(details)}&sf=true&output=xml`, '_blank');
+        }
+
+        let _taskEntityTimeout = null;
+        async function searchTaskEntityPC(q) {
+            const res = document.getElementById('task-entity-results');
+            clearTimeout(_taskEntityTimeout);
+            if (!q || q.length < 2) { res.style.display = 'none'; return; }
+            _taskEntityTimeout = setTimeout(async () => {
+                const [{ data: clients }, { data: prospects }] = await Promise.all([
+                    _supabase.from('clients').select('id,full_name').ilike('full_name', `%${q}%`).limit(5),
+                    _supabase.from('prospects').select('id,full_name').ilike('full_name', `%${q}%`).limit(5)
+                ]);
+                const all = [...(clients||[]).map(c=>({...c,_type:'client'})), ...(prospects||[]).map(p=>({...p,_type:'prospect'}))];
+                if (!all.length) { res.innerHTML = `<p style="padding:12px 16px;font-size:13px;color:#94a3b8;text-align:center">Aucun résultat</p>`; res.style.display = 'block'; return; }
+                res.innerHTML = all.map(e => `
+                  <div onclick="selectTaskEntityPC('${e.id}','${(e.full_name||'').replace(/'/g,"\\'")}','${e._type}')" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                    <span class="material-symbols-outlined" style="font-size:16px;color:${e._type==='client'?'#f27f0d':'#6366f1'}">${e._type==='client'?'person':'person_search'}</span>
+                    <div><p style="font-size:13px;font-weight:700;margin:0;color:#0f172a">${e.full_name}</p><p style="font-size:10px;color:#94a3b8;margin:0;text-transform:uppercase;font-weight:600">${e._type}</p></div>
+                  </div>`).join('');
+                res.style.display = 'block';
+            }, 250);
+        }
+
+        function selectTaskEntityPC(id, name, type) {
+            document.getElementById('task-entity-search').value = name;
+            document.getElementById('task-entity-id').value = id;
+            document.getElementById('task-entity-type').value = type;
+            document.getElementById('task-entity-results').style.display = 'none';
+        }
+        // ═══════════════════════════════════════════════════════
 
         function hookInternalButtons(container) {
             // Dashbord specific links - avoid DIVs that contain form elements or are parent containers
