@@ -5587,7 +5587,7 @@ Suivant
                                 ${credit.exclude_automation ? '<span class="material-symbols-outlined text-[13px] text-red-400 align-middle ml-1">notifications_off</span>' : ''}
                             </h3>
                             <div class="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-                                <span onclick="event.stopPropagation(); toggleCreditHealthPC('${credit.id}', '${credit.health}')" class="px-2 py-0.5 rounded-full text-[9px] font-black ${healthClass} uppercase tracking-wide cursor-help hover:opacity-80 transition-all border border-black/5 flex items-center gap-1">${credit.health || '-'} <span class="opacity-50">↻</span></span>
+                                <span onclick="event.stopPropagation(); toggleCreditHealthPC('${credit.id}', '${credit.health}')" class="px-2 py-0.5 rounded-full text-[9px] font-black ${healthClass} uppercase tracking-wide cursor-pointer hover:opacity-80 transition-all border border-black/5 flex items-center gap-1">${credit.health || '-'} <span class="opacity-50">↻</span></span>
                                 <span onclick="event.stopPropagation(); currentCredit=${JSON.stringify(credit).replace(/'/g, "&#39;")}; openCreditStatusModalPC()" class="px-2 py-0.5 rounded-full text-[9px] font-black ${credit.status === 'Soldé' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'} uppercase tracking-wide cursor-pointer hover:bg-primary hover:text-white transition-all border border-black/5 flex items-center gap-1">${credit.status || 'En cours'} <span class="opacity-50">▾</span></span>
                             </div>
                         </div>
