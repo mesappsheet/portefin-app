@@ -1009,6 +1009,7 @@ function repRow(r){
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      ${!isPaid && r.scheduled_date ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span> ${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}</button>` : ''}
       <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)">
         <span class="material-symbols-outlined" style="font-size:13px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
         ${isPaid?'Payé':'En attente'}
@@ -1103,15 +1104,20 @@ async function loadCredits(){
 
     // Pour chaque crédit, compter les remboursements
     const ids=rows.map(c=>c.id);
-    const{data:repsAll}=await sb.from('repayments').select('credit_id,is_paid').in('credit_id',ids);
+    const{data:repsAll}=await sb.from('repayments').select('id,credit_id,is_paid,scheduled_date,amount').in('credit_id',ids);
     const repsMap={};
     (repsAll||[]).forEach(r=>{
-      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0};
+      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0,unpaid:[]};
       repsMap[r.credit_id].total++;
       if(r.is_paid)repsMap[r.credit_id].paid++;
+      else repsMap[r.credit_id].unpaid.push(r);
     });
 
     rows.forEach(c=>{
+      if(repsMap[c.id] && repsMap[c.id].unpaid.length>0){
+        repsMap[c.id].unpaid.sort((a,b)=>new Date(b.scheduled_date)-new Date(a.scheduled_date));
+        c.nextUnpaid = repsMap[c.id].unpaid[0];
+      }
       c.reps=repsMap[c.id]||{total:0,paid:0};
       _credCache[c.id]=c;
     });
@@ -1161,7 +1167,15 @@ function credRow(c){
     </div>
     
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
-      <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
+      <div>
+        <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
+        ${c.nextUnpaid && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
+          <button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="margin-top:4px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer">
+            <span class="material-symbols-outlined" style="font-size:12px">warning</span>
+            Impayé le ${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}
+          </button>
+        `:''}
+      </div>
       <div style="font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:4px">
         <span class="material-symbols-outlined" style="font-size:14px;color:var(--text2)">calendar_month</span>
         ${fmtDate(startD)} &nbsp;→&nbsp; ${fmtDate(endD)}
@@ -1174,6 +1188,20 @@ function credRow(c){
       <p style="font-size:11px;font-weight:900;color:var(--text);margin:0">${pct}% payé</p>
     </div>
   </div>`;
+}
+
+function confirmPayInstallment(repId, dateStr, amountStr) {
+  openConfirm(`Valider le paiement ?`, `Confirmez-vous le paiement de l'échéance du ${dateStr} d'un montant de ${amountStr} FCFA ?`, async () => {
+    try {
+      const { error } = await sb.from('repayments').update({
+        is_paid: true,
+        actual_payment_date: new Date().toISOString()
+      }).eq('id', repId);
+      if (error) throw error;
+      toast('Paiement validé ✓', 'ok');
+      loadCredits();
+    } catch(e) { toast('Erreur lors du paiement', 'err'); }
+  });
 }
 
 async function viewEcheancier(creditId,clientName){

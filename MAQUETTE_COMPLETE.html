@@ -5495,6 +5495,38 @@ Suivant
             if (!error) { t.status = newStatus; renderTasksPC(); renderTasksKPIPC(); }
         }
 
+        // ──── PAIEMENT RAPIDE — Badge date impayée ────
+        let _lastUnpaidMapPC = {};
+
+        async function getLastUnpaidMap(creditIds) {
+            if (!creditIds || !creditIds.length) return {};
+            const { data } = await _supabase.from('repayments')
+                .select('id, credit_id, scheduled_date')
+                .in('credit_id', creditIds)
+                .eq('is_paid', false)
+                .order('scheduled_date', { ascending: false });
+            const map = {};
+            (data || []).forEach(r => { if (!map[r.credit_id]) map[r.credit_id] = { id: r.id, date: r.scheduled_date }; });
+            return map;
+        }
+
+        function unpaidBadgePC(repId, date) {
+            if (!repId || !date) return '';
+            const d = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+            return `<button onclick="event.stopPropagation();quickPayRepPC('${repId}','${date}',this)" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'" title="Cliquer pour marquer payé"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">event_busy</span> ${d}</button>`;
+        }
+
+        async function quickPayRepPC(repId, date, btn) {
+            const fmtDate = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+            if (!confirm(`Procéder au paiement du ${fmtDate} ?`)) return;
+            const orig = btn.innerHTML; btn.innerHTML = '…'; btn.disabled = true;
+            const { error } = await _supabase.from('repayments')
+                .update({ is_paid: true, actual_payment_date: new Date().toISOString().split('T')[0] })
+                .eq('id', repId);
+            if (error) { alert('Erreur : ' + error.message); btn.innerHTML = orig; btn.disabled = false; return; }
+            loadScreen(currentScreen);
+        }
+
         function exportTaskToGCalPC(taskId) {
             const tid = taskId || _editingTaskId;
             const t = _tasksData.find(x => x.id === tid);
@@ -6031,6 +6063,8 @@ Suivant
             selectedCreditIds.clear();
             updateCreditSelectionBar();
 
+            const _unpaidFC = await getLastUnpaidMap(data.map(c => c.id));
+
             container.innerHTML = data.map(credit => {
                 const clientName = (credit.clients && credit.clients.full_name) || credit.client_name || 'Prospect Anonyme';
                 const initials = clientName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -6055,6 +6089,7 @@ Suivant
                             </div>
                         </div>
                         <p class="text-xs font-semibold text-primary mt-1">${parseInt(credit.amount || 0).toLocaleString('fr-FR')} FCFA</p>
+                        ${_unpaidFC[credit.id] ? unpaidBadgePC(_unpaidFC[credit.id].id, _unpaidFC[credit.id].date) : ''}
                     </div>
                 </div>
                 `;
@@ -7252,6 +7287,7 @@ Suivant
                             <div class="flex flex-col">
                                 <span class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">${displayName}</span>
                                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${creditType}</span>
+                                ${!r.is_paid ? unpaidBadgePC(r.id, r.scheduled_date) : ''}
                             </div>
                         </div>
                     </td>
@@ -7424,6 +7460,8 @@ Suivant
                 return;
             }
 
+            const _unpaidET = await getLastUnpaidMap(data.map(c => c.id));
+
             tbody.innerHTML = data.map(c => {
                 const displayName = c.clients?.full_name || c.client_name || 'Client Inconnu';
                 const displayPhone = c.clients?.phone1 || c.phone || '';
@@ -7439,6 +7477,7 @@ Suivant
                             <div>
                                 <p class="font-bold text-slate-900 dark:text-slate-100">${displayName}</p>
                                 <p class="text-xs text-slate-500 font-medium tracking-tight">ID: ${c.id.substring(0,8)}</p>
+                                ${_unpaidET[c.id] ? unpaidBadgePC(_unpaidET[c.id].id, _unpaidET[c.id].date) : ''}
                             </div>
                         </div>
                     </td>
@@ -7520,6 +7559,7 @@ Suivant
                 return;
             }
             _souffranceData = data || [];
+            _lastUnpaidMapPC = await getLastUnpaidMap(_souffranceData.map(c => c.id));
             renderSouffranceTable(_souffranceData, totalPortefeuille);
         }
 
@@ -7565,6 +7605,7 @@ Suivant
                             <div>
                                 <p class="font-bold text-slate-900 dark:text-white text-sm">${c.client_name || '—'}</p>
                                 <p class="text-xs text-slate-400">${c.activity || ''}</p>
+                                ${_lastUnpaidMapPC[c.id] ? unpaidBadgePC(_lastUnpaidMapPC[c.id].id, _lastUnpaidMapPC[c.id].date) : ''}
                             </div>
                         </div>
                     </td>
@@ -7671,12 +7712,18 @@ Suivant
                         amount: 0,
                         maxDays: 0,
                         oldestDate: r.scheduled_date,
+                        latestDate: r.scheduled_date,
+                        latestRepId: r.id,
                         count: 0
                     };
                 }
                 byCredit[cid].amount   += parseFloat(r.amount || 0);
                 byCredit[cid].count    += 1;
                 byCredit[cid].maxDays   = Math.max(byCredit[cid].maxDays, daysLate);
+                if (r.scheduled_date > byCredit[cid].latestDate) {
+                    byCredit[cid].latestDate  = r.scheduled_date;
+                    byCredit[cid].latestRepId = r.id;
+                }
                 totalAmount += parseFloat(r.amount || 0);
                 totalDays   += daysLate;
             });
@@ -7703,6 +7750,7 @@ Suivant
                             <div>
                                 <p class="font-bold text-slate-900 dark:text-white text-sm">${c.name}</p>
                                 <p class="text-xs text-slate-400">${c.count} échéance${c.count>1?'s':''} impayée${c.count>1?'s':''}</p>
+                                ${c.latestRepId ? unpaidBadgePC(c.latestRepId, c.latestDate) : ''}
                             </div>
                         </div>
                     </td>
@@ -7819,6 +7867,8 @@ Suivant
                 return;
             }
 
+            const _unpaidSC = await getLastUnpaidMap(data.map(c => c.id));
+
             tbody.innerHTML = data.map(c => {
                 const displayName = c.clients?.full_name || c.client_name || 'Client Inconnu';
                 const displayPhone = c.clients?.phone1 || c.phone || '';
@@ -7831,6 +7881,7 @@ Suivant
                             <div class="flex flex-col">
                                 <span class="font-bold text-slate-900">${displayName}</span>
                                 <span class="text-xs text-slate-500 font-medium">ID: ${c.id.substring(0,8)}</span>
+                                ${_unpaidSC[c.id] ? unpaidBadgePC(_unpaidSC[c.id].id, _unpaidSC[c.id].date) : ''}
                             </div>
                         </div>
                     </td>
