@@ -764,9 +764,9 @@ async function viewDashboard(){
     const topReps=reps.filter(r=>!r.is_paid).slice(0,5);
     const repsHtml=topReps.length?topReps.map(r=>`
       <div class="rep-item" style="padding:12px 16px">
-        <div class="rep-avatar" style="width:36px;height:36px;font-size:13px">${initials(getName(r))}</div>
+        <div class="rep-avatar" style="width:36px;height:36px;font-size:13px">${initials(getName(r.credits))}</div>
         <div style="flex:1;min-width:0">
-          <p style="font-size:13px;font-weight:600;margin:0">${getName(r)}</p>
+          <p style="font-size:13px;font-weight:600;margin:0">${getName(r.credits)}</p>
           <p style="font-size:11px;color:rgba(255,255,255,.4);margin:0">${fmt(r.amount)} FCFA</p>
         </div>
         <button class="toggle-paid pending" onclick="quickToggle('${r.id}',false,this)" style="font-size:10px;padding:5px 9px">
@@ -2729,6 +2729,7 @@ function openTaskFormMobile(taskId=null){
     _taskFormStatusMob='todo';
   }
   document.getElementById('task-form-content').innerHTML=renderTaskFormMobile(t);
+  renderSubtasksMob();
   view.style.display='flex';
 }
 
