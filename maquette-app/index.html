@@ -303,7 +303,7 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
     <p id="confirm-sub" style="color:var(--text2);font-size:13px;margin:0 0 20px"></p>
     <div style="display:flex;gap:10px">
       <button onclick="closeConfirm()" class="btn-ghost" style="flex:1;padding:11px">Annuler</button>
-      <button id="confirm-ok" style="flex:1;padding:11px;background:rgba(239,68,68,.85);border:1px solid rgba(239,68,68,.4);border-radius:10px;color:white;font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Supprimer</button>
+      <button id="confirm-ok" style="flex:1;padding:11px;background:rgba(239,68,68,.85);border:1px solid rgba(239,68,68,.4);border-radius:10px;color:white;font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Confirmer</button>
     </div>
   </div>
 </div>
@@ -594,10 +594,14 @@ document.getElementById('modal-overlay').addEventListener('click',function(e){
 
 // ─── CONFIRM ──────────────────────────────────
 let _confirmCb=null;
-function openConfirm(msg,sub,cb){
+function openConfirm(msg,sub,cb,okLabel,okColor){
   document.getElementById('confirm-msg').textContent=msg;
   document.getElementById('confirm-sub').textContent=sub||'';
   _confirmCb=cb;
+  const okBtn=document.getElementById('confirm-ok');
+  okBtn.textContent=okLabel||'Confirmer';
+  okBtn.style.background=okColor||'rgba(239,68,68,.85)';
+  okBtn.style.borderColor=okColor?okColor.replace('.85','.4'):'rgba(239,68,68,.4)';
   document.getElementById('confirm-overlay').classList.add('open');
 }
 function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('open');_confirmCb=null;}
@@ -1009,7 +1013,7 @@ function repRow(r){
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-      ${!isPaid && r.scheduled_date ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span> ${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}</button>` : ''}
+      ${!isPaid && r.scheduled_date && r.scheduled_date.split('T')[0] <= new Date().toISOString().split('T')[0] ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${fmtDate(r.scheduled_date.split('T')[0])}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span> ${fmtDate(r.scheduled_date.split('T')[0])}</button>` : ''}
       <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)">
         <span class="material-symbols-outlined" style="font-size:13px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
         ${isPaid?'Payé':'En attente'}
@@ -1107,18 +1111,29 @@ async function loadCredits(){
     const{data:repsAll}=await sb.from('repayments').select('id,credit_id,is_paid,scheduled_date,amount').in('credit_id',ids);
     const repsMap={};
     (repsAll||[]).forEach(r=>{
-      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0,unpaid:[]};
+      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0,unpaid:[],all:[]};
       repsMap[r.credit_id].total++;
       if(r.is_paid)repsMap[r.credit_id].paid++;
       else repsMap[r.credit_id].unpaid.push(r);
+      repsMap[r.credit_id].all.push(r);
     });
 
+    const _today=new Date().toISOString().split('T')[0];
     rows.forEach(c=>{
-      if(repsMap[c.id] && repsMap[c.id].unpaid.length>0){
-        repsMap[c.id].unpaid.sort((a,b)=>new Date(b.scheduled_date)-new Date(a.scheduled_date));
-        c.nextUnpaid = repsMap[c.id].unpaid[0];
+      const rm=repsMap[c.id]||{total:0,paid:0,unpaid:[],all:[]};
+      // Badge rouge : échéance impayée la plus récente <= today
+      const overdue=rm.unpaid.filter(r=>r.scheduled_date&&r.scheduled_date.split('T')[0]<=_today);
+      if(overdue.length>0){
+        overdue.sort((a,b)=>new Date(b.scheduled_date)-new Date(a.scheduled_date));
+        c.nextUnpaid=overdue[0];
       }
-      c.reps=repsMap[c.id]||{total:0,paid:0};
+      // Badge orange : prochaine échéance >= today (payée ou non)
+      const upcoming=rm.all.filter(r=>r.scheduled_date&&r.scheduled_date.split('T')[0]>=_today);
+      if(upcoming.length>0){
+        upcoming.sort((a,b)=>new Date(a.scheduled_date)-new Date(b.scheduled_date));
+        c.nextUpcoming=upcoming[0];
+      }
+      c.reps=rm;
       _credCache[c.id]=c;
     });
 
@@ -1169,11 +1184,11 @@ function credRow(c){
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
       <div>
         <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
-        ${c.nextUnpaid && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
-          <button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="margin-top:4px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer">
-            <span class="material-symbols-outlined" style="font-size:12px">warning</span>
-            Impayé le ${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}
-          </button>
+        ${(c.nextUnpaid || c.nextUpcoming) && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+            ${c.nextUnpaid ? `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}</button>` : ''}
+            ${c.nextUpcoming ? (c.nextUpcoming.is_paid ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);color:#94a3b8;font-size:10px;font-weight:800"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</span>` : `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUpcoming.id}','${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}','${fmt(c.nextUpcoming.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</button>`) : ''}
+          </div>
         `:''}
       </div>
       <div style="font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:4px">
@@ -1201,7 +1216,7 @@ function confirmPayInstallment(repId, dateStr, amountStr) {
       toast('Paiement validé ✓', 'ok');
       loadCredits();
     } catch(e) { toast('Erreur lors du paiement', 'err'); }
-  });
+  }, 'Valider', 'rgba(34,197,94,.85)');
 }
 
 async function viewEcheancier(creditId,clientName){
