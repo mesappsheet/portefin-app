@@ -1986,6 +1986,10 @@
                     <span class="material-symbols-outlined text-slate-500 text-lg">content_copy</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Copier nom</span>
                 </button>
+                <button onclick="downloadVCard(currentProspect?.full_name || currentProspect?.name || '', currentProspect?.phone, currentProspect?.phone2); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
+                    <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
+                </button>
                 <div class="border-t border-slate-100 dark:border-slate-800"></div>
                 <button id="btn-edit-prospect" onclick="handleEditProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
                     <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
@@ -3235,6 +3239,10 @@
         <button onclick="copyToClipboard(currentCredit?.clients?.full_name || currentCredit?.client_name || ''); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
           <span class="material-symbols-outlined text-slate-500 text-lg">content_copy</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Copier nom</span>
+        </button>
+        <button onclick="downloadVCard(currentCredit?.clients?.full_name || currentCredit?.client_name || '', currentCredit?.clients?.phone1, currentCredit?.clients?.phone2); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
+          <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
         </button>
         <button onclick="if(currentCredit){populateScheduleView(currentCredit);loadScreen('credits_schedule');}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
           <span class="material-symbols-outlined text-primary text-lg">payments</span>
@@ -4824,6 +4832,29 @@ Suivant
             });
         }
 
+        function downloadVCard(name, p1, p2) {
+            if (!name) return;
+            const vcf = [
+                'BEGIN:VCARD',
+                'VERSION:3.0',
+                `FN:${name}`,
+                p1 ? `TEL;TYPE=CELL:${p1}` : '',
+                p2 ? `TEL;TYPE=WORK:${p2}` : '',
+                'END:VCARD'
+            ].filter(Boolean).join('\n');
+
+            const blob = new Blob([vcf], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Contact_${name.replace(/\s+/g, '_')}.vcf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification("vCard générée !", "success");
+        }
+
         // States for Credits Filters
         let endTermFilter = 'month';
         let endTermSearch = '';
@@ -5312,12 +5343,35 @@ Suivant
         function renderTasksPC() {
             const list = document.getElementById('tasks-list-pc');
             if (!list) return;
-            const rows = getTasksFilteredPC();
-            if (!rows.length) {
+            const allFiltered = getTasksFilteredPC();
+            const activeRows = allFiltered.filter(t => t.status !== 'done');
+            const doneRows   = allFiltered.filter(t => t.status === 'done');
+            if (!allFiltered.length) {
                 list.innerHTML = `<div style="text-align:center;padding:64px 0"><span class="material-symbols-outlined" style="font-size:56px;display:block;color:#e2e8f0;margin-bottom:12px">task_alt</span><p style="color:#94a3b8;font-weight:600;margin:0">Aucune tâche</p></div>`;
                 return;
             }
-            list.innerHTML = rows.map(t => renderTaskCardPC(t)).join('');
+            let html = '';
+            if (activeRows.length) {
+                html += `<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:${doneRows.length?'24px':'0'}">` + activeRows.map(t => renderTaskCardPC(t)).join('') + `</div>`;
+            } else if (_taskFilterPC !== 'done') {
+                html += `<div style="text-align:center;padding:32px 0;color:#94a3b8;font-weight:600">Aucune tâche active</div>`;
+            }
+            if (doneRows.length) {
+                html += `
+                <details style="border:1px solid #bbf7d0;border-radius:16px;overflow:hidden;background:#f0fdf4">
+                  <summary style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;list-style:none;user-select:none">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span class="material-symbols-outlined filled" style="font-size:20px;color:#22c55e">check_circle</span>
+                      <span style="font-size:13px;font-weight:800;color:#16a34a">Terminées (${doneRows.length})</span>
+                    </div>
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#94a3b8">expand_more</span>
+                  </summary>
+                  <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 16px">
+                    ${doneRows.map(t => renderTaskCardPC(t)).join('')}
+                  </div>
+                </details>`;
+            }
+            list.innerHTML = html;
         }
 
         function renderTaskCardPC(t) {
@@ -5342,6 +5396,7 @@ Suivant
                 ${isDone?`<span class="material-symbols-outlined filled" style="font-size:15px;color:white">check</span>`:t.status==='in_progress'?`<span class="material-symbols-outlined" style="font-size:15px;color:#3b82f6">sync</span>`:''}
               </button>
               <div style="flex:1;min-width:0">
+                ${t.entity_name ? `<p style="font-size:11px;font-weight:700;color:#94a3b8;margin:0 0 4px;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">person</span>${t.entity_name}</p>` : ''}
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
                   <p style="font-size:15px;font-weight:800;color:#0f172a;margin:0;${isDone?'text-decoration:line-through;color:#94a3b8':''}">${t.title || '—'}</p>
                   <span style="padding:2px 8px;border-radius:20px;background:${p.bg};color:${p.color};border:1px solid ${p.border};font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${p.label}</span>
@@ -5519,6 +5574,7 @@ Suivant
             if (!title) { alert('Veuillez saisir un titre pour la tâche.'); document.getElementById('task-title-input').focus(); return; }
             const payload = {
                 title,
+                entity_name: (document.getElementById('task-entity-search').value || '').trim() || null,
                 entity_id:   document.getElementById('task-entity-id').value || null,
                 entity_type: document.getElementById('task-entity-type').value || 'free',
                 due_date:    document.getElementById('task-due-date').value || null,

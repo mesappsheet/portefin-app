@@ -553,6 +553,7 @@ function credMenu(btn,cid){
       {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount||0,c.end_date||'',(c.activity||''),cid)},
       {icon:'call',label:'Appeler',fn:()=>call(phone)},
       {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
+      {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
       {sep:true},
     ]:[]),
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
@@ -571,6 +572,7 @@ function prosMenu(btn,pid){
       {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid)},
       {icon:'call',label:'Appeler',fn:()=>call(phone)},
       {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
+      {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
       {sep:true},
     ]:[]),
     {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
@@ -640,6 +642,29 @@ function copyToClipboard(text){
     console.error("Clipboard Error:",e);
     toast("Erreur de copie","err");
   });
+}
+
+function downloadVCard(name, p1, p2) {
+  if (!name) return;
+  const vcf = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${name}`,
+    p1 ? `TEL;TYPE=CELL:${p1}` : '',
+    p2 ? `TEL;TYPE=WORK:${p2}` : '',
+    'END:VCARD'
+  ].filter(Boolean).join('\n');
+
+  const blob = new Blob([vcf], { type: 'text/vcard' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Contact_${name.replace(/\s+/g, '_')}.vcf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("vCard générée !");
 }
 
 async function wa(phone, name='', category='Crédit', amount=0, date='', activity='', id=''){
@@ -2674,9 +2699,17 @@ function renderTasksMobile(){
   const inP=_tasksMobile.filter(t=>t.status==='in_progress').length;
   const done=_tasksMobile.filter(t=>t.status==='done').length;
   const overdue=_tasksMobile.filter(t=>t.due_date&&t.due_date<today&&t.status!=='done').length;
-  let rows=_tasksMobile.filter(t=>_taskFilterMob==='all'||t.status===_taskFilterMob);
-  if(_taskPriorityMob)rows=rows.filter(t=>t.priority===_taskPriorityMob);
-  if(_taskSearchMob){const q=_taskSearchMob.toLowerCase();rows=rows.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q));}
+  // Appliquer filtres (sauf statut done — il va dans section séparée)
+  const applyFilters=arr=>{
+    let r=arr;
+    if(_taskPriorityMob)r=r.filter(t=>t.priority===_taskPriorityMob);
+    if(_taskSearchMob){const q=_taskSearchMob.toLowerCase();r=r.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.entity_name||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q));}
+    return r;
+  };
+  const allActive=_tasksMobile.filter(t=>t.status!=='done');
+  const allDone=_tasksMobile.filter(t=>t.status==='done');
+  let activeRows=applyFilters(_taskFilterMob==='done'?[]:(_taskFilterMob==='all'?allActive:allActive.filter(t=>t.status===_taskFilterMob)));
+  let doneRows=applyFilters(_taskFilterMob==='todo'||_taskFilterMob==='in_progress'?[]:allDone);
   view.innerHTML=`
     <div style="padding:16px 16px 0">
       <div style="position:relative;margin-bottom:12px">
@@ -2692,7 +2725,7 @@ function renderTasksMobile(){
           <div><p style="font-size:20px;font-weight:900;margin:0;color:var(--text);line-height:1">${v}</p><p style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:2px 0 0">${lb}</p></div>
         </div>`).join('')}
       </div>
-      <div style="display:flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:3px;gap:2px;margin-bottom:14px">
+      <div style="display:flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:3px;gap:2px;margin-bottom:10px">
         ${[['all','Toutes'],['todo','À faire'],['in_progress','En cours'],['done','Terminées']].map(([k,l])=>`
         <button onclick="_taskFilterMob='${k}';renderTasksMobile()" style="flex:1;padding:7px 4px;border-radius:9px;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;background:${_taskFilterMob===k?'#f27f0d':'transparent'};color:${_taskFilterMob===k?'white':'var(--text2)'};transition:all .15s">${l}</button>`).join('')}
       </div>
@@ -2701,9 +2734,22 @@ function renderTasksMobile(){
         <button onclick="_taskPriorityMob=_taskPriorityMob==='${k}'?null:'${k}';renderTasksMobile()" style="flex:1;padding:6px 4px;border-radius:9px;border:1px solid ${_taskPriorityMob===k?c:'var(--border)'};font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;background:${_taskPriorityMob===k?c+'20':'transparent'};color:${_taskPriorityMob===k?c:'var(--text2)'};transition:all .15s">${ic}</button>`).join('')}
       </div>
     </div>
-    <div style="padding:0 16px 100px;display:flex;flex-direction:column;gap:10px">
-      ${!rows.length?`<div class="empty"><span class="material-symbols-outlined">task_alt</span><p>Aucune tâche</p></div>`:rows.map(t=>taskCardMobile(t)).join('')}
-    </div>`;
+    <div style="padding:0 16px 6px;display:flex;flex-direction:column;gap:10px">
+      ${!activeRows.length&&_taskFilterMob!=='done'?`<div class="empty" style="padding:32px 0"><span class="material-symbols-outlined">task_alt</span><p>Aucune tâche active</p></div>`:activeRows.map(t=>taskCardMobile(t)).join('')}
+    </div>
+    ${doneRows.length?`
+    <div style="padding:0 16px 100px">
+      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';this.querySelector('.expand-ic').textContent=this.nextElementSibling.style.display==='none'?'expand_more':'expand_less'" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="material-symbols-outlined filled" style="font-size:18px;color:#22c55e">check_circle</span>
+          <span style="font-size:12px;font-weight:800;color:#16a34a">Terminées (${doneRows.length})</span>
+        </div>
+        <span class="material-symbols-outlined expand-ic" style="font-size:20px;color:#94a3b8">expand_more</span>
+      </button>
+      <div style="display:none;flex-direction:column;gap:8px">
+        ${doneRows.map(t=>taskCardMobile(t)).join('')}
+      </div>
+    </div>`:`<div style="height:100px"></div>`}`;
 }
 
 function taskCardMobile(t){
@@ -2733,6 +2779,7 @@ function taskCardMobile(t){
         <span class="material-symbols-outlined${isDone||isInP?' filled':''}" style="font-size:14px;color:${isDone||isInP?'white':p.col}">${toggleIcon}</span>
       </button>
       <div style="flex:1;min-width:0">
+        ${t.entity_name?`<p style="font-size:10px;font-weight:700;color:var(--text2);margin:0 0 3px;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:12px">person</span>${t.entity_name}</p>`:''}
         <p style="font-size:14px;font-weight:800;margin:0 0 4px;color:var(--text);${isDone?'text-decoration:line-through;color:var(--text2)':''}">${t.title||'—'}</p>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${subs.length?'8px':'0'}">
           <span style="padding:2px 8px;border-radius:20px;background:${p.bg};color:${p.col};font-size:9px;font-weight:800;text-transform:uppercase">${p.label}</span>
@@ -2871,6 +2918,7 @@ async function saveTaskMobile(){
   if(!title){toast('Saisir un titre pour la tâche','err');document.getElementById('tmob-title')?.focus();return;}
   const payload={
     title,
+    entity_name:(document.getElementById('tmob-entity')?.value||'').trim()||null,
     entity_id:document.getElementById('tmob-entity-id')?.value||null,
     entity_type:document.getElementById('tmob-entity-type')?.value||'free',
     due_date:document.getElementById('tmob-date')?.value||null,
