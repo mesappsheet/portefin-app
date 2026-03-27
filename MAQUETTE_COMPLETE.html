@@ -510,21 +510,27 @@
             <input type="hidden" id="task-entity-id"/>
             <input type="hidden" id="task-entity-type"/>
           </div>
-          <!-- Date + Priority -->
+          <!-- Date + Heure -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
             <div>
               <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Date échéance</label>
               <input type="date" id="task-due-date" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit"/>
             </div>
             <div>
-              <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Priorité</label>
-              <select id="task-priority" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit;font-weight:700">
-                <option value="low">⚪ Basse</option>
-                <option value="normal" selected>🔵 Normale</option>
-                <option value="high">🟠 Haute</option>
-                <option value="urgent">🔴 Urgente</option>
-              </select>
+              <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Heure</label>
+              <input type="time" id="task-due-time" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:white;outline:none;box-sizing:border-box;font-family:inherit"/>
             </div>
+          </div>
+          <!-- Priorité -->
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Priorité</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+              <button type="button" onclick="setPriorityPC('urgent')" id="tpr-urgent" style="padding:10px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">🔴 Urgente</button>
+              <button type="button" onclick="setPriorityPC('high')" id="tpr-high" style="padding:10px;border-radius:10px;border:1px solid #fed7aa;background:#fff7ed;color:#f97316;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">🟠 Haute</button>
+              <button type="button" onclick="setPriorityPC('normal')" id="tpr-normal" style="padding:10px;border-radius:10px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">🔵 Normale</button>
+              <button type="button" onclick="setPriorityPC('low')" id="tpr-low" style="padding:10px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;color:#94a3b8;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">⚪ Basse</button>
+            </div>
+            <input type="hidden" id="task-priority" value="normal"/>
           </div>
           <!-- Status -->
           <div>
@@ -5331,9 +5337,9 @@ Suivant
                 else                 { dateLabel = new Date(t.due_date + 'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
             }
             return `
-            <div onclick="openTaskDrawer('${t.id}')" style="background:white;border-radius:16px;border:1px solid #e2e8f0;border-left:4px solid ${p.color};box-shadow:0 2px 8px rgba(0,0,0,.04);padding:16px 20px;display:flex;align-items:flex-start;gap:16px;cursor:pointer;transition:all .2s;opacity:${isDone?.6:1}" class="hover:shadow-lg" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-              <button onclick="event.stopPropagation();quickToggleTaskDonePC('${t.id}')" style="width:24px;height:24px;border-radius:50%;border:2px solid ${isDone?'#22c55e':p.color};background:${isDone?'#22c55e':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:2px;transition:all .2s">
-                ${isDone?`<span class="material-symbols-outlined" style="font-size:14px;color:white">check</span>`:''}
+            <div onclick="openTaskDrawer('${t.id}')" style="background:white;border-radius:16px;border:1px solid #e2e8f0;border-left:4px solid ${p.color};box-shadow:0 2px 8px rgba(0,0,0,.04);padding:16px 20px;display:flex;align-items:flex-start;gap:16px;cursor:pointer;transition:all .2s;opacity:${isDone?.6:1}" class="hover:shadow-lg" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'" title="${isDone?'Terminée — cliquer pour remettre':'Cliquer pour passer à l\'étape suivante'}">
+              <button onclick="event.stopPropagation();quickToggleTaskDonePC('${t.id}')" title="${t.status==='todo'?'→ En cours':t.status==='in_progress'?'→ Terminée':'→ À faire'}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${isDone?'#22c55e':t.status==='in_progress'?'#3b82f6':p.color};background:${isDone?'#22c55e':t.status==='in_progress'?'#eff6ff':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
+                ${isDone?`<span class="material-symbols-outlined filled" style="font-size:15px;color:white">check</span>`:t.status==='in_progress'?`<span class="material-symbols-outlined" style="font-size:15px;color:#3b82f6">sync</span>`:''}
               </button>
               <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
@@ -5356,6 +5362,7 @@ Suivant
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
                 ${t.due_date ? `<div style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:14px;color:${dateColor}">calendar_month</span><span style="font-size:11px;font-weight:700;color:${dateColor}">${dateLabel}</span></div>` : ''}
+                ${t.due_time ? `<div style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px;color:#94a3b8">schedule</span><span style="font-size:11px;font-weight:700;color:#64748b">${t.due_time.slice(0,5)}</span></div>` : ''}
                 <button onclick="event.stopPropagation();exportTaskToGCalPC('${t.id}')" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1px solid #bfdbfe;background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" class="hover:bg-blue-100">
                   <span class="material-symbols-outlined" style="font-size:12px">open_in_new</span> Google
                 </button>
@@ -5403,8 +5410,9 @@ Suivant
                 document.getElementById('task-entity-id').value = t.entity_id || '';
                 document.getElementById('task-entity-type').value = t.entity_type || '';
                 document.getElementById('task-due-date').value = t.due_date || '';
-                document.getElementById('task-priority').value = t.priority || 'normal';
+                document.getElementById('task-due-time').value = t.due_time || '';
                 document.getElementById('task-notes').value = t.notes || '';
+                setPriorityPC(t.priority || 'normal');
                 _taskFormStatus = t.status || 'todo';
                 _taskSubtasksForm = Array.isArray(t.subtasks) ? JSON.parse(JSON.stringify(t.subtasks)) : (t.subtasks ? JSON.parse(t.subtasks) : []);
                 document.getElementById('task-delete-btn').style.display = 'flex';
@@ -5416,8 +5424,9 @@ Suivant
                 document.getElementById('task-entity-id').value = '';
                 document.getElementById('task-entity-type').value = '';
                 document.getElementById('task-due-date').value = new Date().toISOString().split('T')[0];
-                document.getElementById('task-priority').value = 'normal';
+                document.getElementById('task-due-time').value = '';
                 document.getElementById('task-notes').value = '';
+                setPriorityPC('normal');
                 _taskFormStatus = 'todo';
                 document.getElementById('task-delete-btn').style.display = 'none';
                 document.getElementById('task-gcal-btn').style.display = 'none';
@@ -5447,6 +5456,20 @@ Suivant
             const drawer  = document.getElementById('task-drawer');
             drawer.style.transform = 'translateX(100%)';
             setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+
+        function setPriorityPC(p) {
+            document.getElementById('task-priority').value = p;
+            const cfg = { urgent:['#ef4444','#fef2f2','#fecaca'], high:['#f97316','#fff7ed','#fed7aa'], normal:['#3b82f6','#eff6ff','#bfdbfe'], low:['#94a3b8','#f8fafc','#e2e8f0'] };
+            ['urgent','high','normal','low'].forEach(k => {
+                const btn = document.getElementById('tpr-'+k);
+                if (!btn) return;
+                const [col, bg, border] = cfg[k];
+                btn.style.background = k === p ? bg : 'white';
+                btn.style.color = k === p ? col : '#94a3b8';
+                btn.style.border = k === p ? `2px solid ${col}` : `1px solid #e2e8f0`;
+                btn.style.transform = k === p ? 'scale(1.04)' : 'scale(1)';
+            });
         }
 
         function setTaskStatusFormPC(s) {
@@ -5499,6 +5522,7 @@ Suivant
                 entity_id:   document.getElementById('task-entity-id').value || null,
                 entity_type: document.getElementById('task-entity-type').value || 'free',
                 due_date:    document.getElementById('task-due-date').value || null,
+                due_time:    document.getElementById('task-due-time').value || null,
                 priority:    document.getElementById('task-priority').value || 'normal',
                 status:      _taskFormStatus,
                 subtasks:    _taskSubtasksForm,
@@ -5528,7 +5552,8 @@ Suivant
         async function quickToggleTaskDonePC(taskId) {
             const t = _tasksData.find(x => x.id === taskId);
             if (!t) return;
-            const newStatus = t.status === 'done' ? 'todo' : 'done';
+            const cycle = { todo: 'in_progress', in_progress: 'done', done: 'todo' };
+            const newStatus = cycle[t.status] || 'in_progress';
             const { error } = await _supabase.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', taskId);
             if (!error) { t.status = newStatus; renderTasksPC(); renderTasksKPIPC(); }
         }

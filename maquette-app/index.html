@@ -2648,6 +2648,8 @@ async function convertProspect(prospectId, name, phone){
 // ═══════════════════════════════════════════════
 let _tasksMobile=[];
 let _taskFilterMob='all';
+let _taskSearchMob='';
+let _taskPriorityMob=null;
 let _editingTaskIdMob=null;
 let _taskFormStatusMob='todo';
 let _taskSubtasksFormMob=[];
@@ -2659,7 +2661,7 @@ async function viewTasksMobile(){
   const view=document.getElementById('view');
   view.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   showFab(()=>openTaskFormMobile());
-  const{data,error}=await sb.from('vw_tasks').select('*').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+  const{data,error}=await sb.from('tasks').select('*').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
   if(error){view.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;return;}
   _tasksMobile=data||[];
   renderTasksMobile();
@@ -2672,9 +2674,15 @@ function renderTasksMobile(){
   const inP=_tasksMobile.filter(t=>t.status==='in_progress').length;
   const done=_tasksMobile.filter(t=>t.status==='done').length;
   const overdue=_tasksMobile.filter(t=>t.due_date&&t.due_date<today&&t.status!=='done').length;
-  const rows=_tasksMobile.filter(t=>_taskFilterMob==='all'||t.status===_taskFilterMob);
+  let rows=_tasksMobile.filter(t=>_taskFilterMob==='all'||t.status===_taskFilterMob);
+  if(_taskPriorityMob)rows=rows.filter(t=>t.priority===_taskPriorityMob);
+  if(_taskSearchMob){const q=_taskSearchMob.toLowerCase();rows=rows.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q));}
   view.innerHTML=`
     <div style="padding:16px 16px 0">
+      <div style="position:relative;margin-bottom:12px">
+        <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text2);pointer-events:none">search</span>
+        <input value="${_taskSearchMob}" oninput="_taskSearchMob=this.value;renderTasksMobile()" placeholder="Rechercher une tâche…" style="width:100%;padding:11px 12px 11px 38px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         ${[['radio_button_unchecked','À faire',todo,'#64748b'],['sync','En cours',inP,'#3b82f6'],['check_circle','Terminées',done,'#22c55e'],['warning','En retard',overdue,'#ef4444']].map(([ic,lb,v,c])=>`
         <div style="background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:10px">
@@ -2687,6 +2695,10 @@ function renderTasksMobile(){
       <div style="display:flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:3px;gap:2px;margin-bottom:14px">
         ${[['all','Toutes'],['todo','À faire'],['in_progress','En cours'],['done','Terminées']].map(([k,l])=>`
         <button onclick="_taskFilterMob='${k}';renderTasksMobile()" style="flex:1;padding:7px 4px;border-radius:9px;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;background:${_taskFilterMob===k?'#f27f0d':'transparent'};color:${_taskFilterMob===k?'white':'var(--text2)'};transition:all .15s">${l}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:14px">
+        ${[['🔴','urgent','#ef4444'],['🟠','high','#f97316'],['🔵','normal','#3b82f6'],['⚪','low','#94a3b8']].map(([ic,k,c])=>`
+        <button onclick="_taskPriorityMob=_taskPriorityMob==='${k}'?null:'${k}';renderTasksMobile()" style="flex:1;padding:6px 4px;border-radius:9px;border:1px solid ${_taskPriorityMob===k?c:'var(--border)'};font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;background:${_taskPriorityMob===k?c+'20':'transparent'};color:${_taskPriorityMob===k?c:'var(--text2)'};transition:all .15s">${ic}</button>`).join('')}
       </div>
     </div>
     <div style="padding:0 16px 100px;display:flex;flex-direction:column;gap:10px">
@@ -2710,22 +2722,28 @@ function taskCardMobile(t){
     else if(diff===1){dl=`Demain`;dc='#eab308';}
     else{dl=new Date(t.due_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
   }
-  return`<div onclick="openTaskFormMobile('${t.id}')" style="background:var(--card);border-radius:16px;border:1px solid var(--border);border-left:4px solid ${p.col};padding:14px;cursor:pointer;opacity:${isDone?.65:1}">
+  const isInP=t.status==='in_progress';
+  const toggleIcon=isDone?'check':isInP?'sync':'radio_button_unchecked';
+  const toggleBg=isDone?'#22c55e':isInP?'#3b82f6':'transparent';
+  const toggleBorder=isDone?'#22c55e':isInP?'#3b82f6':p.col;
+  const toggleTitle=t.status==='todo'?'→ En cours':t.status==='in_progress'?'→ Terminée':'→ À faire';
+  return`<div onclick="openTaskFormMobile('${t.id}')" style="background:var(--card);border-radius:16px;border:1px solid var(--border);border-left:4px solid ${p.col};padding:14px;cursor:pointer;opacity:${isDone?.7:1}">
     <div style="display:flex;align-items:flex-start;gap:12px">
-      <button onclick="event.stopPropagation();quickToggleTaskMobile('${t.id}')" style="width:24px;height:24px;border-radius:50%;border:2px solid ${isDone?'#22c55e':p.col};background:${isDone?'#22c55e':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
-        ${isDone?`<span class="material-symbols-outlined" style="font-size:13px;color:white">check</span>`:''}
+      <button onclick="event.stopPropagation();quickToggleTaskMobile('${t.id}')" title="${toggleTitle}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${toggleBorder};background:${toggleBg};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
+        <span class="material-symbols-outlined${isDone||isInP?' filled':''}" style="font-size:14px;color:${isDone||isInP?'white':p.col}">${toggleIcon}</span>
       </button>
       <div style="flex:1;min-width:0">
-        <p style="font-size:14px;font-weight:800;margin:0 0 5px;color:var(--text);${isDone?'text-decoration:line-through;color:var(--text2)':''}">${t.title||'—'}</p>
+        <p style="font-size:14px;font-weight:800;margin:0 0 4px;color:var(--text);${isDone?'text-decoration:line-through;color:var(--text2)':''}">${t.title||'—'}</p>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${subs.length?'8px':'0'}">
           <span style="padding:2px 8px;border-radius:20px;background:${p.bg};color:${p.col};font-size:9px;font-weight:800;text-transform:uppercase">${p.label}</span>
           <span style="padding:2px 8px;border-radius:20px;background:${s.bg};color:${s.col};font-size:9px;font-weight:800;text-transform:uppercase">${s.label}</span>
-          ${t.due_date?`<span style="padding:2px 8px;border-radius:20px;background:${dc}18;color:${dc};font-size:9px;font-weight:800">📅 ${dl}</span>`:''}
+          ${t.due_date?`<span style="padding:2px 8px;border-radius:20px;background:${dc}18;color:${dc};font-size:9px;font-weight:800">📅 ${dl}${t.due_time?' '+t.due_time.slice(0,5):''}</span>`:''}
         </div>
-        ${subs.length?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="height:3px;flex:1;background:var(--border);border-radius:10px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.col};border-radius:10px"></div></div><span style="font-size:10px;font-weight:700;color:var(--text2);white-space:nowrap">${doneC}/${subs.length}</span></div>
+        ${subs.length?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="height:3px;flex:1;background:var(--border);border-radius:10px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.col};border-radius:10px;transition:width .3s"></div></div><span style="font-size:10px;font-weight:700;color:var(--text2);white-space:nowrap">${doneC}/${subs.length}</span></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${subs.slice(0,3).map(sub=>`<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:${sub.done?'rgba(34,197,94,.12)':'var(--input-bg)'};color:${sub.done?'#4ade80':'var(--text2)'};font-weight:600">${sub.done?'✓ ':''}${sub.text}</span>`).join('')}${subs.length>3?`<span style="font-size:9px;color:var(--text2);padding:2px 5px">+${subs.length-3}</span>`:''}</div>`:''}
+        ${t.notes?`<p style="font-size:11px;color:var(--text2);margin:6px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.notes}</p>`:''}
       </div>
-      <button onclick="event.stopPropagation();exportTaskToGCalMobile('${t.id}')" style="width:32px;height:32px;border-radius:10px;border:1px solid #bfdbfe;background:#eff6ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+      <button onclick="event.stopPropagation();exportTaskToGCalMobile('${t.id}')" title="Google Calendar" style="width:32px;height:32px;border-radius:10px;border:1px solid #bfdbfe;background:#eff6ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
         <span class="material-symbols-outlined" style="font-size:16px;color:#3b82f6">open_in_new</span>
       </button>
     </div>
@@ -2780,13 +2798,16 @@ function renderTaskFormMobile(t){
         <input type="date" id="tmob-date" value="${t?.due_date||today}" style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;font-size:13px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
       </div>
       <div>
-        <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Priorité</label>
-        <select id="tmob-priority" style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;font-size:13px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit;font-weight:700">
-          <option value="low" ${t?.priority==='low'?'selected':''}>⚪ Basse</option>
-          <option value="normal" ${!t||t?.priority==='normal'?'selected':''}>🔵 Normale</option>
-          <option value="high" ${t?.priority==='high'?'selected':''}>🟠 Haute</option>
-          <option value="urgent" ${t?.priority==='urgent'?'selected':''}>🔴 Urgente</option>
-        </select>
+        <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Heure</label>
+        <input type="time" id="tmob-time" value="${t?.due_time||''}" style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;font-size:13px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+      </div>
+    </div>
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Priorité</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+        ${[['urgent','🔴','Urgente','#ef4444'],['high','🟠','Haute','#f97316'],['normal','🔵','Normale','#3b82f6'],['low','⚪','Basse','#94a3b8']].map(([v,ic,lb,c])=>`
+        <button type="button" onclick="document.getElementById('tmob-priority').value='${v}';this.closest('div').querySelectorAll('button').forEach(b=>b.style.outline='none');this.style.outline='2px solid ${c}';this.style.outlineOffset='2px'" style="padding:8px 4px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;outline:${(!t&&v==='normal')||t?.priority===v?'2px solid '+c:'none'};outline-offset:${(!t&&v==='normal')||t?.priority===v?'2px':'0'}">${ic} ${lb}</button>`).join('')}
+        <input type="hidden" id="tmob-priority" value="${t?.priority||'normal'}"/>
       </div>
     </div>
     <div>
@@ -2853,6 +2874,7 @@ async function saveTaskMobile(){
     entity_id:document.getElementById('tmob-entity-id')?.value||null,
     entity_type:document.getElementById('tmob-entity-type')?.value||'free',
     due_date:document.getElementById('tmob-date')?.value||null,
+    due_time:document.getElementById('tmob-time')?.value||null,
     priority:document.getElementById('tmob-priority')?.value||'normal',
     status:_taskFormStatusMob,
     subtasks:_taskSubtasksFormMob,
@@ -2885,7 +2907,8 @@ function closeTaskForm(){
 async function quickToggleTaskMobile(taskId){
   const t=_tasksMobile.find(x=>x.id===taskId);
   if(!t)return;
-  const ns=t.status==='done'?'todo':'done';
+  const cycle={todo:'in_progress',in_progress:'done',done:'todo'};
+  const ns=cycle[t.status]||'in_progress';
   const{error}=await sb.from('tasks').update({status:ns,updated_at:new Date().toISOString()}).eq('id',taskId);
   if(!error){t.status=ns;renderTasksMobile();}
 }
