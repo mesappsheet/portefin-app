@@ -521,7 +521,7 @@ function showMenu(btn,items){
     if(item.sep){const s=document.createElement('div');s.className='ctx-sep';menu.appendChild(s);return;}
     const el=document.createElement('button');
     el.className='ctx-item'+(item.danger?' ctx-danger':'');
-    el.innerHTML=`<span class="material-symbols-outlined filled" style="font-size:18px">${item.icon}</span>${item.label}`;
+    el.innerHTML=`<span class="material-symbols-outlined filled" style="font-size:18px${item.color?';color:'+item.color:''}">${item.icon}</span>${item.label}`;
     el.ontouchend=el.onclick=(e)=>{e.stopPropagation();closeCtxMenu();item.fn();};
     menu.appendChild(el);
   });
@@ -552,8 +552,11 @@ function credMenu(btn,cid){
     ...(phone?[
       {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount||0,c.end_date||'',(c.activity||''),cid)},
       {icon:'call',label:'Appeler',fn:()=>call(phone)},
+      {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
       {sep:true},
     ]:[]),
+    {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
+    {sep:true},
     {icon:'edit',label:'Modifier',fn:()=>openClientEditForm(cid)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
   ];
@@ -567,10 +570,13 @@ function prosMenu(btn,pid){
     ...(phone?[
       {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid)},
       {icon:'call',label:'Appeler',fn:()=>call(phone)},
+      {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
       {sep:true},
     ]:[]),
     {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
     {icon:'person_add',label:'Convertir en crédit',fn:()=>convertProspect(pid,name,phone)},
+    {sep:true},
+    {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(pid,name,'prospect'),color:'#a855f7'},
     {sep:true},
     {icon:'edit',label:'Modifier',fn:()=>openProspectForm(p)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteProspect(pid,name),danger:true},
@@ -625,6 +631,16 @@ function today(){return new Date().toISOString().split('T')[0];}
 function initials(name){if(!name)return'?';return name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 function getName(r){return r?.clients?.full_name||r?.client_name||r?.full_name||'Inconnu';}
 function getPhone(r){return r?.clients?.phone1||r?.phone||r?.phone1||'';}
+
+function copyToClipboard(text){
+  if(!text)return;
+  navigator.clipboard.writeText(text).then(()=>{
+    toast("Nom copié !");
+  }).catch(e=>{
+    console.error("Clipboard Error:",e);
+    toast("Erreur de copie","err");
+  });
+}
 
 async function wa(phone, name='', category='Crédit', amount=0, date='', activity='', id=''){
   const p=(phone||'').replace(/\D/g,'');
@@ -1106,34 +1122,41 @@ async function loadCredits(){
     }
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
 
-    // Pour chaque crédit, compter les remboursements
+    // Pour chaque crédit, lire les statistiques depuis la vue
     const ids=rows.map(c=>c.id);
-    const{data:repsAll}=await sb.from('repayments').select('id,credit_id,is_paid,scheduled_date,amount').in('credit_id',ids);
-    const repsMap={};
-    (repsAll||[]).forEach(r=>{
-      if(!repsMap[r.credit_id])repsMap[r.credit_id]={total:0,paid:0,unpaid:[],all:[]};
-      repsMap[r.credit_id].total++;
-      if(r.is_paid)repsMap[r.credit_id].paid++;
-      else repsMap[r.credit_id].unpaid.push(r);
-      repsMap[r.credit_id].all.push(r);
-    });
+    const {data: statsData} = await sb.from('credit_stats').select('*').in('credit_id', ids);
+    const statsMap = {};
+    (statsData||[]).forEach(s => { statsMap[s.credit_id] = s; });
 
-    const _today=new Date().toISOString().split('T')[0];
     rows.forEach(c=>{
-      const rm=repsMap[c.id]||{total:0,paid:0,unpaid:[],all:[]};
-      // Badge rouge : échéance impayée la plus récente <= today
-      const overdue=rm.unpaid.filter(r=>r.scheduled_date&&r.scheduled_date.split('T')[0]<=_today);
-      if(overdue.length>0){
-        overdue.sort((a,b)=>new Date(b.scheduled_date)-new Date(a.scheduled_date));
-        c.nextUnpaid=overdue[0];
+      const s = statsMap[c.id] || { nombre_echeances_total:0, nombre_echeances_payees:0 };
+      
+      c.reps = {
+        total: s.nombre_echeances_total,
+        paid: s.nombre_echeances_payees
+      };
+
+      if(s.plus_ancienne_echeance_impayee_id) {
+        c.nextUnpaid = {
+          id: s.plus_ancienne_echeance_impayee_id,
+          scheduled_date: s.plus_ancienne_echeance_impayee_date,
+          amount: s.plus_ancienne_echeance_impayee_montant
+        };
+      } else {
+        c.nextUnpaid = null;
       }
-      // Badge orange : prochaine échéance >= today (payée ou non)
-      const upcoming=rm.all.filter(r=>r.scheduled_date&&r.scheduled_date.split('T')[0]>=_today);
-      if(upcoming.length>0){
-        upcoming.sort((a,b)=>new Date(a.scheduled_date)-new Date(b.scheduled_date));
-        c.nextUpcoming=upcoming[0];
+
+      if(s.prochaine_echeance_id) {
+        c.nextUpcoming = {
+          id: s.prochaine_echeance_id,
+          scheduled_date: s.prochaine_echeance_date,
+          amount: s.prochaine_echeance_montant,
+          is_paid: s.prochaine_echeance_is_paid
+        };
+      } else {
+        c.nextUpcoming = null;
       }
-      c.reps=rm;
+      
       _credCache[c.id]=c;
     });
 
@@ -1185,9 +1208,9 @@ function credRow(c){
       <div>
         <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
         ${(c.nextUnpaid || c.nextUpcoming) && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
             ${c.nextUnpaid ? `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}</button>` : ''}
-            ${c.nextUpcoming ? (c.nextUpcoming.is_paid ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);color:#94a3b8;font-size:10px;font-weight:800"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</span>` : `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUpcoming.id}','${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}','${fmt(c.nextUpcoming.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</button>`) : ''}
+            ${c.nextUpcoming && (!c.nextUnpaid || c.nextUpcoming.id !== c.nextUnpaid.id) ? (c.nextUpcoming.is_paid ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);color:#94a3b8;font-size:10px;font-weight:800"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</span>` : `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUpcoming.id}','${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}','${fmt(c.nextUpcoming.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</button>`) : ''}
           </div>
         `:''}
       </div>
@@ -2636,7 +2659,7 @@ async function viewTasksMobile(){
   const view=document.getElementById('view');
   view.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   showFab(()=>openTaskFormMobile());
-  const{data,error}=await sb.from('tasks').select('*').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+  const{data,error}=await sb.from('vw_tasks').select('*').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
   if(error){view.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;return;}
   _tasksMobile=data||[];
   renderTasksMobile();
@@ -2675,13 +2698,13 @@ function taskCardMobile(t){
   const p=TASK_P[t.priority]||TASK_P.normal;
   const s=TASK_S[t.status]||TASK_S.todo;
   const subs=Array.isArray(t.subtasks)?t.subtasks:(t.subtasks?JSON.parse(t.subtasks):[]);
-  const doneC=subs.filter(x=>x.done).length;
-  const pct=subs.length?Math.round(doneC/subs.length*100):(t.status==='done'?100:0);
+  const doneC = t.subtasks_done_count ?? subs.filter(x=>x.done).length;
+  const pct = t.progress_percent ?? (subs.length?Math.round(doneC/subs.length*100):(t.status==='done'?100:0));
   const isDone=t.status==='done';
   const today=new Date().toISOString().split('T')[0];
   let dl='',dc='var(--text2)';
   if(t.due_date){
-    const diff=Math.round((new Date(t.due_date)-new Date(today))/86400000);
+    const diff = t.diff_days ?? Math.round((new Date(t.due_date)-new Date(today))/86400000);
     if(diff<0){dl=`En retard (${Math.abs(diff)}j)`;dc='#ef4444';}
     else if(diff===0){dl=`Aujourd'hui`;dc='#f97316';}
     else if(diff===1){dl=`Demain`;dc='#eab308';}
@@ -2738,10 +2761,14 @@ function renderTaskFormMobile(t){
   const esc=v=>(v||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   return`
     <div>
-      <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Client / Prospect</label>
+      <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Titre de la tâche *</label>
+      <input id="tmob-title" value="${esc(t?.title)}" placeholder="Ex : Rappeler client, Préparer contrat…" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:700;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+    </div>
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Client / Prospect lié</label>
       <div style="position:relative">
         <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text2);pointer-events:none">person_search</span>
-        <input id="tmob-entity" value="${esc(t?.title)}" oninput="searchTaskEntityMob(this.value)" autocomplete="off" placeholder="Rechercher client ou prospect…" style="width:100%;padding:12px 14px 12px 36px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+        <input id="tmob-entity" value="" oninput="searchTaskEntityMob(this.value)" autocomplete="off" placeholder="Rechercher client ou prospect…" style="width:100%;padding:12px 14px 12px 36px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
         <div id="tmob-entity-res" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:10;max-height:180px;overflow-y:auto"></div>
       </div>
       <input type="hidden" id="tmob-entity-id" value="${esc(t?.entity_id)}"/>
@@ -2819,8 +2846,8 @@ function addSubtaskMob(){
 }
 
 async function saveTaskMobile(){
-  const title=(document.getElementById('tmob-entity')?.value||'').trim();
-  if(!title){toast('Saisir un nom de client / prospect','err');return;}
+  const title=(document.getElementById('tmob-title')?.value||'').trim();
+  if(!title){toast('Saisir un titre pour la tâche','err');document.getElementById('tmob-title')?.focus();return;}
   const payload={
     title,
     entity_id:document.getElementById('tmob-entity-id')?.value||null,
@@ -2904,9 +2931,14 @@ function openTaskForEntityMobile(id,name,type){
   setTimeout(()=>{
     openTaskFormMobile();
     setTimeout(()=>{
-      document.getElementById('tmob-entity').value=name||'';
-      document.getElementById('tmob-entity-id').value=id||'';
-      document.getElementById('tmob-entity-type').value=type||'client';
+      const titleEl=document.getElementById('tmob-title');
+      const entityEl=document.getElementById('tmob-entity');
+      if(titleEl){titleEl.value=name||'';titleEl.focus();}
+      if(entityEl)entityEl.value=name||'';
+      const idEl=document.getElementById('tmob-entity-id');
+      const typeEl=document.getElementById('tmob-entity-type');
+      if(idEl)idEl.value=id||'';
+      if(typeEl)typeEl.value=type||'client';
     },100);
   },300);
 }
