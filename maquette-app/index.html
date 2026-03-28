@@ -341,11 +341,12 @@ body.light .cred-item { box-shadow: 0 1px 8px rgba(0,0,0,.05); }
 /* Toggle paid */
 .toggle-paid {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 50%; border: 2px solid;
-  cursor: pointer; transition: all .2s; flex-shrink: 0; background: none;
+  border: 1.5px solid; border-radius: 20px; padding: 5px 10px;
+  cursor: pointer; transition: all .2s; background: none;
+  font-size: 10px; font-weight: 800; font-family: inherit;
 }
-.toggle-paid.pending { border-color: rgba(239,68,68,.4); color: #ef4444; background: rgba(239,68,68,.08); }
-.toggle-paid.paid { border-color: rgba(34,197,94,.4); color: #22c55e; background: rgba(34,197,94,.08); }
+.toggle-paid.pending { border-color: rgba(239,68,68,.35); color: #ef4444; background: rgba(239,68,68,.08); }
+.toggle-paid.paid { border-color: rgba(34,197,94,.35); color: #22c55e; background: rgba(34,197,94,.08); }
 
 /* Progress bar */
 .progress-bar-bg { height: 6px; background: var(--border2); border-radius: 10px; overflow: hidden; }
@@ -1299,39 +1300,40 @@ function repRow(r){
   const isSolde=['Soldé','SOLDÉ','soldé'].includes(status);
   const isEchu=status==='Échu';
   const statusClass=isSolde?'badge-blue':isEchu?'badge-red':'badge-orange';
-  return`<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'}">
-    <div class="rep-avatar">${initials(name)}</div>
-    <div style="flex:1;min-width:0">
-      <p style="font-size:14px;font-weight:600;margin:0 0 4px">${name}</p>
-      <p style="font-size:12px;color:rgba(255,255,255,.4);margin:0 0 5px">${fmt(r.amount)} FCFA</p>
-      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-        <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">
-          ${health} <span style="font-size:10px;opacity:.7">↻</span>
-        </span>
-        <span class="badge ${statusClass}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();changeCreditStatus('${cid}','${name.replace(/'/g,"\\'")}','${status}')">
-          ${status} <span style="font-size:10px;opacity:.7">▾</span>
-        </span>
-        ${r.is_reported?`<span class="badge badge-blue" style="font-size:9px">Reporté</span>`:''}
+  const dueBadge = !isPaid && r.scheduled_date && r.scheduled_date.split('T')[0] <= new Date().toISOString().split('T')[0]
+    ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${fmtDate(r.scheduled_date.split('T')[0])}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>${fmtDate(r.scheduled_date.split('T')[0])}</button>` : '';
+  return`<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'};display:flex;flex-direction:column;gap:0;padding:14px 16px">
+    <!-- Ligne 1 : Avatar + infos + toggle statut -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="rep-avatar" style="flex-shrink:0">${initials(name)}</div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:14px;font-weight:700;margin:0 0 2px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 6px;font-weight:600">${fmt(r.amount)} FCFA${r.scheduled_date?' · '+fmtDate(r.scheduled_date.split('T')[0]):''}</p>
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">${health} <span style="font-size:10px;opacity:.7">↻</span></span>
+          <span class="badge ${statusClass}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();changeCreditStatus('${cid}','${name.replace(/'/g,"\\'")}','${status}')">${status} <span style="font-size:10px;opacity:.7">▾</span></span>
+          ${r.is_reported?`<span class="badge badge-blue" style="font-size:9px">Reporté</span>`:''}
+          ${dueBadge}
+        </div>
       </div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-      ${!isPaid && r.scheduled_date && r.scheduled_date.split('T')[0] <= new Date().toISOString().split('T')[0] ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${fmtDate(r.scheduled_date.split('T')[0])}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span> ${fmtDate(r.scheduled_date.split('T')[0])}</button>` : ''}
-      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)">
-        <span class="material-symbols-outlined" style="font-size:13px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
+      <!-- Toggle statut seul, à droite -->
+      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap;height:auto;width:auto;border-width:1.5px">
+        <span class="material-symbols-outlined" style="font-size:14px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
         ${isPaid?'Payé':'En attente'}
       </button>
-      ${phone?`<div style="display:flex;gap:4px">
-        <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')">
-          <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>
-        </button>
-        <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="background:rgba(59,130,246,.15);color:#3b82f6">
-          <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>
-        </button>
-        <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')">
-          <span class="material-symbols-outlined filled" style="font-size:18px">call</span>
-        </button>
-      </div>`:''}
     </div>
+    ${phone?`<!-- Ligne 2 : Boutons d'action séparés -->
+    <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
+      <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit">
+        <span class="material-symbols-outlined filled" style="font-size:16px">chat</span>WhatsApp
+      </button>
+      <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
+        <span class="material-symbols-outlined filled" style="font-size:16px">sms</span>SMS
+      </button>
+      <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit">
+        <span class="material-symbols-outlined filled" style="font-size:16px">call</span>Appel
+      </button>
+    </div>`:''}
   </div>`;
 }
 
