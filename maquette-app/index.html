@@ -1604,9 +1604,9 @@ async function loadCredits(){
       const s=statsMap[c.id]||{nombre_echeances_total:0,nombre_echeances_payees:0};
       c.reps={total:s.nombre_echeances_total,paid:s.nombre_echeances_payees};
       const u=unpaidMap[c.id];
-      c.nextUnpaid=(u&&(!c.end_date||u.scheduled_date<=c.end_date))?{id:u.id,scheduled_date:u.scheduled_date,amount:u.amount}:null;
+      c.nextUnpaid=u?{id:u.id,scheduled_date:u.scheduled_date,amount:u.amount}:null;
       const n=upcomingMap[c.id];
-      c.nextUpcoming=(n&&(!c.end_date||n.scheduled_date<=c.end_date))?{id:n.id,scheduled_date:n.scheduled_date,is_paid:n.is_paid,amount:n.amount}:null;
+      c.nextUpcoming=n?{id:n.id,scheduled_date:n.scheduled_date,is_paid:n.is_paid,amount:n.amount}:null;
       _credCache[c.id]=c;
       const el=document.getElementById('cred-row-'+c.id);
       if(el)el.outerHTML=credRow(c);
