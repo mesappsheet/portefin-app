@@ -205,6 +205,30 @@ html, body {
 }
 #prospect-detail-view.open, #credit-detail-view.open, #task-form-view.open { display: flex; }
 
+/* Contenu scrollable des vues détail */
+.detail-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  box-sizing: border-box;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0,0,0,.22) transparent;
+}
+.detail-content::-webkit-scrollbar { display: block !important; width: 5px !important; }
+.detail-content::-webkit-scrollbar-track { background: transparent; }
+.detail-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); border-radius: 4px; }
+
+/* Grand livre mobile scrollable aussi */
+#grand-livre-mob-content {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0,0,0,.22) transparent;
+}
+#grand-livre-mob-content::-webkit-scrollbar { display: block !important; width: 5px !important; }
+#grand-livre-mob-content::-webkit-scrollbar-track { background: transparent; }
+#grand-livre-mob-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); border-radius: 4px; }
+
 /* Buttons */
 .btn-main {
   background: var(--primary); color: white; border: none;
