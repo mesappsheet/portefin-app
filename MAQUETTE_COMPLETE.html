@@ -4718,6 +4718,9 @@ Suivant
     <button onclick="loadRecouvrementDashboard()" class="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
       <span class="material-symbols-outlined text-[16px]">refresh</span> Actualiser
     </button>
+    <button onclick="openNouveauDossierPC()" class="inline-flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20">
+      <span class="material-symbols-outlined text-[16px]">add</span> Nouveau dossier
+    </button>
     <button onclick="exportRecouvrementCSV()" class="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
       <span class="material-symbols-outlined text-[16px]">download</span> Exporter CSV
     </button>
@@ -5784,6 +5787,75 @@ Suivant
             showNotification('Opération enregistrée avec succès', 'success');
             await loadGrandLivre(creditId);
             loadRecouvrementDashboard(); // Refresh les KPIs du dashboard en arrière-plan
+        }
+
+        async function openNouveauDossierPC() {
+            // Charger les crédits non-souffrance éligibles
+            const { data: eligibles, error } = await _supabase
+                .from('credits')
+                .select('id, client_name, amount, status, clients(full_name, phone1)')
+                .neq('health', 'Souffrance')
+                .in('status', ['En cours', 'En attente', 'Échu'])
+                .order('amount', { ascending: false });
+
+            if (error) { showNotification('Erreur chargement crédits', 'error'); return; }
+
+            if (!eligibles || !eligibles.length) {
+                // Petite modale info
+                const ov = document.createElement('div');
+                ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+                ov.innerHTML = `<div style="background:#fff;border-radius:20px;padding:32px;max-width:400px;width:90%;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:48px;color:#94a3b8">check_circle</span>
+                    <h3 style="font-size:18px;font-weight:900;margin:12px 0 6px">Aucun crédit éligible</h3>
+                    <p style="font-size:13px;color:#64748b;margin:0 0 24px">Tous les crédits actifs sont déjà en souffrance ou soldés.</p>
+                    <button onclick="this.closest('[style*=\"fixed\"]').remove()" style="padding:10px 24px;background:#f1f5f9;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit">Fermer</button>
+                </div>`;
+                document.body.appendChild(ov);
+                return;
+            }
+
+            const rows = eligibles.map(c => {
+                const name = c.clients?.full_name || c.client_name || '—';
+                const phone = c.clients?.phone1 || '—';
+                const amt = parseInt(c.amount || 0).toLocaleString('fr-FR');
+                return `<tr class="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors" onclick="document.getElementById('_nd-ov').remove();openSouffranceModalPC('${c.id}','${name.replace(/'/g,"\\'")}')">
+                    <td class="px-4 py-3">
+                        <p class="font-bold text-sm text-slate-900">${name}</p>
+                        <p class="text-xs text-slate-400">${phone}</p>
+                    </td>
+                    <td class="px-4 py-3 text-sm font-black text-slate-700">${amt} FCFA</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-500">${c.status}</span></td>
+                </tr>`;
+            }).join('');
+
+            const ov = document.createElement('div');
+            ov.id = '_nd-ov';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+            ov.innerHTML = `<div style="background:#fff;border-radius:20px;padding:0;max-width:540px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+                <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                        <h3 style="font-size:17px;font-weight:900;margin:0;color:#0f172a">Nouveau dossier en souffrance</h3>
+                        <p style="font-size:12px;color:#64748b;margin:4px 0 0">Sélectionnez le crédit à passer en souffrance</p>
+                    </div>
+                    <button onclick="document.getElementById('_nd-ov').remove()" style="width:32px;height:32px;border:none;background:#f1f5f9;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">
+                        <span class="material-symbols-outlined" style="font-size:18px;color:#64748b">close</span>
+                    </button>
+                </div>
+                <div style="overflow-y:auto;flex:1">
+                    <table style="width:100%;border-collapse:collapse">
+                        <thead><tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <th class="px-4 py-3 text-left">Client</th>
+                            <th class="px-4 py-3 text-left">Montant</th>
+                            <th class="px-4 py-3 text-left">Statut</th>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div style="padding:12px 24px;border-top:1px solid #f1f5f9;flex-shrink:0">
+                    <button onclick="document.getElementById('_nd-ov').remove()" style="width:100%;padding:10px;border:1px solid #e2e8f0;background:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#64748b">Annuler</button>
+                </div>
+            </div>`;
+            document.body.appendChild(ov);
         }
 
         function exportRecouvrementCSV() {
@@ -6873,17 +6945,24 @@ Suivant
 
         async function toggleCreditHealthPC(id, currentHealth) {
             const newHealth = (currentHealth === 'Souffrance') ? 'Sain' : 'Souffrance';
+
+            if (newHealth === 'Souffrance') {
+                const name = currentCredit?.client_name || currentCredit?.clients?.full_name || '';
+                await openSouffranceModalPC(id, name);
+                return;
+            }
+
+            // Retour à Sain
             const go = await openConfirm({
-                title: "Changement d'état",
-                message: `Passer ce crédit en état : ${newHealth.toUpperCase()} ?`,
+                title: "Retour en santé Sain",
+                message: `Passer ce dossier de Souffrance → Sain ? Le Grand Livre sera conservé.`,
                 icon: "health_and_safety"
             });
             if (!go) return;
-
-            const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
+            const { error } = await _supabase.from('credits').update({ health: 'Sain' }).eq('id', id);
             if (error) { showNotification('Erreur : ' + error.message, 'error'); return; }
-            showNotification(`Santé mise à jour : ${newHealth}`, 'info');
-            if (currentCredit && currentCredit.id === id) { currentCredit.health = newHealth; showCreditDetails(currentCredit); }
+            showNotification('Santé mise à jour : Sain', 'info');
+            if (currentCredit && currentCredit.id === id) { currentCredit.health = 'Sain'; showCreditDetails(currentCredit); }
             fetchCredits();
         }
 
@@ -6919,7 +6998,8 @@ Suivant
 
             if (newStatus === 'Souffrance') {
                 overlay.remove();
-                await confirmSouffranceFlowPC();
+                const name = currentCredit?.client_name || currentCredit?.clients?.full_name || '';
+                await openSouffranceModalPC(currentCredit.id, name);
                 return;
             }
 
@@ -6933,39 +7013,118 @@ Suivant
             await applyCreditStatusPC(currentCredit.id, newStatus, overlay);
         }
 
-        async function confirmSouffranceFlowPC() {
-            const amount = prompt("Passage en SOUFFRANCE.\nVeuillez saisir le montant total dû par le client à ce jour (FCFA) :");
-            if (amount === null || amount === "" || isNaN(amount)) {
-                showNotification("Annulé : Montant invalide", "error");
+        // ── MODAL SOUFFRANCE (remplace prompt()) ─────────────────────────────────
+
+        async function openSouffranceModalPC(creditId, creditName) {
+            // Vérifier si un solde_initial existe déjà
+            const { data: existing } = await _supabase.from('recovery_ledger')
+                .select('id').eq('credit_id', creditId).eq('type', 'solde_initial').limit(1);
+            const hasExisting = existing && existing.length > 0;
+
+            const ov = document.createElement('div');
+            ov.id = 'souffrance-modal-pc';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px';
+            ov.innerHTML = `
+                <div style="background:white;border-radius:24px;width:100%;max-width:460px;box-shadow:0 25px 60px rgba(0,0,0,.25);overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border-bottom:1px solid #fecdd3;padding:24px;text-align:center">
+                        <div style="width:56px;height:56px;border-radius:18px;background:#fee2e2;color:#ef4444;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px">
+                            <span class="material-symbols-outlined">gavel</span>
+                        </div>
+                        <h3 style="font-size:18px;font-weight:900;color:#111827;margin:0">Ouverture Dossier Recouvrement</h3>
+                        <p style="font-size:12px;color:#6b7280;margin:6px 0 0">${creditName || 'Client'}</p>
+                    </div>
+                    ${hasExisting ? `<div style="margin:16px 20px 0;padding:10px 14px;background:#fefce8;border:1px solid #fde047;border-radius:12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#854d0e">
+                        <span class="material-symbols-outlined" style="font-size:16px">info</span>
+                        Un solde initial existe déjà dans le Grand Livre. Un nouveau sera ajouté.
+                    </div>` : ''}
+                    <div style="padding:20px 24px 0">
+                        <div style="margin-bottom:16px">
+                            <label style="display:block;font-size:10px;font-weight:900;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+                                Montant total dû à ce jour (FCFA) <span style="color:#ef4444">*</span>
+                            </label>
+                            <input type="number" id="souff-pc-amount" min="1" step="1" placeholder="Ex: 1 500 000"
+                                style="width:100%;padding:14px 16px;border-radius:14px;border:2px solid #e5e7eb;background:#f9fafb;font-size:18px;font-weight:900;color:#111827;outline:none;box-sizing:border-box;font-family:inherit;transition:border-color .15s"
+                                onfocus="this.style.borderColor='#ef4444'" onblur="this.style.borderColor='#e5e7eb'"/>
+                            <p style="font-size:11px;color:#9ca3af;margin:6px 0 0">Ce montant sera le solde de référence dans le Grand Livre.</p>
+                        </div>
+                        <div style="margin-bottom:20px">
+                            <label style="display:block;font-size:10px;font-weight:900;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+                                Motif / Note (optionnel)
+                            </label>
+                            <textarea id="souff-pc-note" rows="2" placeholder="Ex: Défaut de paiement depuis 3 mois, litige en cours…"
+                                style="width:100%;padding:12px 16px;border-radius:14px;border:2px solid #e5e7eb;background:#f9fafb;font-size:13px;color:#374151;outline:none;resize:none;box-sizing:border-box;font-family:inherit;transition:border-color .15s"
+                                onfocus="this.style.borderColor='#ef4444'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+                        </div>
+                    </div>
+                    <div style="padding:0 24px 24px;display:flex;gap:10px">
+                        <button onclick="document.getElementById('souffrance-modal-pc').remove()" style="flex:1;padding:14px;border:1.5px solid #e5e7eb;border-radius:14px;background:white;color:#6b7280;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">Annuler</button>
+                        <button onclick="_submitSouffrancePC('${creditId}')" style="flex:2;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(239,68,68,.3);transition:all .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+                            <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:6px">gavel</span>
+                            Ouvrir le Dossier
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(ov);
+            setTimeout(() => document.getElementById('souff-pc-amount')?.focus(), 150);
+        }
+
+        async function _submitSouffrancePC(creditId) {
+            const amountEl = document.getElementById('souff-pc-amount');
+            const noteEl   = document.getElementById('souff-pc-note');
+            const amount   = parseFloat(amountEl?.value || 0);
+            const note     = noteEl?.value?.trim() || '';
+
+            // Validation
+            if (!amount || amount <= 0) {
+                amountEl.style.borderColor = '#ef4444';
+                amountEl.focus();
+                showNotification('Le montant est obligatoire et doit être supérieur à 0', 'error');
                 return;
             }
 
-            const val = parseFloat(amount);
             const go = await openConfirm({
-                title: "Client en Souffrance",
-                message: `Confirmer le passage en SOUFFRANCE avec un solde de départ de ${val.toLocaleString()} FCFA ?`,
-                icon: "warning",
-                type: "danger"
+                title: 'Confirmer l\'ouverture du dossier',
+                message: `Solde initial : ${amount.toLocaleString('fr-FR')} FCFA\nCette opération sera tracée dans le Grand Livre.`,
+                icon: 'gavel', type: 'danger'
             });
             if (!go) return;
 
-            // 1. Enregistrer dans le Grand Livre de Recouvrement (Régularisation initiale)
-            const { error: ledgerError } = await _supabase.from('recovery_ledger').insert({
-                credit_id: currentCredit.id,
-                operation_type: 'Solde_Initial_Souffrance',
-                amount: val,
-                notes: `Passage en souffrance - Solde déclaré : ${val} FCFA`,
-                created_by: getSessionUser()?.id
-            });
+            document.getElementById('souffrance-modal-pc')?.remove();
+            const today = new Date().toISOString().split('T')[0];
 
-            if (ledgerError) {
-                showNotification("Erreur Ledger : " + ledgerError.message, "error");
+            // 1. INSERT recovery_ledger — colonnes correctes
+            const { error: ledgerErr } = await _supabase.from('recovery_ledger').insert({
+                credit_id:   creditId,
+                type:        'solde_initial',
+                amount:      amount,
+                op_date:     today,
+                description: note || `Passage en souffrance — Solde initial : ${amount.toLocaleString('fr-FR')} FCFA`
+            });
+            if (ledgerErr) {
+                showNotification('Erreur Grand Livre : ' + ledgerErr.message, 'error');
                 return;
             }
 
-            // 2. Changer le statut
-            await applyCreditStatusPC(currentCredit.id, 'Souffrance', null);
+            // 2. UPDATE credits health + status
+            const { error: creditErr } = await _supabase.from('credits')
+                .update({ health: 'Souffrance' })
+                .eq('id', creditId);
+            if (creditErr) {
+                showNotification('Grand Livre enregistré mais erreur crédit : ' + creditErr.message, 'error');
+                return;
+            }
+
+            showNotification('Dossier ouvert en recouvrement ✓', 'success');
+            if (currentCredit?.id === creditId) {
+                currentCredit.health = 'Souffrance';
+                showCreditDetails(currentCredit);
+            }
+            fetchCredits?.();
+            // Refresh le module recouvrement si actif
+            if (document.getElementById('rec-dossiers-list')) loadRecouvrementDashboard();
         }
+
+        // ── FIN MODAL SOUFFRANCE ──────────────────────────────────────────────────
 
         async function openRegularizeModalPC(creditId) {
             const amount = prompt("RÉGULARISATION DU SOLDE\nEntrez le montant de l'ajustement (ex: -5000 pour une remise, 5000 pour un frais supplémentaire) :");
