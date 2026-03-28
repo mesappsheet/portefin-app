@@ -26,13 +26,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
-            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
                         "primary": "#f27f0d",
                         "background-light": "#f8f7f5",
-                        "background-dark": "#221910",
                     },
                     fontFamily: {
                         "display": ["Inter"]
@@ -57,9 +55,7 @@
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .font-fill { font-variation-settings: 'FILL' 1 !important; }
         .active-nav { background-color: rgba(242, 127, 13, 0.1); color: #f27f0d; }
-        .dark .active-nav { background-color: rgba(242, 127, 13, 0.2); color: #f1f5f9; }
         .sub-nav-active { background-color: #f1f5f9; font-weight: 700; color: #0f172a; }
-        .dark .sub-nav-active { background-color: #1e293b; color: #ffffff; }
         
         /* RESIZABLE SIDEBARS */
         .resizer-v {
@@ -141,10 +137,6 @@
             z-index: 15 !important;
             background-color: #f8fafc !important;
             box-shadow: 0 1px 0 #e2e8f0;
-        }
-        .dark .tbl-scroll thead th {
-            background-color: #1e293b !important;
-            box-shadow: 0 1px 0 #334155;
         }
 
         .loading-spinner {
@@ -604,14 +596,7 @@
 <span class="material-symbols-outlined text-[18px]">language</span>
             Global Status
           </button>
-<div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-<button onclick="document.documentElement.classList.remove('dark')" class="p-1.5 rounded-md bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white">
-<span class="material-symbols-outlined text-[20px]">light_mode</span>
-</button>
-<button onclick="document.documentElement.classList.add('dark')" class="p-1.5 rounded-md text-slate-400 hover:text-slate-600">
-<span class="material-symbols-outlined text-[20px]">dark_mode</span>
-</button>
-</div>
+
                         <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
                     </button>
                     <button class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all hover:rotate-90" onclick="loadScreen('dashboard_config')">
@@ -3254,8 +3239,16 @@
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
         </button>
         <button onclick="if(currentCredit){populateScheduleView(currentCredit);loadScreen('credits_schedule');}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
-          <span class="material-symbols-outlined text-primary text-lg">payments</span>
+          <span class="material-symbols-outlined text-primary text-lg">calendar_month</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Échéancier</span>
+        </button>
+        <button onclick="if(currentCredit){openNoteModalPC(currentCredit.id);}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors text-left">
+          <span class="material-symbols-outlined text-amber-500 text-lg">sticky_note_2</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Observations & Notes</span>
+        </button>
+        <button onclick="if(currentCredit){openRegularizeModalPC(currentCredit.id);}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-t border-slate-100/50">
+          <span class="material-symbols-outlined text-blue-600 text-lg">account_balance_wallet</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Régulariser le dossier</span>
         </button>
         <div class="border-t border-slate-100 dark:border-slate-800"></div>
         <button onclick="if(currentCredit){const n=(currentCredit.clients?.full_name||currentCredit.client_name||'');const id=(currentCredit.client_id||currentCredit.id||'');openTaskForEntityPC(id,n,'client');}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors text-left">
@@ -6340,63 +6333,179 @@ Suivant
         }
 
 
-        async function toggleCreditHealth(creditId, currentHealth) {
-            const nextHealth = currentHealth === 'Sain' ? 'Souffrance' : 'Sain';
-            
-            const { error } = await _supabase
-                .from('credits')
-                .update({ health: nextHealth })
-                .eq('id', creditId);
+        // --- SECURED FINANCIAL FUNCTIONS (PC PARITY) ---
+        async function openConfirm(options) {
+            const overlay = document.getElementById('confirm-overlay');
+            if (!overlay) return confirm(options.message);
+            const title = document.getElementById('confirm-title');
+            const msg = document.getElementById('confirm-message');
+            const icon = document.getElementById('confirm-icon');
+            const iconBox = document.getElementById('confirm-icon-box');
+            const btnOk = document.getElementById('confirm-ok');
+            const btnCancel = document.getElementById('confirm-cancel');
 
-            if (error) {
-                alert("Erreur lors de la mise à jour de la santé : " + error.message);
-            } else {
-                showNotification(`Santé du crédit : ${nextHealth}`, "info");
-                fetchCredits();
+            title.innerText = options.title || "Confirmation";
+            msg.innerText = options.message || "Confirmez-vous cette action ?";
+            icon.innerText = options.icon || "verified";
+            
+            iconBox.className = "size-20 rounded-[28px] bg-primary/10 text-primary flex items-center justify-center mx-auto mb-6 shadow-inner";
+            btnOk.className = "py-4 px-6 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95";
+
+            if (options.type === 'danger') {
+                iconBox.className = "size-20 rounded-[28px] bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-6 shadow-inner";
+                btnOk.className = "py-4 px-6 rounded-2xl bg-red-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-red-600/20 hover:bg-red-700 transition-all active:scale-95";
             }
+
+            overlay.classList.remove('hidden');
+            return new Promise((resolve) => {
+                btnOk.onclick = () => { overlay.classList.add('hidden'); resolve(true); };
+                btnCancel.onclick = () => { overlay.classList.add('hidden'); resolve(false); };
+            });
         }
 
-        async function toggleCreditStatus(creditId, currentStatus) {
-            if (currentStatus === 'Soldé') return;
-            
-            if (!confirm("Voulez-vous marquer ce crédit comme SOLDÉ ?\n\nCela passera automatiquement toutes les échéances restantes à 'Payé' (Paiement anticipé).")) return;
+        async function toggleCreditHealthPC(id, currentHealth) {
+            const newHealth = (currentHealth === 'Souffrance') ? 'Sain' : 'Souffrance';
+            const go = await openConfirm({
+                title: "Changement d'état",
+                message: `Passer ce crédit en état : ${newHealth.toUpperCase()} ?`,
+                icon: "health_and_safety"
+            });
+            if (!go) return;
 
-            const now = new Date().toISOString().split('T')[0];
+            const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
+            if (error) { showNotification('Erreur : ' + error.message, 'error'); return; }
+            showNotification(`Santé mise à jour : ${newHealth}`, 'info');
+            if (currentCredit && currentCredit.id === id) { currentCredit.health = newHealth; showCreditDetails(currentCredit); }
+            fetchCredits();
+        }
 
-            // 1. Update credit status
-            const { error: creditError } = await _supabase
-                .from('credits')
-                .update({ 
-                    status: 'Soldé', 
-                    end_date: now 
-                })
-                .eq('id', creditId);
+        async function openCreditStatusModalPC() {
+            if (!currentCredit) return;
+            const overlay = document.createElement('div');
+            overlay.className = "fixed inset-0 z-[5000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300";
+            overlay.innerHTML = `
+                <div class="bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl scale-in-center">
+                    <div class="p-8 text-center bg-slate-50 border-b border-slate-100">
+                        <div class="size-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-3xl font-fill">sync_alt</span>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-900 tracking-tight">Changer le Statut</h3>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <button onclick="handleStatusChangePC('En cours', this.parentElement.parentElement.parentElement)" class="w-full py-4 px-6 rounded-2xl bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">En cours</button>
+                        <button onclick="handleStatusChangePC('Échu', this.parentElement.parentElement.parentElement)" class="w-full py-4 px-6 rounded-2xl bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Échu</button>
+                        <button onclick="handleStatusChangePC('Souffrance', this.parentElement.parentElement.parentElement)" class="w-full py-4 px-6 rounded-2xl bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">Souffrance</button>
+                        <button onclick="handleStatusChangePC('Soldé', this.parentElement.parentElement.parentElement)" class="w-full py-4 px-6 rounded-2xl bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all border-t border-slate-200 mt-2">Soldé</button>
+                    </div>
+                    <div class="p-4 bg-slate-50 text-center">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">Annuler</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
 
-            if (creditError) {
-                alert("Erreur lors de la clôture du dossier : " + creditError.message);
+        async function handleStatusChangePC(newStatus, overlay) {
+            if (!currentCredit) return;
+            if (newStatus === currentCredit.status) { overlay.remove(); return; }
+
+            if (newStatus === 'Souffrance') {
+                overlay.remove();
+                await confirmSouffranceFlowPC();
                 return;
             }
 
-            // 2. Update all pending repayments
-            const { error: repayError } = await _supabase
-                .from('repayments')
-                .update({ 
-                    is_paid: true, 
-                    actual_payment_date: now,
-                    status: 'Payé'
-                })
-                .eq('credit_id', creditId)
-                .eq('is_paid', false);
+            const go = await openConfirm({
+                title: "Confirmation Statut",
+                message: `Passer le dossier en statut ${newStatus.toUpperCase()} ?`,
+                icon: "sync_alt"
+            });
+            if (!go) return;
 
-            if (repayError) {
-                console.error("Erreur mise à jour échéances:", repayError);
+            await applyCreditStatusPC(currentCredit.id, newStatus, overlay);
+        }
+
+        async function confirmSouffranceFlowPC() {
+            const amount = prompt("Passage en SOUFFRANCE.\nVeuillez saisir le montant total dû par le client à ce jour (FCFA) :");
+            if (amount === null || amount === "" || isNaN(amount)) {
+                showNotification("Annulé : Montant invalide", "error");
+                return;
             }
 
-            showNotification("Crédit soldé avec succès !", "success");
-            fetchCredits();
-            
-            // 3. Clear existing dashboard stats to force refresh
-            if (typeof fetchDashboardStats === 'function') fetchDashboardStats();
+            const val = parseFloat(amount);
+            const go = await openConfirm({
+                title: "Client en Souffrance",
+                message: `Confirmer le passage en SOUFFRANCE avec un solde de départ de ${val.toLocaleString()} FCFA ?`,
+                icon: "warning",
+                type: "danger"
+            });
+            if (!go) return;
+
+            // 1. Enregistrer dans le Grand Livre de Recouvrement (Régularisation initiale)
+            const { error: ledgerError } = await _supabase.from('recovery_ledger').insert({
+                credit_id: currentCredit.id,
+                operation_type: 'Solde_Initial_Souffrance',
+                amount: val,
+                notes: `Passage en souffrance - Solde déclaré : ${val} FCFA`,
+                created_by: getSessionUser()?.id
+            });
+
+            if (ledgerError) {
+                showNotification("Erreur Ledger : " + ledgerError.message, "error");
+                return;
+            }
+
+            // 2. Changer le statut
+            await applyCreditStatusPC(currentCredit.id, 'Souffrance', null);
+        }
+
+        async function openRegularizeModalPC(creditId) {
+            const amount = prompt("RÉGULARISATION DU SOLDE\nEntrez le montant de l'ajustement (ex: -5000 pour une remise, 5000 pour un frais supplémentaire) :");
+            if (amount === null || amount === "" || isNaN(amount)) return;
+
+            const notes = prompt("Motif de la régularisation :");
+            if (!notes) return;
+
+            const go = await openConfirm({
+                title: "Régularisation",
+                message: `Enregistrer cet ajustement de ${amount} FCFA ?`,
+                icon: "account_balance_wallet"
+            });
+            if (!go) return;
+
+            const { error } = await _supabase.from('recovery_ledger').insert({
+                credit_id: creditId,
+                operation_type: 'Regularisation',
+                amount: parseFloat(amount),
+                notes: notes,
+                created_by: getSessionUser()?.id
+            });
+
+            if (error) {
+                showNotification("Erreur : " + error.message, "error");
+            } else {
+                showNotification("Régularisation effectuée", "success");
+                fetchCredits();
+            }
+        }
+        
+        async function openNoteModalPC(creditId) {
+            const note = prompt("Ajouter une observation importante pour ce dossier :");
+            if (!note) return;
+
+            const { error } = await _supabase.from('credit_notes').insert({
+                credit_id: creditId,
+                content: note,
+                author_id: getSessionUser()?.id
+            });
+
+            if (error) {
+                showNotification("Erreur : " + error.message, "error");
+            } else {
+                showNotification("Note ajoutée", "success");
+                fetchCreditNotes(creditId);
+            }
+        }
 
             // Clean up details view if it was showing this credit
             if (currentCredit && currentCredit.id === creditId) {
@@ -6404,7 +6513,7 @@ Suivant
                 document.getElementById('credit-details-container').classList.add('hidden');
                 currentCredit = null;
             }
-        }
+
 
 
         // --- MISSING CREDIT MODULE HELPERS (Progress, End-Term, Settled) ---
@@ -6797,7 +6906,12 @@ Suivant
         }
 
         async function handleMarkAsPaid(id) {
-            if (!confirm("Confirmer l'encaissement de cette échéance ?")) return;
+            const go = await openConfirm({
+                title: "Encaisser Échéance",
+                message: "Confirmer l'encaissement de cette échéance ?",
+                icon: "payments"
+            });
+            if (!go) return;
 
             const now = new Date().toISOString().split('T')[0];
 
@@ -6811,9 +6925,9 @@ Suivant
                 .eq('id', id);
 
             if (error) {
-                alert("Erreur lors du paiement : " + error.message);
+                showNotification("Erreur lors du paiement : " + error.message, "error");
             } else {
-                alert("Paiement enregistré !");
+                showNotification("Paiement enregistré !", "success");
                 if (currentCredit) populateScheduleView(currentCredit);
             }
         }
@@ -8892,7 +9006,13 @@ Suivant
 
         async function handleDeleteCredit() {
             if (!currentCredit) return;
-            openModal('credit_confirm_delete');
+            const go = await openConfirm({
+                title: "Supprimer le dossier",
+                message: "Supprimer définitivement ce dossier et toutes ses données rattachées ?",
+                icon: "delete_forever",
+                type: "danger"
+            });
+            if (go) executeDeleteCredit();
         }
 
         async function executeDeleteCredit() {
@@ -8904,10 +9024,9 @@ Suivant
                 .eq('id', currentCredit.id);
 
             if (error) {
-                alert("Erreur lors de la suppression : " + error.message);
+                showNotification("Erreur lors de la suppression : " + error.message, "error");
             } else {
                 showNotification("Dossier de crédit supprimé avec succès.", "success");
-                closeModal();
                 if (document.getElementById('credit-details-container')) {
                     document.getElementById('credit-details-container').classList.add('hidden');
                 }
@@ -8916,6 +9035,31 @@ Suivant
                 }
                 fetchCredits();
             }
+        }
+        
+        async function applyCreditStatusPC(creditId, status, overlay) {
+            const now = new Date().toISOString().split('T')[0];
+            const updates = { status: status };
+            if (status === 'Soldé') updates.end_date = now;
+
+            const { error: creditError } = await _supabase.from('credits').update(updates).eq('id', creditId);
+            if (creditError) { showNotification("Erreur Statut : " + creditError.message, "error"); return; }
+
+            if (status === 'Soldé') {
+                const { error: repayError } = await _supabase.from('repayments').update({ 
+                    is_paid: true, actual_payment_date: now, status: 'Payé' 
+                }).eq('credit_id', creditId).eq('is_paid', false);
+                if (repayError) console.error("Erreur clôture échéances:", repayError);
+            }
+
+            if (overlay) overlay.remove();
+            showNotification(`Dossier passé en ${status}`, "success");
+            if (currentCredit && currentCredit.id === creditId) { 
+                currentCredit.status = status; 
+                if (status === 'Soldé') currentCredit.end_date = now;
+                showCreditDetails(currentCredit); 
+            }
+            fetchCredits();
         }
 
         // Helper to trigger edit from screens where currentCredit might not be pre-loaded correctly
@@ -8941,9 +9085,13 @@ Suivant
                 return;
             }
 
-            // --- ÉTAPE 1 : Confirmation Initiale (Mise en garde) ---
-            const warnMessage = "⚠️ MISE EN GARDE MODIFICATION ⚠️\n\nPour garantir l'intégrité des calculs, modifier ce dossier supprimera TOUTES les données actuelles de ce client (échéancier, remboursements, notes, documents).\n\nSouhaitez-vous continuer cette opération irréversible ?";
-            if (!confirm(warnMessage)) return;
+            const go = await openConfirm({
+                title: "⚠️ Modification Risquée",
+                message: "Modifier ce dossier supprimera TOUTES les données rattachées (échéancier, remboursements, notes, documents). Continuer ?",
+                icon: "warning",
+                type: "danger"
+            });
+            if (!go) return;
 
             // Sauvegarde des IDs avant suppression
             const creditId = currentCredit.id;
@@ -10064,5 +10212,22 @@ Suivant
         window.location.replace("./login.html");
     }
     </script>
+<!-- SYSTEME DE CONFIRMATION PREMIUM -->
+<div id="confirm-overlay" class="fixed inset-0 z-[5000] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+        <div class="p-8 text-center bg-gradient-to-b from-slate-50 to-white">
+            <div id="confirm-icon-box" class="size-20 rounded-[28px] bg-primary/10 text-primary flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <span id="confirm-icon" class="material-symbols-outlined text-4xl font-fill">verified</span>
+            </div>
+            <h3 id="confirm-title" class="text-2xl font-black text-slate-900 mb-3 tracking-tight leading-tight">Confirmation</h3>
+            <p id="confirm-message" class="text-slate-500 font-bold leading-relaxed">Voulez-vous vraiment effectuer cette opération ?</p>
+        </div>
+        <div class="p-6 pt-0 bg-white grid grid-cols-2 gap-4">
+            <button id="confirm-cancel" class="py-4 px-6 rounded-2xl bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">NON</button>
+            <button id="confirm-ok" class="py-4 px-6 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95">OUI, VALIDER</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

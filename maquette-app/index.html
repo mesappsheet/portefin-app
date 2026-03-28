@@ -48,7 +48,7 @@ body.light{
 /* Layout */
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;position:relative}
 #topbar{flex-shrink:0;padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));background:var(--top-bg);border-bottom:1px solid var(--top-border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;z-index:50}
-#view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);position:relative}
+#view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;background:var(--bg);position:relative}
 #bottomnav{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);background:var(--bar-bg);border-top:1px solid var(--bar-border);backdrop-filter:blur(16px);display:flex;z-index:50}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;transition:all .2s;gap:3px;min-height:56px}
 .nav-item .ni{font-size:22px;color:var(--nav-icon);transition:all .2s}
@@ -359,26 +359,24 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
 
   <!-- Top bar -->
   <div id="topbar">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#f27f0d,#c96a00);display:flex;align-items:center;justify-content:center">
-        <span class="material-symbols-outlined filled" style="font-size:18px;color:white">account_balance_wallet</span>
+  <!-- Header -->
+  <header style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#f27f0d,#fb923c);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(242,127,13,.2)">
+        <span class="material-symbols-outlined filled" style="color:white;font-size:24px">account_balance_wallet</span>
       </div>
       <div>
-        <p style="font-size:14px;font-weight:800;margin:0;color:var(--text);line-height:1">PorteFin</p>
-        <p id="top-date" style="font-size:10px;color:var(--text2);margin:0;line-height:1.4"></p>
+        <h1 style="font-size:18px;font-weight:900;margin:0;color:var(--text);letter-spacing:-.5px">PorteFin</h1>
+        <p id="top-date" style="font-size:11px;color:var(--text3);margin:0;font-weight:700;text-transform:uppercase;letter-spacing:.05em"></p>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <!-- Toggle thème -->
-      <button id="theme-btn" onclick="toggleTheme()" style="width:30px;height:30px;border-radius:50%;background:var(--close-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s">
-        <span class="material-symbols-outlined filled" id="theme-icon" style="font-size:16px;color:var(--text2)">dark_mode</span>
+    <div style="display:flex;gap:10px">
+      <!-- Theme button removed to enforce light mode -->
+      <button onclick="confirmLogout()" style="width:36px;height:36px;border-radius:50%;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#ef4444">logout</span>
       </button>
-      <!-- Profil / déconnexion -->
-      <div id="top-user" style="width:30px;height:30px;border-radius:50%;background:rgba(242,127,13,.2);border:1px solid rgba(242,127,13,.4);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="confirmLogout()">
-        <span class="material-symbols-outlined" style="font-size:16px;color:#f27f0d">person</span>
-      </div>
     </div>
-  </div>
+  </header>
 
   <!-- Vue principale -->
   <div id="view"></div>
@@ -469,26 +467,21 @@ let _prosCache={};
 function init(){
   const now=new Date();
   document.getElementById('top-date').textContent=now.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
-  // Restaurer thème sauvegardé
-  if(localStorage.getItem('pf-theme')==='light'){
-    document.body.classList.add('light');
-    document.getElementById('theme-icon').textContent='light_mode';
-  }
+  // Force Light Mode
+  document.body.classList.add('light');
   navTo('dashboard');
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
-// ─── THÈME ────────────────────────────────────
-function toggleTheme(){
-  const isLight=document.body.classList.toggle('light');
-  const icon=document.getElementById('theme-icon');
-  icon.textContent=isLight?'light_mode':'dark_mode';
-  localStorage.setItem('pf-theme',isLight?'light':'dark');
-}
+// ─── THÈME (Forcé en clair) ───────────────────
+function toggleTheme(){} // Désactivé
 
 // ─── NAVIGATION ───────────────────────────────
 function navTo(screen){
   currentScreen=screen;
+  document.body.style.overflow=''; // reset si modale mal fermée
+  closeCtxMenu();
+  document.getElementById('view').scrollTop=0;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const nav=document.getElementById('nav-'+screen);
   if(nav)nav.classList.add('active');
@@ -564,10 +557,80 @@ function credMenu(btn,cid){
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
     {sep:true},
+    {icon:'groups',label:'Régulariser solde',fn:()=>openRegularizationModal(cid,name),color:'#f27f0d'},
+    {sep:true},
     {icon:'edit',label:'Modifier',fn:()=>openClientEditForm(cid)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
   ];
   showMenu(btn,items);
+}
+
+// ─── REGULARISATION ───────────────────────────
+function openRegularizationModal(cid, name){
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+        <div style="width:40px;height:40px;border-radius:12px;background:rgba(242,127,13,.15);display:flex;align-items:center;justify-content:center">
+          <span class="material-symbols-outlined filled" style="color:#f27f0d;font-size:22px">balance</span>
+        </div>
+        <div>
+          <p style="font-size:10px;font-weight:700;color:#f27f0d;text-transform:uppercase;letter-spacing:.1em;margin:0">Régularisation</p>
+          <p style="font-size:16px;font-weight:800;color:var(--text);margin:0">${name}</p>
+        </div>
+      </div>
+      
+      <label class="m-label">Montant de la régularisation</label>
+      <input id="reg-amount" type="number" class="m-input" placeholder="Ex: 5000" style="margin-bottom:16px">
+      
+      <label class="m-label">Type d'opération</label>
+      <select id="reg-type" class="m-input" style="margin-bottom:16px">
+        <option value="Regularisation_Positive">Régularisation (Ajout au remboursé)</option>
+        <option value="Regularisation_Negative">Régularisation (Déduction du remboursé)</option>
+      </select>
+      
+      <label class="m-label">Motif / Commentaire</label>
+      <textarea id="reg-reason" class="m-input" rows="3" placeholder="Raison de la régularisation..."></textarea>
+      
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+        <button onclick="saveRegularization('${cid}')" class="btn-primary" style="flex:2">
+          <span class="material-symbols-outlined" style="font-size:18px">check_circle</span> Valider
+        </button>
+      </div>
+    </div>`);
+}
+
+async function saveRegularization(cid){
+  const amount = parseFloat(document.getElementById('reg-amount').value);
+  const type = document.getElementById('reg-type').value;
+  const reason = document.getElementById('reg-reason').value || 'Sans motif';
+  
+  if(!amount || amount <= 0){ toast('Montant invalide','err'); return; }
+  
+  // Vérification solde négatif avant application (si négatif)
+  if(type === 'Regularisation_Negative'){
+    const {data:stats} = await sb.from('credit_stats').select('total_rembourse').eq('credit_id', cid).single();
+    if(stats && stats.total_rembourse < amount){
+      toast('Opération impossible : solde insuffisant','err');
+      return;
+    }
+  }
+
+  openConfirm('Confirmer la régularisation ?', `Cette opération de ${fmt(amount)} FCFA sera enregistrée distinctement dans le grand livre.`, async () => {
+    const {error} = await sb.from('recovery_ledger').insert({
+      credit_id: cid,
+      type: type,
+      amount: amount,
+      op_date: today(),
+      description: reason
+    });
+    
+    if(error){ toast('Erreur de sauvegarde','err'); return; }
+    toast('Régularisation effectuée ✓','ok');
+    closeModal();
+    if(currentScreen==='credits') loadCredits();
+    if(currentCreditId===cid) openCreditDetail(cid);
+  }, 'Confirmer', '#f27f0d');
 }
 function prosMenu(btn,pid){
   const p=_prosCache[pid];if(!p)return;
@@ -1001,27 +1064,39 @@ async function viewDashboard(){
 }
 
 async function quickToggle(id,isPaid,btn){
-  btn.disabled=true;
-  try{
-    const newPaid=!isPaid;
-    const{error}=await sb.from('repayments').update({
-      is_paid:newPaid,
-      actual_payment_date:newPaid?today():null
-    }).eq('id',id);
-    if(error)throw error;
-    if(newPaid){
-      btn.className='toggle-paid paid';
-      btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">check_circle</span> Payé';
-      btn.onclick=()=>quickToggle(id,true,btn);
-    }else{
-      btn.className='toggle-paid pending';
-      btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">radio_button_unchecked</span> En attente';
-      btn.onclick=()=>quickToggle(id,false,btn);
-    }
-    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
-  }catch(e){
-    toast('Erreur de mise à jour','err');
-  }finally{btn.disabled=false;}
+  const actionText = isPaid ? "Remettre en attente ?" : "Marquer comme payé ?";
+  openConfirm(actionText, "Confirmez-vous cette opération ?", async () => {
+    btn.disabled=true;
+    try{
+      const newPaid=!isPaid;
+      
+      if(!newPaid){
+        const {data:rep} = await sb.from('repayments').select('amount, credit_id').eq('id', id).single();
+        const {data:stats} = await sb.from('credit_stats').select('total_rembourse').eq('credit_id', rep.credit_id).single();
+        if(stats && stats.total_rembourse < rep.amount){
+          toast('Impossible : solde insuffisant','err');
+          btn.disabled=false; return;
+        }
+      }
+
+      const{error}=await sb.from('repayments').update({
+        is_paid:newPaid,
+        actual_payment_date:newPaid?today():null
+      }).eq('id',id);
+      if(error)throw error;
+      toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+      if(newPaid){
+        btn.className='toggle-paid paid';
+        btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">check_circle</span> Payé';
+        btn.onclick=()=>quickToggle(id,true,btn);
+      }else{
+        btn.className='toggle-paid pending';
+        btn.innerHTML='<span class="material-symbols-outlined" style="font-size:13px">radio_button_unchecked</span> En attente';
+        btn.onclick=()=>quickToggle(id,false,btn);
+      }
+    }catch(e){toast('Erreur','err');}
+    finally{btn.disabled=false;}
+  }, "Confirmer", isPaid ? "#f43f5e" : "#10b981");
 }
 
 // ═══════════════════════════════════════════════
@@ -1168,17 +1243,34 @@ function repRow(r){
 }
 
 async function toggleRepPaid(id,isPaid,btn){
-  btn.disabled=true;
-  try{
-    const newPaid=!isPaid;
-    const{error}=await sb.from('repayments').update({
-      is_paid:newPaid,
-      actual_payment_date:newPaid?today():null
-    }).eq('id',id);
-    if(error)throw error;
-    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
-    loadRepayments();
-  }catch(e){toast('Erreur','err');btn.disabled=false;}
+  const actionText = isPaid ? "Remettre en attente ?" : "Marquer comme payé ?";
+  const subText = isPaid ? "Cette action va soustraire le montant du solde remboursé." : "Cette action va ajouter le montant au solde remboursé.";
+  
+  openConfirm(actionText, subText, async () => {
+    btn.disabled=true;
+    try{
+      const newPaid=!isPaid;
+      
+      // Sécurité solde négatif
+      if(!newPaid){
+        const {data:rep} = await sb.from('repayments').select('amount, credit_id').eq('id', id).single();
+        const {data:stats} = await sb.from('credit_stats').select('total_rembourse').eq('credit_id', rep.credit_id).single();
+        if(stats && stats.total_rembourse < rep.amount){
+          toast('Impossible : le solde deviendrait négatif','err');
+          btn.disabled=false;
+          return;
+        }
+      }
+
+      const{error}=await sb.from('repayments').update({
+        is_paid:newPaid,
+        actual_payment_date:newPaid?today():null
+      }).eq('id',id);
+      if(error)throw error;
+      toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+      loadRepayments();
+    }catch(e){toast('Erreur','err');btn.disabled=false;}
+  }, "Confirmer", isPaid ? "#f43f5e" : "#10b981");
 }
 
 // ═══════════════════════════════════════════════
@@ -1228,9 +1320,9 @@ async function loadCredits(){
   try{
     let q=sb.from('credits')
       .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
-      .order('status', { ascending: true })
-      .order('health', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('status',{ascending:true})
+      .order('health',{ascending:false})
+      .order('created_at',{ascending:false});
     if(credFilter==='solde'){
       q=q.in('status',['Soldé','SOLDÉ','soldé']);
     } else {
@@ -1241,13 +1333,20 @@ async function loadCredits(){
     const{data,error}=await q;
     if(error)throw error;
     let rows=data||[];
-    if(credSearch){
-      const s=credSearch.toLowerCase();
-      rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));
-    }
+    if(credSearch){const s=credSearch.toLowerCase();rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
 
-    // Statistiques depuis la vue (compteurs uniquement)
+    // Étape 1 : afficher la liste immédiatement avec données de base
+    rows.forEach(c=>{c.reps={total:0,paid:0};c.nextUnpaid=null;c.nextUpcoming=null;_credCache[c.id]=c;});
+    list.innerHTML=`
+      <div style="padding:0 16px 8px">
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} dossier${rows.length>1?'s':''}</span>
+      </div>
+      <div class="glass" style="margin:0 16px;overflow:hidden" id="cred-rows-container">
+        ${rows.map(c=>credRow(c)).join('')}
+      </div>`;
+
+    // Étape 2 : charger compteurs + badges en arrière-plan, puis mettre à jour chaque ligne
     const ids=rows.map(c=>c.id);
     const today=new Date().toISOString().split('T')[0];
     const [{data:statsData},{data:unpaidData},{data:upcomingData}]=await Promise.all([
@@ -1255,34 +1354,29 @@ async function loadCredits(){
       sb.from('repayments').select('id,credit_id,scheduled_date,amount').in('credit_id',ids).eq('is_paid',false).lte('scheduled_date',today).order('scheduled_date',{ascending:false}),
       sb.from('repayments').select('id,credit_id,scheduled_date,is_paid,amount').in('credit_id',ids).gte('scheduled_date',today).order('scheduled_date',{ascending:true})
     ]);
-    const statsMap={};
-    (statsData||[]).forEach(s=>{statsMap[s.credit_id]=s;});
-    const unpaidMap={};
-    (unpaidData||[]).forEach(r=>{if(!unpaidMap[r.credit_id])unpaidMap[r.credit_id]=r;});
-    const upcomingMap={};
-    (upcomingData||[]).forEach(r=>{if(!upcomingMap[r.credit_id])upcomingMap[r.credit_id]=r;});
+    const statsMap={};(statsData||[]).forEach(s=>{statsMap[s.credit_id]=s;});
+    const unpaidMap={};(unpaidData||[]).forEach(r=>{if(!unpaidMap[r.credit_id])unpaidMap[r.credit_id]=r;});
+    const upcomingMap={};(upcomingData||[]).forEach(r=>{if(!upcomingMap[r.credit_id])upcomingMap[r.credit_id]=r;});
+
+    // Vérifier que la vue est toujours là (l'utilisateur n'a pas changé d'écran)
+    if(!document.getElementById('cred-rows-container'))return;
 
     rows.forEach(c=>{
       const s=statsMap[c.id]||{nombre_echeances_total:0,nombre_echeances_payees:0};
       c.reps={total:s.nombre_echeances_total,paid:s.nombre_echeances_payees};
-
-      // Badges : requêtes directes sur repayments (même logique que PC)
       const u=unpaidMap[c.id];
       c.nextUnpaid=(u&&(!c.end_date||u.scheduled_date<=c.end_date))?{id:u.id,scheduled_date:u.scheduled_date,amount:u.amount}:null;
       const n=upcomingMap[c.id];
       c.nextUpcoming=(n&&(!c.end_date||n.scheduled_date<=c.end_date))?{id:n.id,scheduled_date:n.scheduled_date,is_paid:n.is_paid,amount:n.amount}:null;
-
       _credCache[c.id]=c;
+      // Mettre à jour la ligne individuellement
+      const el=document.getElementById('cred-row-'+c.id);
+      if(el)el.outerHTML=credRow(c);
     });
-
-    list.innerHTML=`
-      <div style="padding:0 16px 8px">
-        <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} dossier${rows.length>1?'s':''}</span>
-      </div>
-      <div class="glass" style="margin:0 16px;overflow:hidden">
-        ${rows.map(c=>credRow(c)).join('')}
-      </div>`;
-  }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+  }catch(e){
+    const list=document.getElementById('cred-list');
+    if(list)list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+  }
 }
 
 function credRow(c){
@@ -1468,17 +1562,31 @@ async function viewEcheancier(creditId,clientName){
 }
 
 async function toggleEch(id,isPaid,creditId,clientName,btn){
-  btn.disabled=true;
-  try{
-    const newPaid=!isPaid;
-    const{error}=await sb.from('repayments').update({
-      is_paid:newPaid,
-      actual_payment_date:newPaid?today():null
-    }).eq('id',id);
-    if(error)throw error;
-    toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
-    viewEcheancier(creditId,clientName);
-  }catch(e){toast('Erreur','err');btn.disabled=false;}
+  const actionText = isPaid ? "Remettre en attente ?" : "Marquer comme payé ?";
+  openConfirm(actionText, "Confirmez-vous cette opération ?", async () => {
+    btn.disabled=true;
+    try{
+      const newPaid=!isPaid;
+      
+      if(!newPaid){
+        // Vérification balance négative avant de remettre en attente
+        const {data:rep} = await sb.from('repayments').select('amount').eq('id', id).single();
+        const {data:stats} = await sb.from('credit_stats').select('total_rembourse').eq('credit_id', creditId).single();
+        if(stats && stats.total_rembourse < rep.amount){
+          toast('Impossible : solde insuffisant','err');
+          btn.disabled=false; return;
+        }
+      }
+
+      const {error}=await sb.from('repayments').update({
+        is_paid:newPaid,
+        actual_payment_date:newPaid?today():null
+      }).eq('id',id);
+      if(error)throw error;
+      toast(newPaid?'Marqué payé ✓':'Remis en attente','ok');
+      viewEcheancier(creditId,clientName);
+    }catch(e){toast('Erreur','err');btn.disabled=false;}
+  }, "Confirmer", isPaid ? "#f43f5e" : "#10b981");
 }
 
 async function openManageCreditTypes() {
@@ -2654,29 +2762,70 @@ async function saveProspectNote(prospectId, name){
 // ═══════════════════════════════════════════════
 //  CHANGER STATUT CRÉDIT
 // ═══════════════════════════════════════════════
-function changeCreditStatus(creditId, clientName, currentStatus){
-  const isSolde=['Soldé','SOLDÉ','soldé'].includes(currentStatus);
-  const isSouffrance=currentStatus==='Souffrance';
+function changeCreditStatus(cid, name, currentStatus){
+  const statuses=['En cours','Soldé','En attente','Souffrance','Échu','Annulé'];
   openModal(`
     <div style="padding:0 20px 24px">
-      <p class="sheet-title" style="padding:0 0 8px;margin-bottom:6px">${clientName}</p>
-      <p style="font-size:12px;color:var(--text2);margin:0 0 20px">Statut actuel : <strong>${currentStatus||'—'}</strong></p>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        ${!isSolde&&isSouffrance?`
-        <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="setCreditStatus('${creditId}','En cours','Sain')">
-          <span class="material-symbols-outlined filled">check_circle</span> Remettre EN COURS
-        </button>`:''}
-        ${!isSouffrance?`
-        <button class="btn-primary" style="background:linear-gradient(135deg,#f87171,#dc2626)" onclick="setCreditStatus('${creditId}','Souffrance','Souffrance')">
-          <span class="material-symbols-outlined filled">warning</span> Marquer EN SOUFFRANCE
-        </button>`:''}
-        ${!isSolde?`
-        <button class="btn-primary" style="background:linear-gradient(135deg,#60a5fa,#2563eb)" onclick="setCreditStatus('${creditId}','Soldé','Soldé')">
-          <span class="material-symbols-outlined filled">task_alt</span> Marquer SOLDÉ (clôturer)
-        </button>`:''}
-        <button class="btn-ghost" onclick="closeModal()">Annuler</button>
+      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">Changer le statut : ${name}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${statuses.map(s=>`
+          <button onclick="handleStatusChangeClick('${cid}','${s}','${currentStatus}')" class="m-btn ${s===currentStatus?'btn-p':'btn-ghost'}" style="flex:1 1 40%;font-size:12px;padding:12px 6px">
+            ${s}
+          </button>`).join('')}
       </div>
+      <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:16px">Annuler</button>
     </div>`);
+}
+
+async function handleStatusChangeClick(cid, newStatus, currentStatus){
+  if(newStatus === currentStatus){ closeModal(); return; }
+  
+  if(newStatus === 'Souffrance'){
+    closeModal();
+    openModal(`
+      <div style="padding:0 20px 24px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+          <span class="material-symbols-outlined filled" style="color:#ef4444;font-size:24px">warning</span>
+          <p style="font-size:16px;font-weight:800;color:var(--text);margin:0">Passage en Souffrance</p>
+        </div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:16px">
+          Veuillez saisir le <strong>montant total dû</strong> à ce jour pour établir le solde de référence.
+        </p>
+        <label class="m-label">Montant dû initial</label>
+        <input id="souff-amount" type="number" class="m-input" placeholder="Ex: 50000" style="margin-bottom:20px">
+        <div style="display:flex;gap:10px">
+          <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+          <button onclick="confirmSouffranceFlow('${cid}')" class="btn-primary" style="flex:2;background:#ef4444">Valider</button>
+        </div>
+      </div>`);
+    return;
+  }
+
+  const actionMsg = `Passer de "${currentStatus}" à "${newStatus}" ?`;
+  openConfirm(actionMsg, "Voulez-vous confirmer cette modification ?", async () => {
+    await setCreditStatus(cid, newStatus, _credCache[cid]?.health || 'Sain');
+  }, "Confirmer", "#f27f0d");
+}
+
+async function confirmSouffranceFlow(cid){
+  const amount = parseFloat(document.getElementById('souff-amount').value);
+  if(!amount || amount <= 0){ toast('Montant requis','err'); return; }
+  
+  openConfirm('Valider le passage en souffrance ?', `Le montant dû de ${fmt(amount)} FCFA sera enregistré comme solde initial.`, async () => {
+    // 1. Enregistrement grand livre
+    const {error: errLedger} = await sb.from('recovery_ledger').insert({
+      credit_id: cid,
+      type: 'Solde_Initial_Souffrance',
+      amount: amount,
+      op_date: today(),
+      description: 'Solde initial établi lors du passage en souffrance'
+    });
+    if(errLedger){ toast('Erreur grand livre','err'); return; }
+    
+    // 2. Maj crédit
+    await setCreditStatus(cid, 'Souffrance', 'Souffrance');
+    toast('Dossier en souffrance ✓','ok');
+  }, 'Confirmer', '#ef4444');
 }
 
 async function setCreditStatus(creditId, status, health){
@@ -2706,63 +2855,26 @@ async function setCreditStatus(creditId, status, health){
 async function toggleCreditHealth(id, current){
   const next = (current||'Sain').toLowerCase() === 'souffrance' ? 'Sain' : 'Souffrance';
   
-  // Mise à jour optimiste (l'interface change instantanément)
-  const c = credits.find(x => x.id === id);
-  if (c) {
-    c.health = next;
-    viewCredits(credits); // Rafraîchit visuellement instantanément
-    if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+  if(next === 'Souffrance'){
+    handleStatusChangeClick(id, 'Souffrance', current);
+    return;
   }
-  
-  // Requête en arrière-plan
-  const{error}=await sb.from('credits').update({health:next}).eq('id',id);
-  if(error) {
-    // En cas d'erreur on annule
-    if(c){ 
-       c.health = current; 
-       viewCredits(credits); 
-       if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
+
+  openConfirm(`Passer en santé "${next}" ?`, `Voulez-vous modifier la santé de ce dossier ?`, async () => {
+    const{error}=await sb.from('credits').update({health:next}).eq('id',id);
+    if(error) toast('Erreur','err');
+    else {
+      toast(`Santé → ${next}`,'ok');
+      loadCredits();
+      if(currentCreditId === id) openCreditDetail(id);
     }
-    toast('Erreur de mise à jour','err');
-  } else {
-    toast(`Santé → ${next}`,'ok');
-    // Actualisation silencieuse en arrière plan pour resync globale si nécessaire
-    loadCredits(); 
-  }
+  }, "Confirmer", "#f27f0d");
 }
 
 async function toggleCreditStatus(id, current){
-  const isS = (current||'En cours').toLowerCase() === 'soldé';
-  const next = isS ? 'En cours' : 'Soldé';
-  
-  const c = credits.find(x => x.id === id);
-
-  if(next === 'Soldé'){
-     if(c) { 
-        c.status = next; 
-        viewCredits(credits); 
-        if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
-     }
-     await setCreditStatus(id, 'Soldé', _credCache[id]?.health || 'Sain');
-  } else {
-     if(c) { 
-        c.status = next; c.end_date = null; 
-        viewCredits(credits); 
-        if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
-     }
-     const{error}=await sb.from('credits').update({status:next, end_date:null}).eq('id',id);
-     if(error) {
-       if(c) { 
-          c.status = current; 
-          viewCredits(credits); 
-          if(typeof currentCreditId !== 'undefined' && currentCreditId === id) openCreditDetail(id);
-       }
-       toast('Erreur de mise à jour','err');
-     } else {
-       toast(`Statut → ${next}`,'ok');
-       loadCredits();
-     }
-  }
+  const isSolde = (current||'').toLowerCase() === 'soldé';
+  const next = isSolde ? 'En cours' : 'Soldé';
+  handleStatusChangeClick(id, next, current);
 }
 
 // ═══════════════════════════════════════════════
@@ -3557,8 +3669,16 @@ function renderCreditDetail(c) {
       <!-- Actions compactes -->
       <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">
         <button onclick="viewEcheancier('${c.id}', '${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.25);cursor:pointer;min-width:62px">
-          <span class="material-symbols-outlined" style="font-size:20px;color:#f27f0d">list_alt</span>
+          <span class="material-symbols-outlined" style="font-size:20px;color:#f27f0d">calendar_month</span>
           <span style="font-size:10px;font-weight:700;color:#f27f0d">Échéancier</span>
+        </button>
+        <button onclick="openRegularizationModal('${c.id}', '${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#10b981">balance</span>
+          <span style="font-size:10px;font-weight:700;color:#10b981">Régulariser</span>
+        </button>
+        <button onclick="openCreditNotes('${c.id}','${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#818cf8">sticky_note_2</span>
+          <span style="font-size:10px;font-weight:700;color:#818cf8">Notes</span>
         </button>
         ${phone1 ? `
         <button onclick="call('${phone1}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);cursor:pointer;min-width:62px">
