@@ -183,7 +183,7 @@ html, body {
 }
 
 /* Detail View Overlays */
-#prospect-detail-view, #credit-detail-view, #task-form-view {
+#prospect-detail-view, #credit-detail-view, #task-form-view, #grand-livre-mob-view {
   position: fixed; inset: 0; background: var(--bg);
   z-index: 200; display: none; flex-direction: column;
   animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -507,6 +507,10 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
       <i class="material-symbols-outlined">task_alt</i>
       <label>Tâches</label>
     </div>
+    <div class="nav-item" onclick="navTo('recouvrement')" id="nav-recouvrement">
+      <i class="material-symbols-outlined">gavel</i>
+      <label>Recouvr.</label>
+    </div>
   </nav>
 </div>
 
@@ -568,6 +572,17 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
   <div id="task-form-content" class="detail-content"></div>
 </div>
 
+<div id="grand-livre-mob-view" style="position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column;animation:slideInRight .3s cubic-bezier(.4,0,.2,1)">
+  <div id="topbar" style="flex-shrink:0">
+    <button onclick="closeGrandLivreMob()" class="action-btn"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h2 style="font-size:15px;font-weight:900">Grand Livre</h2>
+    <button onclick="openEnregistrerOpMob(window._glMobCreditId)" class="action-btn" style="background:rgba(242,127,13,.12);border:1px solid rgba(242,127,13,.3);color:#f27f0d" title="Nouvelle opération">
+      <span class="material-symbols-outlined">add</span>
+    </button>
+  </div>
+  <div id="grand-livre-mob-content" style="flex:1;overflow-y:auto;padding:0 0 24px"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ═══════════════════════════════════════════════
@@ -616,13 +631,14 @@ function toggleTheme(){} // Désactivé
 function navTo(screen){
   currentScreen=screen;
   closeCtxMenu();
+  closeGrandLivreMob();
   const v = document.getElementById('view');
   if(v) v.scrollTop=0;
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.id === 'nav-'+screen);
   });
   hideFab();
-  const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects,'tasks':viewTasksMobile};
+  const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects,'tasks':viewTasksMobile,'recouvrement':viewRecouvrement};
   if(views[screen]) views[screen]();
 }
 
@@ -3104,6 +3120,261 @@ let _taskSubtasksFormMob=[];
 
 const TASK_P={urgent:{label:'Urgente',col:'#ef4444',bg:'rgba(239,68,68,.1)'},high:{label:'Haute',col:'#f97316',bg:'rgba(249,115,22,.1)'},normal:{label:'Normale',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},low:{label:'Basse',col:'#94a3b8',bg:'rgba(148,163,184,.1)'}};
 const TASK_S={todo:{label:'À faire',col:'#64748b',bg:'rgba(100,116,139,.1)'},in_progress:{label:'En cours',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},done:{label:'Terminée',col:'#22c55e',bg:'rgba(34,197,94,.1)'}};
+
+// ─── MODULE RECOUVREMENT MOBILE ───────────────────────────────────────────────
+
+function _fmtMob(n){return isNaN(n)?'—':parseInt(n).toLocaleString('fr-FR');}
+function _fmtDMob(d){if(!d)return'—';const dt=new Date(d+'T00:00:00');return isNaN(dt)?d:dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+
+async function viewRecouvrement(){
+  const view=document.getElementById('view');
+  view.innerHTML=`<div style="padding:16px 16px 0">
+    <h2 style="font-size:20px;font-weight:900;color:var(--text);margin:0 0 4px">Recouvrement</h2>
+    <p style="font-size:12px;color:var(--text2);margin:0 0 16px">Dossiers en souffrance</p>
+    <div id="rec-mob-kpis" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none">
+      <div style="min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;flex-shrink:0">
+        <p style="font-size:10px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Portefeuille</p>
+        <p id="rmk-portefeuille" style="font-size:18px;font-weight:900;color:var(--text);margin:0">—</p>
+      </div>
+      <div style="min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;flex-shrink:0">
+        <p style="font-size:10px;font-weight:800;color:#22c55e;text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Recouvré</p>
+        <p id="rmk-recouvre" style="font-size:18px;font-weight:900;color:#22c55e;margin:0">—</p>
+      </div>
+      <div style="min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;flex-shrink:0">
+        <p style="font-size:10px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Taux</p>
+        <p id="rmk-taux" style="font-size:18px;font-weight:900;color:var(--primary);margin:0">—</p>
+      </div>
+    </div>
+  </div>
+  <div id="rec-mob-list" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+    <div style="text-align:center;padding:40px 0;color:var(--text2)">Chargement…</div>
+  </div>`;
+
+  const {data:credits}=await sb.from('credits')
+    .select('id,client_name,phone,amount,status,health,activity,clients(full_name,phone1,phone2)')
+    .eq('health','Souffrance').order('amount',{ascending:false});
+
+  const ids=(credits||[]).map(c=>c.id);
+  let ledgerByCredit={};let totalVersements=0;
+  if(ids.length){
+    const{data:ledger}=await sb.from('recovery_ledger').select('credit_id,type,amount,op_date').in('credit_id',ids).order('op_date',{ascending:false});
+    (ledger||[]).forEach(e=>{
+      if(!ledgerByCredit[e.credit_id])ledgerByCredit[e.credit_id]=[];
+      ledgerByCredit[e.credit_id].push(e);
+      if(e.type==='versement_client')totalVersements+=parseFloat(e.amount||0);
+    });
+  }
+  const totalPortefeuille=(credits||[]).reduce((s,c)=>s+parseFloat(c.amount||0),0);
+  const taux=totalPortefeuille>0?(totalVersements/totalPortefeuille*100):0;
+
+  const kp=document.getElementById('rmk-portefeuille');
+  const kr=document.getElementById('rmk-recouvre');
+  const kt=document.getElementById('rmk-taux');
+  if(kp)kp.textContent=_fmtMob(totalPortefeuille)+' FCFA';
+  if(kr)kr.textContent=_fmtMob(totalVersements)+' FCFA';
+  if(kt)kt.textContent=taux.toFixed(1)+'%';
+
+  const list=document.getElementById('rec-mob-list');
+  if(!list)return;
+  if(!(credits||[]).length){list.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--text2)">Aucun dossier en souffrance</div>`;return;}
+
+  list.innerHTML=(credits||[]).map(c=>{
+    const name=c.clients?.full_name||c.client_name||'—';
+    const entries=ledgerByCredit[c.id]||[];
+    const recouvre=entries.filter(e=>e.type==='versement_client').reduce((s,e)=>s+parseFloat(e.amount||0),0);
+    const initEntry=entries.find(e=>e.type==='solde_initial');
+    const soldeInit=parseFloat(initEntry?.amount||c.amount||0);
+    const solde=Math.max(0,soldeInit-recouvre);
+    const pct=soldeInit>0?Math.min(100,Math.round(recouvre/soldeInit*100)):0;
+    const lastOp=entries[0]?.op_date;
+    const init=(name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase());
+    return`<div class="glass" style="padding:16px;border-radius:20px;cursor:pointer;border:1px solid rgba(239,68,68,.2)" onclick="openGrandLivreMob('${c.id}')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;border-radius:14px;background:rgba(239,68,68,.12);color:#ef4444;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${init}</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:15px;font-weight:900;color:var(--text);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+          <p style="font-size:11px;color:var(--text2);margin:2px 0 0">${c.clients?.phone1||c.phone||''}</p>
+        </div>
+        <span style="font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)">Souffrance</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><p style="font-size:10px;color:var(--text2);margin:0 0 2px;font-weight:700;text-transform:uppercase">Montant initial</p><p style="font-size:13px;font-weight:900;color:var(--text);margin:0">${_fmtMob(soldeInit)} FCFA</p></div>
+        <div><p style="font-size:10px;color:var(--text2);margin:0 0 2px;font-weight:700;text-transform:uppercase">Solde restant</p><p style="font-size:13px;font-weight:900;color:#ef4444;margin:0">${_fmtMob(solde)} FCFA</p></div>
+      </div>
+      <div style="height:4px;background:rgba(0,0,0,.06);border-radius:4px;overflow:hidden;margin-bottom:8px">
+        <div style="height:100%;width:${pct}%;background:#22c55e;border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <p style="font-size:11px;color:var(--text2);margin:0">${pct}% recouvré${lastOp?' · '+_fmtDMob(lastOp):''}</p>
+        <button onclick="event.stopPropagation();openGrandLivreMob('${c.id}')" style="font-size:11px;font-weight:800;color:var(--primary);background:transparent;border:none;cursor:pointer;font-family:inherit">Grand Livre →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openGrandLivreMob(creditId){
+  window._glMobCreditId=creditId;
+  const v=document.getElementById('grand-livre-mob-view');
+  v.style.display='flex';
+  const content=document.getElementById('grand-livre-mob-content');
+  content.innerHTML=`<div style="text-align:center;padding:60px 0;color:var(--text2)">Chargement…</div>`;
+
+  const{data:credit}=await sb.from('credits').select('*,clients(full_name,phone1,phone2,email,address)').eq('id',creditId).single();
+  const{data:entries}=await sb.from('recovery_ledger').select('*').eq('credit_id',creditId).order('op_date',{ascending:true});
+
+  if(!credit){content.innerHTML=`<p style="text-align:center;padding:40px;color:var(--text2)">Erreur chargement</p>`;return;}
+  const name=credit.clients?.full_name||credit.client_name||'—';
+  const phone=credit.clients?.phone1||credit.phone||'';
+  const address=credit.clients?.address||credit.address||'';
+  const ledger=entries||[];
+  const initEntry=ledger.find(e=>e.type==='solde_initial');
+  const soldeInit=parseFloat(initEntry?.amount||credit.amount||0);
+  const totalV=ledger.filter(e=>e.type==='versement_client'||e.type==='remise').reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const soldeActuel=Math.max(0,soldeInit-totalV);
+  const scorePct=soldeInit>0?Math.min(100,Math.round(totalV/soldeInit*100)):0;
+  const scoreColor=scorePct>=75?'#22c55e':scorePct>=40?'#f27f0d':'#ef4444';
+  const init=(name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase());
+
+  const typeBadges={
+    solde_initial:{label:'Solde Initial',color:'#64748b',bg:'rgba(100,116,139,.12)'},
+    versement_client:{label:'Versement Client',color:'#22c55e',bg:'rgba(34,197,94,.12)'},
+    regularisation:{label:'Régularisation',color:'#f27f0d',bg:'rgba(242,127,13,.12)'},
+    remise:{label:'Remise',color:'#3b82f6',bg:'rgba(59,130,246,.12)'},
+    frais:{label:'Frais',color:'#ef4444',bg:'rgba(239,68,68,.12)'},
+  };
+
+  let runningBalance=0;
+  const withBalance=[...ledger].map(e=>{
+    if(e.type==='solde_initial')runningBalance=parseFloat(e.amount||0);
+    else if(e.type==='versement_client'||e.type==='remise')runningBalance-=parseFloat(e.amount||0);
+    else runningBalance+=parseFloat(e.amount||0);
+    return{...e,_sp:Math.max(0,runningBalance)};
+  }).reverse();
+
+  content.innerHTML=`
+    <div style="padding:16px">
+      <!-- Fiche client -->
+      <div class="glass" style="padding:16px;border-radius:20px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:48px;height:48px;border-radius:14px;background:rgba(242,127,13,.15);color:var(--primary);font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${init}</div>
+          <div><p style="font-size:16px;font-weight:900;color:var(--text);margin:0">${name}</p><p style="font-size:12px;color:var(--primary);font-weight:700;margin:2px 0 0">${credit.activity||'Inconnu'}</p></div>
+        </div>
+        ${phone?`<p style="font-size:13px;color:var(--text2);margin:4px 0;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">call</span>${phone}</p>`:''}
+        ${address?`<p style="font-size:13px;color:var(--text2);margin:4px 0;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">location_on</span>${address}</p>`:''}
+        ${credit.health==='Souffrance'?`<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="font-size:18px;color:#ef4444">warning</span><div><p style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;margin:0">Alerte Recouvrement</p><p style="font-size:11px;color:rgba(239,68,68,.7);margin:2px 0 0">Dossier en souffrance</p></div></div>`:''}
+        <div style="margin-top:12px">
+          <p style="font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Score de risque</p>
+          <div style="height:6px;background:var(--border);border-radius:6px;overflow:hidden">
+            <div style="height:100%;width:${scorePct}%;background:${scoreColor};border-radius:6px;transition:width .5s"></div>
+          </div>
+          <p style="font-size:11px;color:var(--text2);margin:4px 0 0">${scorePct}% recouvré</p>
+        </div>
+      </div>
+
+      <!-- Métriques -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="glass" style="padding:14px;border-radius:16px">
+          <p style="font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;margin:0 0 4px">Dette Initiale</p>
+          <p style="font-size:15px;font-weight:900;color:var(--text);margin:0">${_fmtMob(soldeInit)}</p>
+          <p style="font-size:10px;color:var(--text2);margin:2px 0 0">FCFA</p>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:16px">
+          <p style="font-size:10px;font-weight:800;color:#22c55e;text-transform:uppercase;margin:0 0 4px">Recouvré</p>
+          <p style="font-size:15px;font-weight:900;color:#22c55e;margin:0">${_fmtMob(totalV)}</p>
+          <p style="font-size:10px;color:var(--text2);margin:2px 0 0">FCFA · ${scorePct}%</p>
+        </div>
+      </div>
+      <div class="glass" style="padding:14px;border-radius:16px;margin-bottom:12px;border:1px solid rgba(239,68,68,.2)">
+        <p style="font-size:10px;font-weight:800;color:#ef4444;text-transform:uppercase;margin:0 0 4px">Solde Actuel</p>
+        <p style="font-size:22px;font-weight:900;color:#ef4444;margin:0">${_fmtMob(soldeActuel)} <span style="font-size:12px">FCFA</span></p>
+        ${soldeActuel>0?`<p style="font-size:10px;font-weight:800;color:#ef4444;text-transform:uppercase;margin:4px 0 0;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:12px">warning</span>Échéance Dépassée</p>`:`<p style="font-size:10px;font-weight:800;color:#22c55e;text-transform:uppercase;margin:4px 0 0">✓ Soldé</p>`}
+      </div>
+
+      <!-- Journal -->
+      <div class="glass" style="border-radius:20px;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <p style="font-size:13px;font-weight:900;color:var(--text);margin:0">Journal des Opérations</p>
+          <button onclick="openEnregistrerOpMob('${creditId}')" style="font-size:11px;font-weight:800;color:var(--primary);background:transparent;border:none;cursor:pointer;font-family:inherit">+ Ajouter</button>
+        </div>
+        ${withBalance.length?withBalance.map(e=>{
+          const badge=typeBadges[e.type]||{label:e.type,color:'#94a3b8',bg:'rgba(148,163,184,.12)'};
+          const isDebit=e.type==='versement_client'||e.type==='remise';
+          const sign=e.type==='solde_initial'?'':isDebit?'- ':'+ ';
+          const amtColor=isDebit?'#22c55e':e.type==='solde_initial'?'var(--text)':'#ef4444';
+          return`<div style="padding:12px 16px;border-bottom:1px solid var(--border2)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+              <div>
+                <span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:900;background:${badge.bg};color:${badge.color}">${badge.label}</span>
+                <p style="font-size:11px;color:var(--text2);margin:4px 0 0">${e.description||'—'}</p>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <p style="font-size:13px;font-weight:900;color:${amtColor};margin:0">${sign}${_fmtMob(e.amount)} FCFA</p>
+                <p style="font-size:10px;color:var(--text2);margin:2px 0 0">Solde: ${_fmtMob(e._sp)}</p>
+              </div>
+            </div>
+            <p style="font-size:10px;color:var(--text2);margin:0">${_fmtDMob(e.op_date)}</p>
+          </div>`;
+        }).join(''):`<div style="padding:32px;text-align:center;color:var(--text2)"><p style="margin:0 0 12px">Aucune opération</p><button onclick="openEnregistrerOpMob('${creditId}')" style="color:var(--primary);font-size:13px;font-weight:800;background:transparent;border:none;cursor:pointer;font-family:inherit">Enregistrer la première opération</button></div>`}
+      </div>
+    </div>`;
+}
+
+function closeGrandLivreMob(){
+  const v=document.getElementById('grand-livre-mob-view');
+  if(v)v.style.display='none';
+}
+
+function openEnregistrerOpMob(creditId){
+  if(!creditId)return;
+  const today=new Date().toISOString().split('T')[0];
+  openModal(`<div style="padding:8px 16px 24px">
+    <p style="font-size:17px;font-weight:900;color:var(--text);margin:0 0 4px">Enregistrer une Opération</p>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 20px">Saisissez les détails de la nouvelle transaction pour ce client.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Date</p>
+        <input type="date" id="mob-op-date" value="${today}" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Type</p>
+        <select id="mob-op-type" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none">
+          <option value="versement_client">Versement Client</option>
+          <option value="regularisation">Régularisation</option>
+          <option value="remise">Remise</option>
+          <option value="frais">Frais</option>
+          <option value="solde_initial">Solde Initial</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Montant (FCFA)</p>
+      <input type="number" id="mob-op-amount" placeholder="0" min="0" step="100" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-weight:800;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="margin-bottom:20px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Description / Notes</p>
+      <textarea id="mob-op-desc" rows="3" placeholder="Précisez l'origine du paiement…" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeModal()" style="flex:1;padding:14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">Annuler</button>
+      <button onclick="saveOpMob('${creditId}')" style="flex:2;padding:14px;border-radius:14px;border:none;background:var(--primary);color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">Valider</button>
+    </div>
+  </div>`);
+}
+
+async function saveOpMob(creditId){
+  const date=document.getElementById('mob-op-date')?.value;
+  const type=document.getElementById('mob-op-type')?.value;
+  const amount=parseFloat(document.getElementById('mob-op-amount')?.value||0);
+  const description=document.getElementById('mob-op-desc')?.value?.trim();
+  if(!date||!type||!amount||amount<=0){toast('Veuillez remplir tous les champs','error');return;}
+  const{error}=await sb.from('recovery_ledger').insert({credit_id:creditId,op_date:date,type,amount,description:description||null});
+  if(error){toast('Erreur lors de l\'enregistrement','error');return;}
+  closeModal();
+  toast('Opération enregistrée ✓','ok');
+  await openGrandLivreMob(creditId);
+}
+
+// ─── FIN MODULE RECOUVREMENT MOBILE ──────────────────────────────────────────
 
 async function viewTasksMobile(){
   const view=document.getElementById('view');
