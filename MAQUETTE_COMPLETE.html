@@ -1970,7 +1970,7 @@
                 <span class="material-symbols-outlined text-lg">menu</span>
                 Actions
             </button>
-            <div id="prospect-action-menu" class="hidden absolute right-0 top-12 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-56 overflow-y-auto" style="max-height:70vh">
+            <div id="prospect-action-menu" class="hidden absolute right-0 top-12 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-52 overflow-hidden">
                 <button id="btn-call-prospect" onclick="handleProspectCall(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
                     <span class="material-symbols-outlined text-primary text-lg">call</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Appeler</span>
@@ -1990,10 +1990,6 @@
                 <button onclick="downloadVCard(currentProspect?.full_name || currentProspect?.name || '', currentProspect?.phone, currentProspect?.phone2); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
                     <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
-                </button>
-                <button onclick="copyClientsOfDayPC(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-                    <span class="material-symbols-outlined text-lg" style="color:#f27f0d">group_copy</span>
-                    <span class="text-sm font-semibold" style="color:#f27f0d">Copier tout (clients du jour)</span>
                 </button>
                 <div class="border-t border-slate-100 dark:border-slate-800"></div>
                 <button id="btn-edit-prospect" onclick="handleEditProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
@@ -3236,7 +3232,7 @@
         <span class="material-symbols-outlined text-base leading-none">menu</span>
         <span class="hidden xs:inline">Actions</span>
       </button>
-      <div id="credit-action-menu" class="hidden absolute right-0 top-10 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-56 overflow-y-auto" style="max-height:70vh">
+      <div id="credit-action-menu" class="hidden absolute right-0 top-10 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-52 overflow-hidden">
         <button onclick="handleCall(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
           <span class="material-symbols-outlined text-primary text-lg">call</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Appeler</span>
@@ -3256,10 +3252,6 @@
         <button onclick="downloadVCard(currentCredit?.clients?.full_name || currentCredit?.client_name || '', currentCredit?.clients?.phone1, currentCredit?.clients?.phone2); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
           <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
-        </button>
-        <button onclick="copyClientsOfDayPC(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-          <span class="material-symbols-outlined text-lg" style="color:#f27f0d">group_copy</span>
-          <span class="text-sm font-semibold" style="color:#f27f0d">Copier tout (clients du jour)</span>
         </button>
         <button onclick="if(currentCredit){populateScheduleView(currentCredit);loadScreen('credits_schedule');}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
           <span class="material-symbols-outlined text-primary text-lg">payments</span>
@@ -3635,28 +3627,13 @@ Reporter
                         <input type="date" id="progress-end-date" onchange="fetchProgressCredits()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all shadow-sm">
                     </div>
                     
-                    <div class="relative">
-                        <button onclick="toggleActionMenu('credits-progress-actions')" class="h-10 px-4 flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm font-bold text-xs text-slate-700 dark:text-slate-300">
-                            <span class="material-symbols-outlined text-lg">menu</span>
-                            Actions
-                        </button>
-                        <div id="credits-progress-actions" class="hidden absolute right-0 top-12 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-60 overflow-hidden">
-                            <button onclick="copyClientsOfDayPC(this); closeActionMenu('credits-progress-actions')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left group">
-                                <span class="material-symbols-outlined text-primary text-xl">content_copy</span>
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Clients du jour</span>
-                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Copier la liste numérotée</span>
-                                </div>
-                            </button>
-                            <button onclick="fetchProgressCredits(); closeActionMenu('credits-progress-actions')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-                                <span class="material-symbols-outlined text-slate-400 text-xl">sync</span>
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Actualiser</span>
-                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Mettre à jour les données</span>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
+                    <button onclick="copyClientsOfDayPC(this)" class="h-10 px-3 flex items-center gap-2 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm text-xs font-bold" title="Copier les clients du jour dans le presse-papiers">
+                        <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                        Clients du jour
+                    </button>
+                    <button onclick="fetchProgressCredits()" class="w-10 h-10 flex items-center justify-center bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all shadow-sm" title="Actualiser">
+                        <span class="material-symbols-outlined text-[20px]">sync</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -3986,7 +3963,6 @@ Suivant
         <a onclick="loadScreen('credits_end_term')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">FIN ÉCHÉANCE</a>
         <a onclick="loadScreen('credits_settled')" class="pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-600 font-bold text-sm tracking-wide cursor-pointer">CRÉDITS SOLDÉS</a>
         <a onclick="loadScreen('credits_unpaid')" class="pb-4 border-b-2 border-red-500 text-red-600 font-bold text-sm tracking-wide cursor-pointer">IMPAYÉS</a>
-        <a onclick="loadScreen('credits_souffrance')" class="pb-4 border-b-2 border-transparent text-rose-400 hover:text-rose-600 font-bold text-sm tracking-wide cursor-pointer">SOUFFRANCE</a>
     </div>
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -4049,10 +4025,13 @@ Suivant
                 </tr>
             </thead>
             <tbody id="unpaid-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">Chargement...</td></tr>
+                <tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">
+                    <div class="animate-pulse">Chargement des impayés...</div>
+                </td></tr>
             </tbody>
         </table>
     </div>
+    <p id="unpaid-total-line" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
 </div>
 `,
             credits_souffrance: `
@@ -4075,6 +4054,7 @@ Suivant
 </header>
 <div class="flex-1 overflow-y-auto p-8 space-y-6 max-w-7xl mx-auto w-full">
 
+    <!-- KPI Barre -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-rose-50 border border-rose-100 rounded-xl p-5 flex items-center gap-4">
             <div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 flex-shrink-0">
@@ -4105,6 +4085,7 @@ Suivant
         </div>
     </div>
 
+    <!-- Filtres + Recherche -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h3 class="text-lg font-bold text-slate-900 dark:text-white">Liste des crédits en souffrance</h3>
         <div class="flex items-center gap-3">
@@ -4118,75 +4099,27 @@ Suivant
         </div>
     </div>
 
+    <!-- Tableau -->
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-rose-50 dark:bg-rose-900/10">
                     <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest">Client</th>
-                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-right">Dette Actuelle</th>
-                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-right">Montant Initial</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest">Montant crédit</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Date début</th>
+                    <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Date fin</th>
                     <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Statut</th>
                     <th class="px-6 py-4 text-[11px] font-black text-rose-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
             </thead>
             <tbody id="souffrance-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">Chargement...</td></tr>
+                <tr><td colspan="6" class="px-6 py-16 text-center text-slate-400 font-medium">
+                    <div class="animate-pulse">Chargement des dossiers en souffrance...</div>
+                </td></tr>
             </tbody>
         </table>
     </div>
-</div>
-`,
-            credits_ledger_detail: `
-<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-6 flex-shrink-0">
-    <div class="flex items-center justify-between gap-6 max-w-7xl mx-auto w-full">
-        <div class="flex items-center gap-4">
-            <button onclick="loadScreen('credits_souffrance')" class="size-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition-all">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </button>
-            <div>
-                <h2 id="ledger-client-name" class="text-2xl font-black text-slate-900 dark:text-white leading-tight">Grand Livre des Souffrances</h2>
-                <p class="text-xs font-bold text-rose-600 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 shadow-[0_0_8px_rgba(225,29,72,0.4)] animate-pulse"></span>
-                    Suivi de recouvrement en cours
-                </p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-             <div class="px-6 py-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xl flex items-center gap-6 text-white">
-                <div>
-                   <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 opacity-60">Solde Restant</p>
-                   <p id="ledger-current-balance" class="text-xl font-black leading-none">0 FCFA</p>
-                </div>
-                <div class="w-px h-8 bg-slate-800"></div>
-                 <div class="text-right">
-                   <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 opacity-60">Montant Initial</p>
-                   <p id="ledger-initial-amount" class="text-sm font-bold text-slate-300 leading-none">0 FCFA</p>
-                </div>
-            </div>
-            <button onclick="openAddLedgerEntryPC()" class="h-12 px-6 bg-primary text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-primary/25 hover:scale-[1.02] transition-all">
-                <span class="material-symbols-outlined">add_circle</span>
-                Nouvelle Opération
-            </button>
-        </div>
-    </div>
-</header>
-<div class="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto w-full space-y-8">
-    <div id="ledger-entries-container" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-50/50 border-b border-slate-100">
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date / Réf</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Montant</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-                </tr>
-            </thead>
-            <tbody id="ledger-table-body" class="divide-y divide-slate-100">
-                <!-- Data -->
-            </tbody>
-        </table>
-    </div>
+    <p id="souffrance-total-line" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
 </div>
 `,
             credits_comm: `
@@ -6293,44 +6226,9 @@ Suivant
 
         async function toggleCreditHealthPC(id, currentHealth) {
             const newHealth = (currentHealth === 'Souffrance') ? 'Sain' : 'Souffrance';
-            
-            if (newHealth === 'Souffrance') {
-                const initialAmount = prompt("⚠️ DÉCLARATION EN SOUFFRANCE\n\nCe dossier va être transféré au Grand Livre. Quel est le montant TOTAL actuellement dû par ce client (Solde Initial) ?");
-                if (initialAmount === null) return; // Annule
-                
-                const val = parseFloat(initialAmount.replace(/\s/g,''));
-                if (isNaN(val) || val < 0) {
-                    showNotification("Montant invalide", "error");
-                    return;
-                }
-
-                // 1. Mettre à jour la santé
-                const { error: err1 } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
-                if (err1) { showNotification('Erreur : ' + err1.message, 'error'); return; }
-
-                // 2. Créer l'entrée INITIALE dans le ledger
-                const { error: err2 } = await _supabase.from('recovery_ledger').insert({
-                    credit_id: id,
-                    op_date: new Date().toISOString().split('T')[0],
-                    type: 'INITIAL',
-                    amount: val,
-                    description: 'Initialisation lors du passage en souffrance.'
-                });
-                
-                if (err2) {
-                    showNotification("Santé mise à jour, mais erreur d'initialisation du ledger : " + err2.message, "warning");
-                } else {
-                    showNotification("Dossier transféré au Grand Livre avec succès.", "success");
-                }
-                
-                // Ouvrir automatiquement le détail du Grand Livre
-                openGrandLivrePC(id);
-            } else {
-                if (!confirm("Souhaitez-vous repasser ce dossier en état SAIN ? Les données du Grand Livre resteront archivées pour historique.")) return;
-                const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
-                if (error) { showNotification('Erreur : ' + error.message, 'error'); return; }
-                showNotification(`État → ${newHealth} ✓`, 'success');
-            }
+            const { error } = await _supabase.from('credits').update({ health: newHealth }).eq('id', id);
+            if (error) { showNotification('Erreur : ' + error.message, 'error'); return; }
+            showNotification(`État → ${newHealth} ✓`, 'success');
             
             // Refresh details if open
             if (currentCredit && currentCredit.id === id) {
@@ -6429,9 +6327,10 @@ Suivant
                           <button onclick="event.stopPropagation(); quickWhatsapp('${credit.clients?.phone1 || credit.phone || ''}', '${clientName.replace(/'/g,"\\'")}','Crédit',${credit.amount},'${credit.id}')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="WhatsApp"><span class="material-symbols-outlined text-[14px]">chat</span></button>
                           <button onclick="event.stopPropagation(); quickSms('${credit.clients?.phone1 || credit.phone || ''}', '${clientName.replace(/'/g,"\\'")}','Crédit',${credit.amount},'${credit.id}')" class="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Envoyer SMS"><span class="material-symbols-outlined text-[14px]">sms</span></button>
                           
-                          <div style="margin-left:auto; display:flex; gap:4px">
+                          <div style="margin-left:auto; display:flex; gap:4px; align-items:center">
                             ${_unpaidFC[credit.id] ? unpaidBadgePC(_unpaidFC[credit.id].id, _unpaidFC[credit.id].date) : ''}
                             ${_nextUpFC[credit.id] ? nextUpcomingBadgePC(_nextUpFC[credit.id]) : ''}
+                            <button onclick="openCreditRowMenuPC(${JSON.stringify(credit).replace(/'/g,"&#39;")}, this)" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;flex-shrink:0;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'" title="Actions"><span class="material-symbols-outlined" style="font-size:16px">more_vert</span></button>
                           </div>
                         </div>
                     </div>
@@ -7515,45 +7414,6 @@ Suivant
             updateRepaymentStatus(id, !isPaid ? 'Payé' : 'En attente', el);
         }
 
-        async function copyClientsOfDayPC(btn) {
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<div class="size-4 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>';
-            btn.disabled = true;
-
-            try {
-                const now = new Date();
-                const today = now.toISOString().split('T')[0];
-                
-                // On récupère les remboursements du jour
-                const { data, error } = await _supabase
-                    .from('repayments')
-                    .select('credits(client_name)')
-                    .eq('scheduled_date', today);
-
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    showNotification("Aucun client n'est prévu aujourd'hui.", "info");
-                    return;
-                }
-
-                // Filtrage des noms uniques
-                const names = [...new Set(data.map(r => r.credits ? r.credits.client_name : 'Client Inconnu'))]
-                    .sort((a, b) => a.localeCompare(b));
-
-                // Formatage en liste numérotée
-                const list = names.map((name, index) => `${index + 1}. ${name}`).join('\n');
-                
-                await navigator.clipboard.writeText(list);
-                showNotification("Liste des clients copiée ✓", "success");
-            } catch (err) {
-                console.error("Erreur copie liste:", err);
-                showNotification("Erreur lors de la copie : " + err.message, "error");
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
-
         async function fetchProgressCredits() {
             const tbody = document.getElementById('credits-progress-body');
             if (!tbody) return;
@@ -7918,6 +7778,120 @@ Suivant
             settledSearch = query;
             clearTimeout(window.settledSearchTimeout);
             window.settledSearchTimeout = setTimeout(fetchSettledCredits, 300);
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  SOUFFRANCE — Crédits dont health = 'SOUFFRANCE'
+        // ══════════════════════════════════════════════════════════════════
+        let _souffranceData = [];
+
+        async function fetchSouffranceClients() {
+            const tbody = document.getElementById('souffrance-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-16 text-center text-slate-400 animate-pulse">Chargement...</td></tr>';
+
+            const { data: all, error: errAll } = await _supabase
+                .from('credits').select('id, amount').not('status', 'ilike', 'Soldé%');
+            const totalPortefeuille = (all || []).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+
+            const { data, error } = await _supabase
+                .from('credits')
+                .select('id, client_name, phone, amount, start_date, end_date, status, health, activity')
+                .ilike('health', 'SOUFFRANCE%')
+                .not('status', 'ilike', 'Soldé%')
+                .order('end_date', { ascending: true });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold">Erreur : ${error.message}</td></tr>`;
+                return;
+            }
+            _souffranceData = data || [];
+            _lastUnpaidMapPC = await getLastUnpaidMap(_souffranceData.map(c => c.id));
+            _nextUpcomingMapPC = await getNextUpcomingMap(_souffranceData.map(c => c.id));
+            renderSouffranceTable(_souffranceData, totalPortefeuille);
+        }
+
+        function renderSouffranceTable(rows, totalPortefeuille = 0) {
+            const tbody  = document.getElementById('souffrance-table-body');
+            const kpiCli = document.getElementById('souffrance-kpi-clients');
+            const kpiAmt = document.getElementById('souffrance-kpi-amount');
+            const kpiPct = document.getElementById('souffrance-kpi-pct');
+            const badge  = document.getElementById('souffrance-count-badge');
+            const totEl  = document.getElementById('souffrance-total-line');
+            if (!tbody) return;
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-16 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <span class="material-symbols-outlined text-5xl text-green-400">favorite</span>
+                        <p class="font-bold text-slate-500">Aucun crédit en souffrance !</p>
+                    </div>
+                </td></tr>`;
+                if (kpiCli) kpiCli.textContent = '0';
+                if (kpiAmt) kpiAmt.textContent = '0 FCFA';
+                if (kpiPct) kpiPct.textContent = '0%';
+                if (badge)  { badge.textContent = '0'; badge.classList.add('hidden'); }
+                if (totEl)  totEl.textContent = '';
+                return;
+            }
+
+            const totalAmt = rows.reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+            const pct = totalPortefeuille > 0 ? Math.round((totalAmt / totalPortefeuille) * 100) : 0;
+
+            if (kpiCli) kpiCli.textContent = rows.length;
+            if (kpiAmt) kpiAmt.textContent = totalAmt.toLocaleString('fr-FR') + ' FCFA';
+            if (kpiPct) kpiPct.textContent = pct + '%';
+            if (badge)  { badge.textContent = rows.length; badge.classList.remove('hidden'); }
+            if (totEl)  totEl.textContent  = `${rows.length} dossier(s) en souffrance`;
+
+            tbody.innerHTML = rows.map(c => {
+                const phoneClean = (c.phone || '').replace(/\s/g, '');
+                return `<tr class="hover:bg-rose-50/40 dark:hover:bg-rose-900/10 transition-colors cursor-pointer" onclick="goToCredit('${c.id}')">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-black text-sm flex-shrink-0">${(c.client_name?.[0]||'?').toUpperCase()}</div>
+                            <div>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm">${c.client_name || '—'}</p>
+                                <p class="text-xs text-slate-400">${c.activity || ''}</p>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
+                                ${_lastUnpaidMapPC[c.id] ? unpaidBadgePC(_lastUnpaidMapPC[c.id].id, _lastUnpaidMapPC[c.id].date) : ''}
+                                ${_nextUpcomingMapPC[c.id] ? nextUpcomingBadgePC(_nextUpcomingMapPC[c.id]) : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-black text-rose-600 text-sm">${parseFloat(c.amount||0).toLocaleString('fr-FR')} FCFA</p>
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm text-slate-500">${c.start_date || '—'}</td>
+                    <td class="px-6 py-4 text-center text-sm text-slate-500">${c.end_date || '—'}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-700">${c.status || '—'}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${phoneClean ? `
+                            <a href="tel:${phoneClean}" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
+                                <span class="material-symbols-outlined text-sm">call</span>
+                            </a>
+                            <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                                <span class="material-symbols-outlined text-sm">chat</span>
+                            </a>
+                            <button onclick="event.stopPropagation(); quickSms('${phoneClean}', '${c.client_name?.replace(/'/g,"\\'")}','Crédit',${c.amount},'${c.id}')" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-primary/10 text-slate-500 hover:text-primary transition-all" title="Envoyer SMS">
+                                <span class="material-symbols-outlined text-sm">sms</span>
+                            </button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterSouffranceList(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) { renderSouffranceTable(_souffranceData); return; }
+            renderSouffranceTable(_souffranceData.filter(c =>
+                (c.client_name || '').toLowerCase().includes(q)
+            ));
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -9497,21 +9471,42 @@ Suivant
         let currentImportModule = null;
 
         // ═══════════ MENU ACTIONS DROPDOWN ═══════════
+        function openCreditRowMenuPC(credit, btn) {
+            event.stopPropagation();
+            currentCredit = credit;
+            const menu = document.getElementById('credit-action-menu');
+            if (!menu) return;
+            // Toggle off if already open from same button
+            if (!menu.classList.contains('hidden') && menu._srcBtn === btn) {
+                menu.classList.add('hidden'); menu._srcBtn = null; return;
+            }
+            // Move to body for fixed positioning
+            if (menu.parentElement !== document.body) document.body.appendChild(menu);
+            menu.style.position = 'fixed';
+            menu.style.right = 'auto';
+            menu.style.top = 'auto';
+            const rect = btn.getBoundingClientRect();
+            const menuW = 224;
+            let left = rect.right - menuW;
+            if (left < 8) left = 8;
+            let top = rect.bottom + 4;
+            if (top + 380 > window.innerHeight) top = rect.top - Math.min(380, menu.scrollHeight + 12) - 4;
+            menu.style.left = Math.max(8, left) + 'px';
+            menu.style.top = Math.max(8, top) + 'px';
+            menu._srcBtn = btn;
+            document.querySelectorAll('#prospect-action-menu, #credit-action-menu').forEach(m => m.classList.add('hidden'));
+            menu.classList.remove('hidden');
+        }
+
         function toggleActionMenu(menuId) {
             const menu = document.getElementById(menuId);
             if (!menu) return;
             const isHidden = menu.classList.contains('hidden');
-            
             // Fermer tous les menus ouverts
-            document.querySelectorAll('[id$="-menu"], [id$="-actions"]').forEach(m => {
-                if (m.id !== menuId) m.classList.add('hidden');
+            document.querySelectorAll('#prospect-action-menu, #credit-action-menu').forEach(m => {
+                m.classList.add('hidden');
             });
-            
-            if (isHidden) {
-                menu.classList.remove('hidden');
-            } else {
-                menu.classList.add('hidden');
-            }
+            if (isHidden) menu.classList.remove('hidden');
         }
 
         function closeActionMenu(menuId) {
@@ -9521,9 +9516,8 @@ Suivant
 
         // Fermer menu si clic en dehors
         document.addEventListener('click', function(e) {
-            const isToggleBtn = e.target.closest('[onclick*="toggleActionMenu"]');
-            if (!isToggleBtn && !e.target.closest('[id$="-menu"]') && !e.target.closest('[id$="-actions"]')) {
-                document.querySelectorAll('[id$="-menu"], [id$="-actions"]').forEach(m => m.classList.add('hidden'));
+            if (!e.target.closest('#prospect-action-menu') && !e.target.closest('#credit-action-menu') && !e.target.closest('[onclick*="toggleActionMenu"]')) {
+                document.querySelectorAll('#prospect-action-menu, #credit-action-menu').forEach(m => m.classList.add('hidden'));
             }
         });
         // ═══════════ FIN MENU ACTIONS ═══════════
@@ -9999,371 +9993,6 @@ Suivant
         async function quickSms(phone, name, category, amount, id) {
             if (!phone) return showNotification("Numéro non disponible", "error");
             await sendSmsMessage(phone, { name, amount, id }, category);
-        }
-
-        /* ─────────────────────────────────────────────────────────────────────────
-           GESTION DU GRAND LIVRE DES SOUFFRANCES (RECOVERY LEDGER)
-           ───────────────────────────────────────────────────────────────────────── */
-
-        let _souffranceData = [];
-        window.currentLedgerCreditId = null;
-
-        async function fetchSouffranceClients() {
-            const list = document.getElementById('souffrance-table-body');
-            if (!list) return;
-
-            list.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">Chargement en cours...</td></tr>`;
-
-            try {
-                // Fetch credits with health status 'SOUFFRANCE'
-                const { data: credits, error } = await _supabase
-                    .from('credits')
-                    .select(`
-                        id,
-                        amount,
-                        client_name,
-                        status,
-                        health,
-                        recovery_ledger(amount, type)
-                    `)
-                    .eq('health', 'SOUFFRANCE')
-                    .order('client_name');
-
-                if (error) throw error;
-
-                _souffranceData = credits || [];
-
-                // Calculate KPIs
-                const totalClients = _souffranceData.length;
-                let totalUnpaid = 0;
-
-                const rows = _souffranceData.map(c => {
-                    const entries = c.recovery_ledger || [];
-                    const initialEntry = entries.find(e => e.type === 'INITIAL');
-                    const initialAmount = initialEntry ? parseFloat(initialEntry.amount) || 0 : 0;
-                    
-                    let calcBalance = 0;
-                    entries.forEach(e => {
-                        const val = parseFloat(e.amount) || 0;
-                        if (e.type === 'INITIAL' || e.type === 'ADJUSTMENT_ADD') calcBalance += val;
-                        else if (e.type === 'PAYMENT' || e.type === 'ADJUSTMENT_SUB') calcBalance -= val;
-                    });
-
-                    totalUnpaid += calcBalance;
-
-                    return `
-                        <tr onclick="openGrandLivrePC('${c.id}')" class="hover:bg-slate-50 transition-colors cursor-pointer group">
-                            <td class="px-6 py-4">
-                                <p class="text-sm font-black text-slate-900 leading-tight">${c.client_name || 'Client Inconnu'}</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">ID: ${c.id.slice(0,8)}</p>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-sm font-black text-rose-600">${calcBalance.toLocaleString()} GNF</span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-sm font-bold text-slate-500">${initialAmount.toLocaleString()} GNF</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${calcBalance > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-green-50 text-green-600 border border-green-100'}">
-                                    ${calcBalance > 0 ? 'À recouvrir' : 'Soldé'}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center justify-center gap-2">
-                                     <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 group-hover:text-primary group-hover:border-primary/30 transition-all">
-                                         <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                     </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                list.innerHTML = rows || `<tr><td colspan="5" class="px-6 py-16 text-center text-slate-400 font-medium">Aucun client en souffrance.</td></tr>`;
-
-                // Update KPIs
-                document.getElementById('souffrance-kpi-clients').textContent = totalClients;
-                document.getElementById('souffrance-kpi-amount').textContent = totalUnpaid.toLocaleString() + " GNF";
-                
-                // Fetch total credits to calculate %
-                const { count } = await _supabase.from('credits').select('*', { count: 'exact', head: true });
-                if (count) {
-                    const pct = ((totalClients / count) * 100).toFixed(1);
-                    document.getElementById('souffrance-kpi-pct').textContent = pct + "% du portefeuille";
-                }
-
-            } catch (e) {
-                console.error("Error fetching souffrance data:", e);
-                list.innerHTML = `<tr><td colspan="5" class="px-6 py-16 text-center text-red-400 font-medium">Erreur lors du chargement des données.</td></tr>`;
-            }
-        }
-
-        async function openGrandLivrePC(creditId) {
-            window.currentLedgerCreditId = creditId;
-            loadScreen('credits_ledger_detail');
-
-            try {
-                const { data: credit, error } = await _supabase
-                    .from('credits')
-                    .select('*')
-                    .eq('id', creditId)
-                    .single();
-
-                if (error) throw error;
-
-                // Populate Static Infos
-                document.getElementById('ledger-client-name').textContent = credit.client_name;
-                document.getElementById('ledger-client-fullname').textContent = credit.client_name;
-                document.getElementById('ledger-client-id').textContent = `ID Dossier: #${creditId.slice(0,8)}`;
-                document.getElementById('ledger-client-phone').textContent = credit.phone || '—';
-                const phoneLink = document.getElementById('ledger-client-phone-link');
-                if (phoneLink) phoneLink.href = credit.phone ? `tel:${credit.phone}` : '#';
-                document.getElementById('ledger-open-date').textContent = new Date(credit.created_at).toLocaleDateString();
-
-                fetchLedgerEntries(creditId);
-
-            } catch (e) {
-                console.error("Error opening ledger:", e);
-                showNotification("Erreur lors de l'ouverture du Grand Livre", "error");
-                loadScreen('credits_souffrance');
-            }
-        }
-
-        async function fetchLedgerEntries(creditId) {
-            const list = document.getElementById('ledger-table-body');
-            if (!list) return;
-
-            list.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400">Chargement...</td></tr>`;
-
-            try {
-                const { data: entries, error } = await _supabase
-                    .from('recovery_ledger')
-                    .select('*')
-                    .eq('credit_id', creditId)
-                    .order('op_date', { ascending: true })
-                    .order('created_at', { ascending: true });
-
-                if (error) throw error;
-
-                let currentBalance = 0;
-                let initialAmount = 0;
-
-                const rows = entries.map(e => {
-                    const val = parseFloat(e.amount) || 0;
-                    let typeLabel = '', typeColor = '', amountClass = '';
-
-                    if (e.type === 'INITIAL') {
-                        initialAmount = val;
-                        currentBalance = val;
-                        typeLabel = 'Solde Initial';
-                        typeColor = 'bg-slate-100 text-slate-700';
-                        amountClass = 'text-slate-900 font-black';
-                    } else if (e.type === 'PAYMENT') {
-                        currentBalance -= val;
-                        typeLabel = 'Paiement';
-                        typeColor = 'bg-green-100 text-green-700';
-                        amountClass = 'text-green-600 font-black';
-                    } else if (e.type === 'ADJUSTMENT_ADD') {
-                        currentBalance += val;
-                        typeLabel = 'Régularisation (+)';
-                        typeColor = 'bg-blue-100 text-blue-700';
-                        amountClass = 'text-blue-600 font-black';
-                    } else if (e.type === 'ADJUSTMENT_SUB') {
-                        currentBalance -= val;
-                        typeLabel = 'Régularisation (-)';
-                        typeColor = 'bg-orange-100 text-orange-700';
-                        amountClass = 'text-orange-600 font-black';
-                    }
-
-                    return `
-                        <tr class="group hover:bg-slate-50 transition-all">
-                            <td class="px-6 py-5">
-                                <p class="text-sm font-bold text-slate-800">${new Date(e.op_date).toLocaleDateString()}</p>
-                                <p class="text-[9px] text-slate-400 font-black uppercase mt-0.5 tracking-tighter">REF: ${e.id.slice(0,6)}</p>
-                            </td>
-                            <td class="px-6 py-5">
-                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${typeColor}">${typeLabel}</span>
-                            </td>
-                            <td class="px-6 py-5 text-right font-black ${amountClass}">
-                                ${val.toLocaleString()} GNF
-                            </td>
-                            <td class="px-6 py-5 text-sm font-medium text-slate-500 italic">
-                                "${e.description || '—'}"
-                            </td>
-                            <td class="px-6 py-5 text-right">
-                                 <button onclick="editLedgerEntryPC('${e.id}')" class="size-9 rounded-xl bg-slate-50 text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
-                                    <span class="material-symbols-outlined text-lg">delete</span>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                list.innerHTML = rows || `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400">Aucune opération. Cliquez sur "Nouvelle Opération".</td></tr>`;
-
-                // Update UI Indicators
-                document.getElementById('ledger-current-balance').textContent = currentBalance.toLocaleString() + " GNF";
-                document.getElementById('ledger-initial-amount').textContent = initialAmount.toLocaleString() + " GNF";
-                
-                const opCountSpan = document.getElementById('ledger-op-count');
-                if (opCountSpan) opCountSpan.textContent = entries.length;
-
-                // State check: if no entries, suggest initial balance
-                if (entries.length === 0) {
-                    setTimeout(() => {
-                         if (confirm("Ce dossier n'est pas encore initialisé dans le Grand Livre. Voulez-vous enregistrer le solde initial maintenant ?")) {
-                             openAddLedgerEntryPC('INITIAL');
-                         }
-                    }, 500);
-                }
-
-            } catch (e) {
-                console.error("Error fetching ledger entries:", e);
-                showNotification("Erreur de chargement du Grand Livre", "error");
-            }
-        }
-
-        async function openAddLedgerEntryPC(fixedType = null) {
-            const creditId = window.currentLedgerCreditId;
-            if (!creditId) return;
-
-            const overlay = document.getElementById('modal-overlay');
-            const content = document.getElementById('modal-content');
-            
-            content.innerHTML = `
-                <div class="p-8 space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-xl font-black text-slate-900">${fixedType === 'INITIAL' ? 'Initialisation du Dossier' : 'Nouvelle Opération'}</h2>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Grand Livre des Souffrances</p>
-                        </div>
-                        <button onclick="closeModal()" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-
-                    <form id="ledger-form" onsubmit="event.preventDefault(); saveLedgerEntryPC();" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1.5">
-                                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Type d'opération</label>
-                                <select id="ledger-op-type" ${fixedType ? 'disabled' : ''} class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:border-primary/30 outline-none transition-all">
-                                    <option value="PAYMENT" ${fixedType === 'PAYMENT' ? 'selected' : ''}>Paiement Client</option>
-                                    <option value="ADJUSTMENT_ADD" ${fixedType === 'ADJUSTMENT_ADD' ? 'selected' : ''}>Ajustement (Ajouter au solde)</option>
-                                    <option value="ADJUSTMENT_SUB" ${fixedType === 'ADJUSTMENT_SUB' ? 'selected' : ''}>Ajustement (Soustraire du solde)</option>
-                                    <option value="INITIAL" ${fixedType === 'INITIAL' ? 'selected' : ''}>Solde Initial (Correction)</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Date</label>
-                                <input type="date" id="ledger-op-date" value="${new Date().toISOString().split('T')[0]}" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:border-primary/30 outline-none transition-all">
-                            </div>
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Montant (GNF)</label>
-                            <input type="number" id="ledger-op-amount" placeholder="0" required class="w-full px-4 py-4 rounded-xl border-2 border-primary/10 bg-primary/5 text-xl font-black text-primary focus:border-primary/30 outline-none transition-all">
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Description / Commentaire</label>
-                            <textarea id="ledger-op-desc" rows="3" placeholder="Ex: Paiement reçu en espèces..." class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:border-primary/30 outline-none transition-all resize-none"></textarea>
-                        </div>
-
-                        <div class="pt-4 flex gap-3">
-                            <button type="button" onclick="closeModal()" class="flex-1 px-6 py-3.5 rounded-xl border-2 border-slate-100 text-slate-500 font-black text-sm hover:bg-slate-50 transition-all">Annuler</button>
-                            <button type="submit" class="flex-[2] px-6 py-3.5 rounded-xl bg-primary text-white font-black text-sm hover:bg-primary shadow-xl shadow-primary/20 transition-all">Enregistrer</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            
-            // Focus on amount for speed
-            setTimeout(() => document.getElementById('ledger-op-amount')?.focus(), 400);
-        }
-
-        async function saveLedgerEntryPC() {
-            const creditId = window.currentLedgerCreditId;
-            if (!creditId) return;
-
-            const btn = document.querySelector('#ledger-form button[type="submit"]');
-            const origText = btn.innerHTML;
-            
-            const type = document.getElementById('ledger-op-type').value;
-            const amount = parseFloat(document.getElementById('ledger-op-amount').value) || 0;
-            const date = document.getElementById('ledger-op-date').value;
-            const desc = document.getElementById('ledger-op-desc').value.trim();
-
-            if (amount <= 0) {
-                showNotification("Le montant doit être supérieur à zéro", "error");
-                return;
-            }
-
-            // Negative Balance Validation (Except for INITIAL)
-            if (type !== 'INITIAL') {
-                const { data: entries } = await _supabase.from('recovery_ledger').select('amount, type').eq('credit_id', creditId);
-                let currentBalance = 0;
-                (entries || []).forEach(e => {
-                    const v = parseFloat(e.amount) || 0;
-                    if (e.type === 'INITIAL' || e.type === 'ADJUSTMENT_ADD') currentBalance += v;
-                    else currentBalance -= v;
-                });
-
-                let newBalance = currentBalance;
-                if (type === 'PAYMENT' || type === 'ADJUSTMENT_SUB') newBalance -= amount;
-                else if (type === 'ADJUSTMENT_ADD') newBalance += amount;
-
-                if (newBalance < 0) {
-                    if (!confirm("⚠️ ATTENTION : Cette opération va entraîner un SOLDE NÉGATIF (" + newBalance.toLocaleString() + " GNF). Êtes-vous sûr de vouloir continuer ?")) {
-                        return;
-                    }
-                }
-            }
-
-            try {
-                btn.innerHTML = '<span class="animate-spin material-symbols-outlined">sync</span>';
-                btn.disabled = true;
-
-                const { error } = await _supabase
-                    .from('recovery_ledger')
-                    .insert({
-                        credit_id: creditId,
-                        op_date: date,
-                        type: type,
-                        amount: amount,
-                        description: desc
-                    });
-
-                if (error) throw error;
-
-                showNotification("Opération enregistrée avec succès", "success");
-                closeModal();
-                fetchLedgerEntries(creditId);
-
-            } catch (e) {
-                showNotification("Erreur d'enregistrement: " + e.message, "error");
-                btn.innerHTML = origText;
-                btn.disabled = false;
-            }
-        }
-
-        async function editLedgerEntryPC(entryId) {
-            if (!confirm("Toute modification d’une opération passée doit être validée explicitement pour assurer la traçabilité. Souhaitez-vous supprimer cette opération pour la recréer ?")) return;
-            
-            const { data: entry } = await _supabase.from('recovery_ledger').select('*').eq('id', entryId).single();
-            if (!entry) return;
-
-            if (confirm("Confirmer la suppression irréversible de l'opération REF : " + entryId.slice(0,6) + " (" + entry.type + " - " + parseFloat(entry.amount).toLocaleString() + " GNF) ?")) {
-                const { error } = await _supabase.from('recovery_ledger').delete().eq('id', entryId);
-                if (!error) {
-                    showNotification("Opération supprimée avec succès.", "success");
-                    fetchLedgerEntries(window.currentLedgerCreditId);
-                } else {
-                    showNotification("Erreur lors de la suppression : " + error.message, "error");
-                }
-            }
         }
     </script>
 
