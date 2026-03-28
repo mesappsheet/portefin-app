@@ -76,34 +76,24 @@ html, body {
   position: relative;
 }
 
-/* Scrollbars — cachées partout sauf les conteneurs principaux */
+/* Scrollbars — cachées globalement */
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; -ms-overflow-style: none; }
 
-/* Scrollbar visible sur le conteneur principal des données */
-#view::-webkit-scrollbar,
-#grand-livre-mob-content::-webkit-scrollbar,
-.modal-sheet::-webkit-scrollbar {
-  display: block;
-  width: 4px;
-}
-#view::-webkit-scrollbar-track,
-#grand-livre-mob-content::-webkit-scrollbar-track,
-.modal-sheet::-webkit-scrollbar-track {
-  background: transparent;
-}
-#view::-webkit-scrollbar-thumb,
-#grand-livre-mob-content::-webkit-scrollbar-thumb,
-.modal-sheet::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,.18);
-  border-radius: 4px;
-}
-body.light #view::-webkit-scrollbar-thumb,
-body.light #grand-livre-mob-content::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,.15);
-}
-#view { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.18) transparent; }
-#grand-livre-mob-content { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.18) transparent; }
+/* Scrollbar fine visible sur tous les conteneurs de données */
+#view::-webkit-scrollbar { display: block !important; width: 5px !important; }
+#view::-webkit-scrollbar-track { background: transparent; }
+#view::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); border-radius: 4px; }
+#view { scrollbar-width: thin !important; scrollbar-color: rgba(0,0,0,.22) transparent; }
+
+#grand-livre-mob-content::-webkit-scrollbar { display: block !important; width: 5px !important; }
+#grand-livre-mob-content::-webkit-scrollbar-track { background: transparent; }
+#grand-livre-mob-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); border-radius: 4px; }
+#grand-livre-mob-content { scrollbar-width: thin !important; scrollbar-color: rgba(0,0,0,.22) transparent; }
+
+.modal-sheet::-webkit-scrollbar { display: block !important; width: 4px !important; }
+.modal-sheet::-webkit-scrollbar-track { background: transparent; }
+.modal-sheet::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 4px; }
 
 /* Sticky Elements */
 #topbar {
