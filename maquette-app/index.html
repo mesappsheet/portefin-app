@@ -123,15 +123,16 @@ html, body {
   align-items: center; justify-content: center; 
   gap: 4px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-dim); position: relative;
+  cursor: pointer;
 }
 .nav-item i { font-size: 24px; transition: inherit; }
 .nav-item label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: inherit; }
 .nav-item.active { color: var(--primary); }
-.nav-item.active i { transform: translateY(-2px) scale(1.1); font-variation-settings: 'FILL' 1; }
+.nav-item.active i { transform: translateY(-3px) scale(1.1); font-variation-settings: 'FILL' 1; text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3); }
 .nav-item.active::after {
-  content: ''; position: absolute; top: 10px; right: 25%;
+  content: ''; position: absolute; top: 8px; right: 28%;
   width: 6px; height: 6px; background: var(--primary);
-  border-radius: 50%; box-shadow: 0 0 10px var(--primary);
+  border-radius: 50%; box-shadow: 0 0 12px var(--primary), 0 0 4px var(--primary);
 }
 
 /* UI Elements */
@@ -150,7 +151,7 @@ html, body {
 
 .badge {
   padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 1px;
+  text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
 }
 
 /* Premium Modals */
@@ -196,7 +197,7 @@ html, body {
   font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
   display: flex; align-items: center; justify-content: center; gap: 10px;
   box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);
-  transition: all 0.2s;
+  transition: all 0.2s; cursor: pointer;
 }
 .btn-main:active { transform: scale(0.96); filter: brightness(0.9); }
 
@@ -204,7 +205,7 @@ html, body {
   width: 44px; height: 44px; border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   background: var(--glass); border: 1px solid var(--glass-border);
-  color: var(--text); transition: all 0.2s;
+  color: var(--text); transition: all 0.2s; cursor: pointer;
 }
 .action-btn:active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
 
@@ -248,6 +249,7 @@ html, body {
   font-weight: 700;
   text-transform: uppercase;
   transition: all .2s;
+  cursor: pointer;
 }
 .detail-action-btn:active { background: var(--ghost-hover); transform: scale(0.96); }
 .detail-status-badge {
@@ -275,26 +277,39 @@ body.light .glass { box-shadow: 0 2px 16px rgba(0,0,0,.07); }
 
 .stat-card {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 20px; padding: 18px;
+  border-radius: 20px; padding: 18px; cursor: pointer;
 }
 body.light .stat-card { box-shadow: 0 2px 16px rgba(0,0,0,.07); }
 
 /* Rep / Credit items */
 .rep-item {
-  padding: 14px 16px; border-bottom: 1px solid var(--border2);
-  display: flex; align-items: center; gap: 12px;
-  transition: background .15s;
+  margin: 14px 16px; 
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  display: flex; flex-direction: column; gap: 14px;
+  transition: all .2s; cursor: pointer;
+  position: relative;
 }
-.rep-item:last-child { border-bottom: none; }
-.rep-item:active { background: var(--ghost-hover); }
+body.light .rep-item { border-color: rgba(0,0,0,0.06); }
+.rep-item:active { transform: scale(0.98); }
+.rep-item:hover { border-color: var(--primary); }
 
 .cred-item {
-  padding: 14px; border-radius: 16px;
-  background: var(--card); border: 1px solid var(--border);
-  margin-bottom: 10px; transition: transform .15s;
+  margin: 14px 16px;
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: all .2s; cursor: pointer;
 }
-body.light .cred-item { box-shadow: 0 1px 8px rgba(0,0,0,.05); }
-.cred-item:active { transform: scale(0.99); }
+body.light .cred-item { border-color: rgba(0,0,0,0.06); }
+.cred-item:active { transform: scale(0.98); }
+.cred-item:hover { border-color: var(--primary); }
+.card-pwa { display: block; } /* alias for cred-item */
 
 /* Tab bar */
 .tab-bar {
@@ -418,6 +433,27 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
   border-radius: 16px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit;
   box-shadow: 0 6px 16px rgba(242,127,13,.25); transition: all .2s; }
 .btn-primary:active { transform: scale(0.97); }
+/* Row Items Base */
+.rep-avatar, .pros-avatar, .cred-avatar {
+  background: linear-gradient(135deg, var(--primary), #fb923c);
+  color: white; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+  flex-shrink: 0;
+}
+.pros-avatar { background: linear-gradient(135deg, #6366f1, #818cf8); box-shadow: 0 4px 12px rgba(99,102,241,0.2); }
+
+/* Badge Glows */
+.badge-red { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.15); box-shadow: 0 2px 8px rgba(239,68,68,0.05); }
+.badge-green { background: rgba(34,197,94,.08); color: #22c55e; border: 1px solid rgba(34,197,94,.12); box-shadow: 0 2px 8px rgba(34,197,94,0.05); }
+.badge-orange { background: rgba(243,156,18,.08); color: #f39c12; border: 1px solid rgba(243,156,18,.12); box-shadow: 0 2px 8px rgba(243,156,18,0.05); }
+.badge-blue { background: rgba(59,130,246,.08); color: #3b82f6; border: 1px solid rgba(59,130,246,.12); box-shadow: 0 2px 8px rgba(59,130,246,0.05); }
+
+/* Amount Styling */
+.amt-pwa { font-size: 14px; font-weight: 900; color: var(--primary); letter-spacing: -0.2px; }
+.date-pwa { font-size: 11px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
 </style>
 </head>
 <body>
@@ -661,7 +697,42 @@ function credMenu(btn,cid){
   showMenu(btn,items);
 }
 
-// ─── REGULARISATION ───────────────────────────
+function repMenu(btn, rid, cid, isPaid, phone, name, amount, dateStr, health, status){
+  const items=[
+    !isPaid
+      ? {icon:'check_circle',label:'Valider le paiement',fn:()=>confirmPayInstallment(rid,dateStr,fmt(amount)),color:'#22c55e'}
+      : {icon:'radio_button_unchecked',label:'Remettre en attente',fn:()=>{
+          const el=document.getElementById('rep-'+rid);
+          const tb=el?el.querySelector('.toggle-paid'):null;
+          if(tb)toggleRepPaid(rid,true,tb);
+        },color:'#f97316'},
+    {sep:true},
+    {icon:'account_balance',label:'Voir le dossier client',fn:()=>openCreditDetail(cid),color:'#f27f0d'},
+    {icon:'calendar_month',label:'Échéancier complet',fn:()=>viewEcheancier(cid,name)},
+    {icon:'sticky_note_2',label:'Gérer les notes',fn:()=>openCreditNotes(cid,name)},
+    {sep:true},
+    {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
+    {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Suivi',amount,dateStr,'',cid),color:'#22c55e'},
+    {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Suivi',amount,dateStr,'',cid),color:'#3b82f6'},
+    {sep:true},
+    {icon:'swap_horiz',label:'Changer statut',fn:()=>changeCreditStatus(cid,name,status||'')},
+    {icon:'health_and_safety',label:'Changer santé',fn:()=>toggleCreditHealth(cid,health||'Sain'),color:health==='Souffrance'?'#22c55e':'#ef4444'},
+    {sep:true},
+    {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, phone, '')},
+    {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
+    {sep:true},
+    {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
+    {sep:true},
+    {icon:'groups',label:'Régulariser solde',fn:()=>openRegularizationModal(cid,name),color:'#f27f0d'},
+    {sep:true},
+    {icon:'edit',label:'Modifier dossier',fn:()=>openClientEditForm(cid)},
+    {icon:'delete',label:'Supprimer dossier',fn:()=>deleteCredit(cid,name),danger:true},
+  ];
+  showMenu(btn,items);
+}
+
+
 function openRegularizationModal(cid, name){
   openModal(`
     <div style="padding:0 20px 24px">
@@ -1302,36 +1373,52 @@ function repRow(r){
   const statusClass=isSolde?'badge-blue':isEchu?'badge-red':'badge-orange';
   const dueBadge = !isPaid && r.scheduled_date && r.scheduled_date.split('T')[0] <= new Date().toISOString().split('T')[0]
     ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${fmtDate(r.scheduled_date.split('T')[0])}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>${fmtDate(r.scheduled_date.split('T')[0])}</button>` : '';
-  return`<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'};display:flex;flex-direction:column;gap:0;padding:14px 16px">
-    <!-- Ligne 1 : Avatar + infos + toggle statut -->
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="rep-avatar" style="flex-shrink:0">${initials(name)}</div>
+  return `<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'}">
+    <!-- Header: Bento Style -->
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div class="rep-avatar" style="width:52px;height:52px;font-size:20px">${initials(name)}</div>
       <div style="flex:1;min-width:0">
-        <p style="font-size:14px;font-weight:700;margin:0 0 2px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
-        <p style="font-size:12px;color:var(--text2);margin:0 0 6px;font-weight:600">${fmt(r.amount)} FCFA${r.scheduled_date?' · '+fmtDate(r.scheduled_date.split('T')[0]):''}</p>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">${health} <span style="font-size:10px;opacity:.7">↻</span></span>
-          <span class="badge ${statusClass}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();changeCreditStatus('${cid}','${name.replace(/'/g,"\\'")}','${status}')">${status} <span style="font-size:10px;opacity:.7">▾</span></span>
-          ${r.is_reported?`<span class="badge badge-blue" style="font-size:9px">Reporté</span>`:''}
-          ${dueBadge}
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+          <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span class="amt-pwa">${fmt(r.amount)} <small style="font-size:9px;opacity:0.8">FCFA</small></span>
+          ${r.scheduled_date ? `<span class="date-pwa">${fmtDate(r.scheduled_date.split('T')[0])}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">
+            <span class="material-symbols-outlined filled" style="font-size:14px">${isS?'health_and_safety':'verified_user'}</span>
+            ${health}
+          </span>
+          <span class="badge ${statusClass}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();changeCreditStatus('${cid}','${name.replace(/'/g,"\\'")}','${status}')">
+            <span class="material-symbols-outlined filled" style="font-size:14px">info</span>
+            ${status}
+          </span>
+          ${r.is_reported?`<span class="badge badge-blue"><span class="material-symbols-outlined" style="font-size:14px">event_repeat</span>Report</span>`:''}
         </div>
       </div>
-      <!-- Toggle statut seul, à droite -->
-      <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap;height:auto;width:auto;border-width:1.5px">
-        <span class="material-symbols-outlined" style="font-size:14px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
-        ${isPaid?'Payé':'En attente'}
-      </button>
+      <!-- Actions Droite -->
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)" style="height:42px;padding:0 14px;border-radius:14px;border-width:1.5px">
+          <span class="material-symbols-outlined" style="font-size:20px;margin-right:4px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
+          <span style="font-size:11px;font-weight:900">${isPaid?'Payé':'Attente'}</span>
+        </button>
+        <button class="action-btn" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);flex-shrink:0" onclick="event.stopPropagation();repMenu(this,'${r.id}','${cid}',${isPaid},'${phone}','${name.replace(/'/g,"\\'")}',${ r.amount||0},'${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${health}','${status}')">
+          <span class="material-symbols-outlined" style="font-size:20px">more_vert</span>
+        </button>
+      </div>
     </div>
-    ${phone?`<!-- Ligne 2 : Boutons d'action séparés -->
-    <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
-      <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit">
-        <span class="material-symbols-outlined filled" style="font-size:16px">chat</span>WhatsApp
+
+    <!-- Actions Rapides -->
+    ${phone?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:14px;border-top:1px solid var(--border2);margin-top:2px">
+      <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
+        <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>WA
       </button>
-      <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
-        <span class="material-symbols-outlined filled" style="font-size:16px">sms</span>SMS
+      <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="width:100%;border-radius:14px;height:42px;gap:6px;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
+        <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>SMS
       </button>
-      <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')" style="flex:1;border-radius:12px;height:36px;gap:5px;font-size:11px;font-weight:700;font-family:inherit">
-        <span class="material-symbols-outlined filled" style="font-size:16px">call</span>Appel
+      <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
+        <span class="material-symbols-outlined filled" style="font-size:18px">call</span>Appel
       </button>
     </div>`:''}
   </div>`;
@@ -1411,7 +1498,6 @@ function setCredFilter(f){
 async function loadCredits(){
   const list=document.getElementById('cred-list');
   if(!list)return;
-  list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
     let q=sb.from('credits')
       .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
@@ -1431,29 +1517,26 @@ async function loadCredits(){
     if(credSearch){const s=credSearch.toLowerCase();rows=rows.filter(c=>(getName(c)).toLowerCase().includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
 
-    // Étape 1 : afficher la liste immédiatement avec données de base
     rows.forEach(c=>{c.reps={total:0,paid:0};c.nextUnpaid=null;c.nextUpcoming=null;_credCache[c.id]=c;});
     list.innerHTML=`
       <div style="padding:0 16px 8px">
         <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} dossier${rows.length>1?'s':''}</span>
       </div>
-      <div class="glass" style="margin:0 16px;overflow:hidden" id="cred-rows-container">
+      <div id="cred-rows-container">
         ${rows.map(c=>credRow(c)).join('')}
       </div>`;
 
-    // Étape 2 : charger compteurs + badges en arrière-plan, puis mettre à jour chaque ligne
     const ids=rows.map(c=>c.id);
-    const today=new Date().toISOString().split('T')[0];
+    const todayStr=today();
     const [{data:statsData},{data:unpaidData},{data:upcomingData}]=await Promise.all([
       sb.from('credit_stats').select('credit_id,nombre_echeances_total,nombre_echeances_payees').in('credit_id',ids),
-      sb.from('repayments').select('id,credit_id,scheduled_date,amount').in('credit_id',ids).eq('is_paid',false).lte('scheduled_date',today).order('scheduled_date',{ascending:false}),
-      sb.from('repayments').select('id,credit_id,scheduled_date,is_paid,amount').in('credit_id',ids).gte('scheduled_date',today).order('scheduled_date',{ascending:true})
+      sb.from('repayments').select('id,credit_id,scheduled_date,amount').in('credit_id',ids).eq('is_paid',false).lte('scheduled_date',todayStr).order('scheduled_date',{ascending:false}),
+      sb.from('repayments').select('id,credit_id,scheduled_date,is_paid,amount').in('credit_id',ids).gte('scheduled_date',todayStr).order('scheduled_date',{ascending:true})
     ]);
     const statsMap={};(statsData||[]).forEach(s=>{statsMap[s.credit_id]=s;});
     const unpaidMap={};(unpaidData||[]).forEach(r=>{if(!unpaidMap[r.credit_id])unpaidMap[r.credit_id]=r;});
     const upcomingMap={};(upcomingData||[]).forEach(r=>{if(!upcomingMap[r.credit_id])upcomingMap[r.credit_id]=r;});
 
-    // Vérifier que la vue est toujours là (l'utilisateur n'a pas changé d'écran)
     if(!document.getElementById('cred-rows-container'))return;
 
     rows.forEach(c=>{
@@ -1464,13 +1547,11 @@ async function loadCredits(){
       const n=upcomingMap[c.id];
       c.nextUpcoming=(n&&(!c.end_date||n.scheduled_date<=c.end_date))?{id:n.id,scheduled_date:n.scheduled_date,is_paid:n.is_paid,amount:n.amount}:null;
       _credCache[c.id]=c;
-      // Mettre à jour la ligne individuellement
       const el=document.getElementById('cred-row-'+c.id);
       if(el)el.outerHTML=credRow(c);
     });
   }catch(e){
-    const list=document.getElementById('cred-list');
-    if(list)list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
+    if(list)list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;
   }
 }
 
@@ -1482,58 +1563,57 @@ function credRow(c){
   const startD=c.start_date?c.start_date.split('T')[0]:'—';
   const endD=c.end_date?c.end_date.split('T')[0]:'—';
   
-  return `<div class="cred-item" onclick="openCreditDetail('${c.id}')" style="cursor:pointer;position:relative;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--border);margin-bottom:10px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="flex:1;min-width:0;padding-right:8px;display:flex;align-items:center;gap:8px">
-        <p style="font-size:15px;font-weight:800;color:var(--text);margin:0;letter-spacing:-.2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:4px">
-          <!-- Badge SANTÉ — ↻ Bascule directe -->
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
-            ${c.health||'Sain'} <span style="font-size:10px;opacity:.7">↻</span>
+  return `<div class="cred-item card-pwa" id="cred-row-${c.id}" onclick="openCreditDetail('${c.id}')">
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px">
+      <div class="cred-avatar" style="width:52px;height:52px;font-size:20px">${initials(name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+          <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span class="amt-pwa">${fmt(c.amount)} <small style="font-size:9px;opacity:0.8;font-weight:700">FCFA</small></span>
+          <span class="date-pwa">${fmtDate(startD)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
+            <span class="material-symbols-outlined filled" style="font-size:14px">${isS?'health_and_safety':'verified_user'}</span>
+            ${c.health||'Sain'}
           </span>
-          <!-- Badge STATUT — ▾ Menu modal -->
           ${(() => {
             const st = c.status || 'En cours';
             const isSolde = ['Soldé','SOLDÉ','soldé'].includes(st);
             const isEchu = st === 'Échu';
             const bClass = isSolde ? 'badge-blue' : (isEchu ? 'badge-red' : 'badge-orange');
-            return `<span class="badge ${bClass}" style="font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')">
-              ${st} <span style="font-size:10px;opacity:.7">▾</span>
+            return `<span class="badge ${bClass}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')">
+              <span class="material-symbols-outlined filled" style="font-size:14px">info</span>
+              ${st}
             </span>`;
           })()}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        ${getPhone(c)?`
-        <button class="action-btn ab-sms" style="background:rgba(59,130,246,.12);color:#3b82f6;width:32px;height:32px;border-radius:10px" onclick="event.stopPropagation();sms('${getPhone(c)}','${name.replace(/'/g,"\\'")}','Crédit',${c.amount},'${c.end_date||''}','','${c.id}')">
-          <span class="material-symbols-outlined" style="font-size:18px">sms</span>
-        </button>`:''}
-        <button class="action-btn" style="background:var(--bg);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0;color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
-          <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button class="action-btn" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
+          <span class="material-symbols-outlined" style="font-size:20px">more_vert</span>
         </button>
       </div>
     </div>
     
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;padding-top:10px;border-top:1px solid var(--border2)">
       <div>
-        <p style="font-size:18px;font-weight:900;color:#f27f0d;margin:0;line-height:1">${fmt(c.amount)} <span style="font-size:10px;color:var(--text2)">FCFA</span></p>
-        ${(c.nextUnpaid || c.nextUpcoming) && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
-            ${c.nextUnpaid ? `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}</button>` : ''}
-            ${c.nextUpcoming && (!c.nextUnpaid || c.nextUpcoming.id !== c.nextUnpaid.id) ? (c.nextUpcoming.is_paid ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);color:#94a3b8;font-size:10px;font-weight:800"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</span>` : `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUpcoming.id}','${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}','${fmt(c.nextUpcoming.amount)}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:800;cursor:pointer"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</button>`) : ''}
-          </div>
-        `:''}
+        ${(c.nextUnpaid || c.nextUpcoming) && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? (c.nextUnpaid ? `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUnpaid.id}','${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}','${fmt(c.nextUnpaid.amount)}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:900;cursor:pointer;font-family:inherit"><span class="material-symbols-outlined" style="font-size:14px">event_busy</span>${fmtDate(c.nextUnpaid.scheduled_date.split('T')[0])}</button>` : `<button onclick="event.stopPropagation();confirmPayInstallment('${c.nextUpcoming.id}','${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}','${fmt(c.nextUpcoming.amount)}')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:900;cursor:pointer;font-family:inherit"><span class="material-symbols-outlined" style="font-size:14px">event_upcoming</span>${fmtDate(c.nextUpcoming.scheduled_date.split('T')[0])}</button>`) : `<span style="font-size:10px;color:var(--text3);font-weight:700">ID: ${c.id.slice(0,8).toUpperCase()}</span>`}
       </div>
-      <div style="font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:4px">
-        <span class="material-symbols-outlined" style="font-size:14px;color:var(--text2)">calendar_month</span>
-        ${fmtDate(startD)} &nbsp;→&nbsp; ${fmtDate(endD)}
+      <div style="font-size:11px;font-weight:700;color:var(--text3);display:flex;align-items:center;gap:4px">
+        <span class="material-symbols-outlined" style="font-size:14px">calendar_month</span>
+        ${fmtDate(endD)}
       </div>
     </div>
 
-    <div class="progress-bar-bg" style="height:6px;margin-bottom:6px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div style="background:rgba(255,255,255,.05);height:6px;border-radius:10px;overflow:hidden;margin-bottom:8px">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:10px;transition:width .6s ease"></div>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
       <p style="font-size:11px;color:var(--text2);margin:0;font-weight:700">${reps.paid}/${reps.total} échéances</p>
-      <p style="font-size:11px;font-weight:900;color:var(--text);margin:0">${pct}% payé</p>
+      <p style="font-size:11px;font-weight:900;color:var(--primary);margin:0">${pct}%</p>
     </div>
   </div>`;
 }
@@ -2371,69 +2451,53 @@ function twColor(c){
 }
 
 function prosRow(p){
-  const name=p.full_name||'Inconnu';
-  const phone=p.phone||'';
-  const address=p.address||p.neighborhood||'';
-  const labelKey = Object.keys(statusMapPWA).find(k=>k.toLowerCase()===(p.status||'').toLowerCase());
-  const rawColor = statusMapPWA[labelKey] || '#cbd5e1';
-  const color = twColor(rawColor);
-  const isSel = selectedProsPWA.has(p.id);
-  
-  return `<div class="pros-item ${isSel?'selected':''}" style="padding:16px; ${isSel?'background:linear-gradient(90deg, rgba(242,127,13,0.1) 0%, transparent 100%)':''}; border-bottom:1px solid var(--sep); transition:all 0.2s">
-    <div style="display:flex;align-items:flex-start;gap:12px;width:100%">
-      <!-- Sélection -->
-      <div style="padding-top:12px">
-        <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation(); toggleProSelPWA('${p.id}')" style="width:18px;height:18px;accent-color:#f27f0d;cursor:pointer">
+  const name=getName(p);
+  const phone=getPhone(p);
+  const address=p.address||'';
+  const isSel=selectedProsPWA.has(p.id);
+
+  return `<div class="pros-item ${isSel?'selected':''}" style="margin:14px 16px; padding:18px; border-radius:20px; background:var(--card); border:1.5px solid ${isSel?'var(--primary)':'var(--border)'}; box-shadow:0 6px 24px rgba(0,0,0,0.06); transition:all 0.2s; cursor:pointer" onclick="openProspectDetail('${p.id}')">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <!-- Avatar + Sélection superposée -->
+      <div style="position:relative;flex-shrink:0">
+        <div class="pros-avatar" style="width:54px;height:54px;font-size:22px">${initials(name)}</div>
+        <div style="position:absolute;-bottom:4px;-right:4px;width:24px;height:24px;background:var(--card);border-radius:50%;display:flex;items:center;justify:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);border:1.5px solid var(--border)" onclick="event.stopPropagation()">
+           <input type="checkbox" ${isSel?'checked':''} onclick="toggleProSelPWA('${p.id}')" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;margin:0">
+        </div>
       </div>
       
-      <!-- Contenu Principal -->
-      <div onclick="openProspectDetail('${p.id}')" style="flex:1;min-width:0;cursor:pointer">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-          <div class="pros-avatar" style="width:44px;height:44px;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,0.1)">${initials(name)}</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <p style="font-size:15px;font-weight:800;color:var(--text);margin:0;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
-              <span style="padding:3px 10px;border-radius:20px;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:${color}15;color:${color};border:1px solid ${color}40;flex-shrink:0">${p.status||'NOUVEAU'}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-               ${p.activity?`<span style="font-size:12px;color:#f27f0d;font-weight:700">${p.activity}</span>`:''}
-               ${p.activity && p.activity_detail ?`<span style="font-size:10px;color:var(--text3)">·</span>`:''}
-               ${p.activity_detail?`<span style="font-size:12px;color:var(--text2);font-weight:500">${p.activity_detail}</span>`:''}
-            </div>
-          </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+           <p style="font-size:17px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0">${name}</p>
+           <button onclick="event.stopPropagation();prosMenu(this,'${p.id}')" style="flex-shrink:0;width:32px;height:32px;border-radius:10px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Actions">
+             <span class="material-symbols-outlined" style="font-size:18px">more_vert</span>
+           </button>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+           <span class="badge badge-blue" style="padding:4px 10px;display:flex;align-items:center;gap:4px">
+              <span class="material-symbols-outlined filled" style="font-size:14px">label</span>
+              ${p.status||'NOUVEAU'}
+           </span>
+           ${p.activity?`<span style="font-size:12px;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:14px">work</span>${p.activity}</span>`:''}
         </div>
 
-        <!-- Informations Secondaires (Icônes + Texte) -->
-        <div style="display:flex;flex-direction:column;gap:6px;padding-left:56px">
-          ${phone ? `
-            <div style="display:flex;align-items:center;gap:8px;color:var(--text2)">
-              <span class="material-symbols-outlined" style="font-size:16px;opacity:0.7">call</span>
-              <span style="font-size:12px;font-weight:500;letter-spacing:0.02em">${phone}</span>
-            </div>` : ''}
-          
-          ${address ? `
-            <div style="display:flex;align-items:center;gap:8px;color:var(--text2)">
-              <span class="material-symbols-outlined" style="font-size:16px;opacity:0.7">location_on</span>
-              <span style="font-size:12px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${address}</span>
-            </div>` : ''}
-
-          ${p.created_at ? `
-            <div style="display:flex;align-items:center;gap:8px;color:var(--text3);margin-top:2px">
-              <span class="material-symbols-outlined" style="font-size:16px;opacity:0.6">calendar_today</span>
-              <span style="font-size:11px;font-weight:500;letter-spacing:0.01em">Fiché le ${fmtDate(p.created_at.split('T')[0])}</span>
-            </div>` : ''}
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+           ${phone?`<div style="display:flex;align-items:center;gap:8px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:16px;opacity:0.7">call</span><span style="font-size:13px;font-weight:700">${phone}</span></div>`:''}
+           ${address?`<div style="display:flex;align-items:center;gap:8px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:16px;opacity:0.7">location_on</span><span style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${address}</span></div>`:''}
         </div>
-      </div>
 
-      <!-- Actions -->
-      <div style="display:flex;align-items:center;padding-top:4px;gap:6px">
-        ${phone?`
-        <button class="action-btn ab-sms" style="background:rgba(59,130,246,.12);color:#3b82f6;width:34px;height:34px;border-radius:10px" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')">
-          <span class="material-symbols-outlined" style="font-size:18px">sms</span>
-        </button>`:''}
-        <button class="action-btn" style="background:var(--card2);border:1px solid var(--border);width:36px;height:36px;border-radius:12px;color:var(--text2)" onclick="event.stopPropagation();prosMenu(this,'${p.id}')">
-          <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
-        </button>
+        ${phone?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:14px;border-top:1px solid var(--border2)" onclick="event.stopPropagation()">
+          <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
+            <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>WA
+          </button>
+          <button class="action-btn ab-sms" onclick="sms('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="width:100%;border-radius:14px;height:42px;gap:6px;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
+            <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>SMS
+          </button>
+          <button class="action-btn ab-call" onclick="call('${phone}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
+            <span class="material-symbols-outlined filled" style="font-size:18px">call</span>Appel
+          </button>
+        </div>`:''}
       </div>
     </div>
   </div>`;
