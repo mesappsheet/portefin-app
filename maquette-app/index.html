@@ -76,9 +76,34 @@ html, body {
   position: relative;
 }
 
-/* Scrollbars - Globally Hidden */
+/* Scrollbars — cachées partout sauf les conteneurs principaux */
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* Scrollbar visible sur le conteneur principal des données */
+#view::-webkit-scrollbar,
+#grand-livre-mob-content::-webkit-scrollbar,
+.modal-sheet::-webkit-scrollbar {
+  display: block;
+  width: 4px;
+}
+#view::-webkit-scrollbar-track,
+#grand-livre-mob-content::-webkit-scrollbar-track,
+.modal-sheet::-webkit-scrollbar-track {
+  background: transparent;
+}
+#view::-webkit-scrollbar-thumb,
+#grand-livre-mob-content::-webkit-scrollbar-thumb,
+.modal-sheet::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.18);
+  border-radius: 4px;
+}
+body.light #view::-webkit-scrollbar-thumb,
+body.light #grand-livre-mob-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+}
+#view { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.18) transparent; }
+#grand-livre-mob-content { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.18) transparent; }
 
 /* Sticky Elements */
 #topbar {
