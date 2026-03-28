@@ -1377,7 +1377,7 @@ async function loadRepayments(){
   list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
     let q=sb.from('repayments')
-      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,clients(full_name,phone1))')
+      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,start_date,end_date,clients(full_name,phone1))')
       .eq('scheduled_date',repDate)
       .order('is_paid',{ascending:true});
     if(repFilter==='pending')q=q.eq('is_paid',false);
@@ -1453,7 +1453,7 @@ function repRow(r){
         </div>
       </div>
       <!-- Actions Droite -->
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
         <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)" style="height:42px;padding:0 14px;border-radius:14px;border-width:1.5px">
           <span class="material-symbols-outlined" style="font-size:20px;margin-right:4px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
           <span style="font-size:11px;font-weight:900">${isPaid?'Payé':'Attente'}</span>
@@ -1463,6 +1463,12 @@ function repRow(r){
         </button>
       </div>
     </div>
+
+    <!-- Dates début / fin crédit -->
+    ${(r.credits?.start_date||r.credits?.end_date)?`<div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border2);margin-bottom:8px;flex-wrap:wrap">
+      ${r.credits?.start_date?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);font-size:10px;font-weight:800;color:#3b82f6"><span class="material-symbols-outlined" style="font-size:12px">play_arrow</span>${fmtDate(r.credits.start_date)}</span>`:''}
+      ${r.credits?.end_date?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);font-size:10px;font-weight:800;color:#f97316"><span class="material-symbols-outlined" style="font-size:12px">flag</span>${fmtDate(r.credits.end_date)}</span>`:''}
+    </div>`:''}
 
     <!-- Actions Rapides -->
     ${phone?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:14px;border-top:1px solid var(--border2);margin-top:2px">
@@ -1612,19 +1618,26 @@ async function loadCredits(){
 
 function _echeanceBadges(c){
   const isSolde=['Soldé','SOLDÉ','soldé'].includes(c.status);
-  if(isSolde) return '<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);font-size:11px;font-weight:800;color:#22c55e"><span class="material-symbols-outlined" style="font-size:14px">task_alt</span>Toutes les échéances payées</span>';
-  let html='';
+  let html='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
+  if(isSolde){
+    html+='<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 14px rgba(34,197,94,.45)" title="Toutes les échéances payées"><span class="material-symbols-outlined" style="font-size:20px;color:#fff">task_alt</span></div>';
+    html+='</div>';
+    return html;
+  }
   if(c.nextUnpaid){
     const d=fmtDate(c.nextUnpaid.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUnpaid.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Échéance non payée — cliquer pour enregistrer le paiement" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.4);color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit"><span class="material-symbols-outlined" style="font-size:14px">event_busy</span>'+d+'<span style="padding:2px 7px;border-radius:8px;background:#ef4444;color:#fff;font-size:9px;font-weight:900">Non payée</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Non payée — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(239,68,68,.45);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>'+d+'</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">Non payée</span></button>';
   }
   if(c.nextUpcoming){
     const d=fmtDate(c.nextUpcoming.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUpcoming.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="Prochaine échéance — cliquer pour enregistrer le paiement" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:rgba(249,115,22,.1);border:1.5px solid rgba(249,115,22,.4);color:#f97316;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit"><span class="material-symbols-outlined" style="font-size:14px">event_upcoming</span>'+d+'<span style="padding:2px 7px;border-radius:8px;background:#f97316;color:#fff;font-size:9px;font-weight:900">À venir</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="À venir — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#f97316,#c2410c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(249,115,22,.4);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>'+d+'</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">À venir</span></button>';
   }
-  if(!html) return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);font-weight:700"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span>Aucune échéance en attente</span>';
+  if(!c.nextUnpaid&&!c.nextUpcoming){
+    html+='<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(100,116,139,.12);border:1.5px solid rgba(100,116,139,.2)" title="Aucune échéance en attente"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8">check_circle</span></div>';
+  }
+  html+='</div>';
   return html;
 }
 
@@ -1664,13 +1677,14 @@ function credRow(c){
           })()}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
+        ${_echeanceBadges(c)}
         <button class="action-btn" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
           <span class="material-symbols-outlined" style="font-size:20px">more_vert</span>
         </button>
       </div>
     </div>
-    
+
     <!-- Dates début / fin -->
     <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border2);margin-bottom:8px;flex-wrap:wrap">
       <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);font-size:10px;font-weight:800;color:#3b82f6">
@@ -1680,8 +1694,6 @@ function credRow(c){
         <span class="material-symbols-outlined" style="font-size:12px">flag</span>${fmtDate(endD)}
       </span>
     </div>
-    <!-- Badges échéances -->
-    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">${_echeanceBadges(c)}</div>
 
     <div style="background:rgba(255,255,255,.05);height:6px;border-radius:10px;overflow:hidden;margin-bottom:8px">
       <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:10px;transition:width .6s ease"></div>
