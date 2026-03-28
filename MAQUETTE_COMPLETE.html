@@ -8262,8 +8262,8 @@ Suivant
                 return;
             }
 
-            // Filtre local si recherche (couvre crédits FK et crédits importés)
-            let filtered = data;
+            // Exclure les crédits en Souffrance de la liste des impayés
+            let filtered = (data || []).filter(r => r.credits?.health !== 'Souffrance');
             if (repaymentSearch) {
                 const q = repaymentSearch.toLowerCase();
                 filtered = data.filter(r => {

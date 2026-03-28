@@ -1384,7 +1384,8 @@ async function loadRepayments(){
     if(repFilter==='paid')q=q.eq('is_paid',true);
     const{data,error}=await q;
     if(error)throw error;
-    const rows=data||[];
+    // Exclure les crédits en Souffrance de la liste des impayés
+    const rows=(data||[]).filter(r=>r.credits?.health!=='Souffrance');
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">event_busy</span><p>Aucun remboursement pour cette date</p></div>`;return;}
     const paid=rows.filter(r=>r.is_paid).length;
     const pending=rows.length-paid;
