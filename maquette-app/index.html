@@ -1341,27 +1341,50 @@ function credRow(c){
   </div>`;
 }
 
-async function copyClientsOfDayMob(btn) {
+function copyClientsOfDayMob() {
   const today = new Date().toISOString().split('T')[0];
+  let ov = document.getElementById('copy-clients-ov-mob');
+  if (ov) { document.getElementById('copy-clients-date-mob').value = today; ov.style.display = 'flex'; return; }
+  ov = document.createElement('div');
+  ov.id = 'copy-clients-ov-mob';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = `
+    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;box-sizing:border-box;font-family:inherit">
+      <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:4px;margin:0 auto 20px"></div>
+      <p style="font-size:15px;font-weight:800;color:var(--text);margin:0 0 4px">Copier clients en attente</p>
+      <p style="font-size:12px;color:var(--text3);margin:0 0 18px">Sélectionnez la date souhaitée</p>
+      <input type="date" id="copy-clients-date-mob" value="${today}" style="width:100%;padding:12px 14px;border:1.5px solid var(--input-border);border-radius:12px;font-size:14px;font-weight:600;color:var(--text);background:var(--input-bg);outline:none;box-sizing:border-box;margin-bottom:14px;font-family:inherit">
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('copy-clients-ov-mob').style.display='none'" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--input-border);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
+        <button id="copy-clients-btn-mob" onclick="executeCopyClientsMob(this)" style="flex:2;padding:13px;border-radius:12px;background:#f27f0d;border:none;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Copier</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+  document.body.appendChild(ov);
+}
+
+async function executeCopyClientsMob(btn) {
+  const date = document.getElementById('copy-clients-date-mob').value || new Date().toISOString().split('T')[0];
   const salut = new Date().getHours() >= 18 ? 'Bonsoir' : 'Bonjour';
-  const icon = btn ? btn.querySelector('.material-symbols-outlined') : null;
-  if (icon) { icon.textContent = 'hourglass_top'; btn.disabled = true; }
+  btn.textContent = '…'; btn.disabled = true;
   try {
     const { data, error } = await sb.from('repayments')
       .select('credits(client_name, clients(full_name))')
-      .eq('scheduled_date', today)
+      .eq('scheduled_date', date)
       .eq('is_paid', false);
     if (error) throw error;
-    if (!data || !data.length) { toast('Aucun client prévu aujourd\'hui', 'info'); return; }
+    if (!data || !data.length) { toast('Aucun client en attente pour cette date', 'info'); return; }
     const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
     const liste = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
     const msg = `${salut},\n\nVeuillez vérifier si ces clients sont déjà venus payer.\n\n${liste}\n\nMerci de répondre.`;
     await navigator.clipboard.writeText(msg);
-    toast(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''}`, 'ok');
+    document.getElementById('copy-clients-ov-mob').style.display = 'none';
+    const fmtDate = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    toast(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''} (${fmtDate})`, 'ok');
   } catch(e) {
     toast('Erreur lors de la copie', 'err');
   } finally {
-    if (icon) { icon.textContent = 'content_copy'; btn.disabled = false; }
+    btn.textContent = 'Copier'; btn.disabled = false;
   }
 }
 

@@ -5698,28 +5698,49 @@ Suivant
             loadScreen(currentScreen);
         }
 
-        async function copyClientsOfDayPC(btn) {
+        function copyClientsOfDayPC() {
             const today = new Date().toISOString().split('T')[0];
-            const hour = new Date().getHours();
-            const salut = hour >= 18 ? 'Bonsoir' : 'Bonjour';
-            const origHTML = btn ? btn.innerHTML : '';
-            if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-lg">hourglass_top</span> …'; btn.disabled = true; }
+            let ov = document.getElementById('copy-clients-ov-pc');
+            if (ov) { document.getElementById('copy-clients-date-pc').value = today; ov.style.display = 'flex'; return; }
+            ov = document.createElement('div');
+            ov.id = 'copy-clients-ov-pc';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+            ov.innerHTML = `
+              <div style="background:white;border-radius:20px;padding:28px 28px 24px;width:340px;box-shadow:0 24px 60px rgba(0,0,0,.18);font-family:inherit">
+                <h3 style="font-size:15px;font-weight:800;color:#0f172a;margin:0 0 4px">Copier clients en attente</h3>
+                <p style="font-size:12px;color:#94a3b8;margin:0 0 20px">Sélectionnez la date souhaitée</p>
+                <input type="date" id="copy-clients-date-pc" value="${today}" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-weight:600;color:#0f172a;outline:none;box-sizing:border-box;margin-bottom:16px;font-family:inherit">
+                <div style="display:flex;gap:8px">
+                  <button onclick="document.getElementById('copy-clients-ov-pc').style.display='none'" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:white;color:#64748b;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
+                  <button id="copy-clients-btn-pc" onclick="executeCopyClientsPC(this)" style="flex:1;padding:11px;border-radius:12px;background:#f27f0d;border:none;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Copier</button>
+                </div>
+              </div>`;
+            ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+            document.body.appendChild(ov);
+        }
+
+        async function executeCopyClientsPC(btn) {
+            const date = document.getElementById('copy-clients-date-pc').value || new Date().toISOString().split('T')[0];
+            const salut = new Date().getHours() >= 18 ? 'Bonsoir' : 'Bonjour';
+            btn.textContent = '…'; btn.disabled = true;
             try {
                 const { data, error } = await _supabase.from('repayments')
                     .select('credits(client_name, clients(full_name))')
-                    .eq('scheduled_date', today)
+                    .eq('scheduled_date', date)
                     .eq('is_paid', false);
                 if (error) throw error;
-                if (!data || !data.length) { showNotification('Aucun client prévu aujourd\'hui', 'info'); return; }
+                if (!data || !data.length) { showNotification('Aucun client en attente pour cette date', 'info'); return; }
                 const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
                 const liste = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
                 const msg = `${salut},\n\nVeuillez vérifier si ces clients sont déjà venus payer.\n\n${liste}\n\nMerci de répondre.`;
                 await navigator.clipboard.writeText(msg);
-                showNotification(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''} dans le presse-papiers`, 'success');
+                document.getElementById('copy-clients-ov-pc').style.display = 'none';
+                const fmtDate = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                showNotification(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''} (${fmtDate})`, 'success');
             } catch(e) {
                 showNotification('Erreur lors de la copie', 'error');
             } finally {
-                if (btn) { btn.innerHTML = origHTML; btn.disabled = false; }
+                btn.textContent = 'Copier'; btn.disabled = false;
             }
         }
 
