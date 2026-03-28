@@ -5795,7 +5795,7 @@ Suivant
                 .from('credits')
                 .select('id, client_name, amount, status, clients(full_name, phone1)')
                 .neq('health', 'Souffrance')
-                .in('status', ['En cours', 'En attente', 'Échu'])
+                .in('status', ['En cours','EN COURS','en cours','ENCOURS','En attente','EN ATTENTE','Échu','ÉCHU'])
                 .order('amount', { ascending: false });
 
             if (error) { showNotification('Erreur chargement crédits', 'error'); return; }
@@ -9009,16 +9009,16 @@ Suivant
                 const headers = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
                 const base = SB_URL + '/rest/v1/credits';
                 const [actifRes, unpaidRes, soufRes] = await Promise.all([
-                    fetch(`${base}?select=id&status=eq.EN COURS`, { headers }),
+                    _supabase.from('credits').select('id').in('status',['En cours','EN COURS','en cours','ENCOURS']).neq('health','Souffrance'),
                     fetch(`${SB_URL}/rest/v1/repayments?select=credit_id&scheduled_date=lt.${new Date().toISOString().split('T')[0]}&is_paid=eq.false`, { headers }),
                     fetch(`${base}?select=id&health=ilike.SOUFFRANCE*&status=neq.SOLDÉ`, { headers })
                 ]);
-                const actifs = await actifRes.json().catch(() => []);
+                const actifs = actifRes.data || [];
                 const unpaid = await unpaidRes.json().catch(() => []);
                 const souf   = await soufRes.json().catch(() => []);
                 const unpaidCount = new Set((unpaid || []).map(r => r.credit_id)).size;
                 const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-                el('hero-credit-actif',      (actifs || []).length);
+                el('hero-credit-actif',      actifs.length);
                 el('hero-credit-impaye',     unpaidCount);
                 el('hero-credit-souffrance', (souf || []).length);
             } catch(e) {}

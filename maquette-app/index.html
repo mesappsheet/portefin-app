@@ -1137,7 +1137,7 @@ async function viewDashboard(){
   try{
     const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff}]=await Promise.all([
       sb.from('repayments').select('id,amount,is_paid,credits(client_name,clients(full_name,phone1))').eq('scheduled_date',t),
-      sb.from('credits').select('amount,type').in('status',['En cours','en cours','ENCOURS']),
+      sb.from('credits').select('amount,type').in('status',['En cours','en cours','EN COURS','ENCOURS']).neq('health','Souffrance'),
       sb.from('repayments').select('id').lt('scheduled_date',t).eq('is_paid',false),
       sb.from('credits').select('id').eq('health','Souffrance')
     ]);
@@ -1575,7 +1575,7 @@ async function loadCredits(){
       q=q.in('status',['Soldé','SOLDÉ','soldé']);
     } else {
       q=q.not('status','in','("Soldé","SOLDÉ","soldé")');
-      if(credFilter==='encours')q=q.in('status',['En cours','en cours','ENCOURS']);
+      if(credFilter==='encours')q=q.in('status',['En cours','en cours','EN COURS','ENCOURS']).neq('health','Souffrance');
       if(credFilter==='souffrance')q=q.eq('health','Souffrance');
     }
     const{data,error}=await q;
@@ -3448,7 +3448,7 @@ async function saveNouveauClientSouffrance(){
 async function _legacyCreditSelect(){
   const{data:allCredits}=await sb.from('credits')
     .select('id,client_name,amount,status,clients(full_name)')
-    .neq('health','Souffrance').in('status',['En cours','En attente','Échu'])
+    .neq('health','Souffrance').in('status',['En cours','EN COURS','en cours','ENCOURS','En attente','EN ATTENTE','Échu','ÉCHU'])
     .order('client_name',{ascending:true});
 
   if(!allCredits||!allCredits.length){
