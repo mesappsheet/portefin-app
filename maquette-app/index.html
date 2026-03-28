@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none;transition:background .3s,color .3s}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none;transition:background .3s,color .3s}
 .material-symbols-outlined{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none}
 .filled{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
 
@@ -46,9 +46,9 @@ body.light{
 }
 
 /* Layout */
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;position:relative}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;position:relative}
 #topbar{flex-shrink:0;padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));background:var(--top-bg);border-bottom:1px solid var(--top-border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;z-index:50}
-#view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;background:var(--bg);position:relative}
+#view{flex:1;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;background:var(--bg);position:relative}
 #bottomnav{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);background:var(--bar-bg);border-top:1px solid var(--bar-border);backdrop-filter:blur(16px);display:flex;z-index:50}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;transition:all .2s;gap:3px;min-height:56px}
 .nav-item .ni{font-size:22px;color:var(--nav-icon);transition:all .2s}
@@ -235,7 +235,7 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
 }
 .detail-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 20px 16px 100px;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
