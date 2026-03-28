@@ -238,6 +238,8 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
   overflow-y: auto;
   padding: 20px 16px 100px;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
 .detail-card {
   background: var(--card);
@@ -660,11 +662,9 @@ function prosMenu(btn,pid){
 function openModal(html){
   document.getElementById('modal-content').innerHTML=html;
   document.getElementById('modal-overlay').classList.add('open');
-  document.body.style.overflow='hidden';
 }
 function closeModal(){
   document.getElementById('modal-overlay').classList.remove('open');
-  document.body.style.overflow='';
 }
 document.getElementById('modal-overlay').addEventListener('click',function(e){
   if(e.target===this)closeModal();
@@ -2086,6 +2086,7 @@ function openProspectDetail(pid) {
 
 function closeProspectDetail() {
   document.getElementById('prospect-detail-view').classList.remove('open');
+  document.body.style.overflow='';
   currentProspectId = null;
 }
 
@@ -3213,6 +3214,7 @@ async function deleteTaskMobile(){
 
 function closeTaskForm(){
   document.getElementById('task-form-view').style.display='none';
+  document.body.style.overflow='';
 }
 
 async function quickToggleTaskMobile(taskId){
@@ -3576,6 +3578,7 @@ let currentCreditId = null;
 
 function closeCreditDetail() {
   document.getElementById('credit-detail-view').classList.remove('open');
+  document.body.style.overflow='';
   currentCreditId = null;
 }
 
