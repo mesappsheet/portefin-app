@@ -172,7 +172,8 @@ body.light #modal-sheet{border:1px solid rgba(0,0,0,.15);box-shadow:0 15px 40px 
 .ctx-menu{position:fixed;z-index:500;background:var(--sheet-bg);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:ctxIn .15s ease}
 @keyframes ctxIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
 .ctx-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);border:none;background:none;width:100%;text-align:left;transition:background .15s}
-.ctx-item:active{background:rgba(255,255,255,.07)}
+.ctx-item:hover{background:rgba(255,255,255,.07)}
+.ctx-item:active{background:rgba(255,255,255,.11)}
 .ctx-item.ctx-danger{color:#f87171}
 .ctx-item.ctx-danger:active{background:rgba(239,68,68,.1)}
 .ctx-sep{height:1px;background:var(--sep);margin:4px 0}
@@ -525,8 +526,11 @@ function showMenu(btn,items){
     el.ontouchend=el.onclick=(e)=>{e.stopPropagation();closeCtxMenu();item.fn();};
     menu.appendChild(el);
   });
+  const maxH=Math.round(window.innerHeight*0.7);
+  menu.style.maxHeight=maxH+'px';
+  menu.style.overflowY='auto';
   document.body.appendChild(menu);
-  const menuH=menu.childElementCount*44+12;
+  const menuH=Math.min(menu.scrollHeight,maxH);
   let top=rect.bottom+6;
   if(top+menuH>window.innerHeight-20)top=rect.top-menuH-6;
   let left=rect.right-menu.offsetWidth||rect.right-200;
@@ -556,6 +560,7 @@ function credMenu(btn,cid){
     {sep:true},
     {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
     {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
+    {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
     {sep:true},
@@ -578,6 +583,7 @@ function prosMenu(btn,pid){
     {sep:true},
     {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
     {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
+    {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(pid,name,'prospect'),color:'#a855f7'},
     {sep:true},
