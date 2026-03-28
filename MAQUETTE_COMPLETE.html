@@ -1880,6 +1880,7 @@
                         <th class="px-4 py-3">Contact</th>
                         <th class="px-4 py-3">Secteur</th>
                         <th class="px-4 py-3">Statut</th>
+                        <th class="px-4 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="prospect-list-body" class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1999,8 +2000,12 @@
                     <span class="material-symbols-outlined text-amber-500 text-lg">event_note</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Ajouter une note</span>
                 </button>
+                <button onclick="handleConvertProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
+                    <span class="material-symbols-outlined text-orange-500 text-lg">person_add</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Convertir en crédit</span>
+                </button>
                 <div class="border-t border-slate-100 dark:border-slate-800"></div>
-                <button onclick="if(currentProspect){openTaskForEntityPC(currentProspect.id,currentProspect.full_name||'','prospect');}closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors text-left">
+                <button onclick="if(currentProspect){const n=currentProspect.full_name; const id=currentProspect.id; openTaskForEntityPC(id,n,'prospect');}closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors text-left">
                     <span class="material-symbols-outlined text-purple-500 text-lg">task_alt</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Créer une tâche</span>
                 </button>
@@ -5334,7 +5339,7 @@ Suivant
                 if (_taskPriorityFilterPC && t.priority !== _taskPriorityFilterPC) return false;
                 if (_taskSearchPC) {
                     const s = _taskSearchPC.toLowerCase();
-                    if (!(t.title || '').toLowerCase().includes(s) && !(t.notes || '').toLowerCase().includes(s)) return false;
+                    if (!(t.title || '').toLowerCase().includes(s) && !(t.notes || '').toLowerCase().includes(s) && !(t.entity_name || '').toLowerCase().includes(s)) return false;
                 }
                 return true;
             });
@@ -5461,7 +5466,7 @@ Suivant
                 if (!t) return;
                 document.getElementById('task-drawer-title').textContent = 'Modifier la tâche';
                 document.getElementById('task-title-input').value = t.title || '';
-                document.getElementById('task-entity-search').value = '';
+                document.getElementById('task-entity-search').value = t.entity_name || '';
                 document.getElementById('task-entity-id').value = t.entity_id || '';
                 document.getElementById('task-entity-type').value = t.entity_type || '';
                 document.getElementById('task-due-date').value = t.due_date || '';
@@ -5618,8 +5623,10 @@ Suivant
         let _lastUnpaidMapPC = {};
         let _nextUpcomingMapPC = {};
 
-        async function getLastUnpaidMap(creditIds) {
-            if (!creditIds || !creditIds.length) return {};
+        async function getLastUnpaidMap(credits) {
+            if (!credits || !credits.length) return {};
+            const creditIds = credits.map(c => c.id);
+            const endMap = Object.fromEntries(credits.map(c => [c.id, c.end_date]));
             const today = new Date().toISOString().split('T')[0];
             const { data } = await _supabase.from('repayments')
                 .select('id, credit_id, scheduled_date')
@@ -5628,7 +5635,12 @@ Suivant
                 .lte('scheduled_date', today)
                 .order('scheduled_date', { ascending: false });
             const map = {};
-            (data || []).forEach(r => { if (!map[r.credit_id]) map[r.credit_id] = { id: r.id, date: r.scheduled_date }; });
+            (data || []).forEach(r => {
+                if (map[r.credit_id]) return;
+                const endDate = endMap[r.credit_id];
+                if (endDate && r.scheduled_date > endDate) return;
+                map[r.credit_id] = { id: r.id, date: r.scheduled_date };
+            });
             return map;
         }
 
@@ -5638,8 +5650,10 @@ Suivant
             return `<button onclick="event.stopPropagation();quickPayRepPC('${repId}','${date}',this)" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'" title="Cliquer pour marquer payé"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">event_busy</span> ${d}</button>`;
         }
 
-        async function getNextUpcomingMap(creditIds) {
-            if (!creditIds || !creditIds.length) return {};
+        async function getNextUpcomingMap(credits) {
+            if (!credits || !credits.length) return {};
+            const creditIds = credits.map(c => c.id);
+            const endMap = Object.fromEntries(credits.map(c => [c.id, c.end_date]));
             const today = new Date().toISOString().split('T')[0];
             const { data } = await _supabase.from('repayments')
                 .select('id, credit_id, scheduled_date, is_paid')
@@ -5647,7 +5661,12 @@ Suivant
                 .gte('scheduled_date', today)
                 .order('scheduled_date', { ascending: true });
             const map = {};
-            (data || []).forEach(r => { if (!map[r.credit_id]) map[r.credit_id] = { id: r.id, date: r.scheduled_date, is_paid: r.is_paid }; });
+            (data || []).forEach(r => {
+                if (map[r.credit_id]) return;
+                const endDate = endMap[r.credit_id];
+                if (endDate && r.scheduled_date > endDate) return;
+                map[r.credit_id] = { id: r.id, date: r.scheduled_date, is_paid: r.is_paid };
+            });
             return map;
         }
 
@@ -5677,8 +5696,18 @@ Suivant
             if (!t) return;
             const subs = Array.isArray(t.subtasks) ? t.subtasks : (t.subtasks ? JSON.parse(t.subtasks) : []);
             const details = subs.map(s => (s.done?'✓ ':'○ ') + s.text).join('\n') + (t.notes ? '\n\n' + t.notes : '');
-            const d = (t.due_date || new Date().toISOString().split('T')[0]).replace(/-/g,'');
-            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title||'Tâche')}&dates=${d}/${d}&details=${encodeURIComponent(details)}&sf=true&output=xml`, '_blank');
+            const dateStr = (t.due_date || new Date().toISOString().split('T')[0]).replace(/-/g,'');
+            
+            let dates = dateStr + '/' + dateStr;
+            if (t.due_time) {
+                const startH = t.due_time.split(':').slice(0,2).join('') + '00';
+                const start = dateStr + 'T' + startH;
+                const endD = new Date(t.due_date + 'T' + t.due_time);
+                endD.setHours(endD.getHours() + 1);
+                const endStr = endD.toISOString().split('T')[0].replace(/-/g,'') + 'T' + endD.toISOString().split('T')[1].replace(/[:.]/g,'').slice(0,6);
+                dates = start + '/' + endStr;
+            }
+            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title||'Tâche')}&dates=${dates}&details=${encodeURIComponent(details)}&sf=true&output=xml`, '_blank');
         }
 
         let _taskEntityTimeout = null;
@@ -5817,6 +5846,7 @@ Suivant
                     "{{Nom}}": data.name || '',
                     "{{Capital}}": formattedAmount,
                     "{{Montant}}": formattedAmount,
+                    "{{Montant à Payer}}": formattedAmount,
                     "{{Date}}": data.date || '',
                     "{{Date d'Échéance}}": data.date || '',
                     "{{Activité}}": data.activity || '',
@@ -5879,12 +5909,16 @@ Suivant
 
                 const replaceMap = {
                     "{{Nom du Client}}": data.name || '',
+                    "{{Nom du Prospect}}": data.name || '',
                     "{{Nom}}": data.name || '',
-                    "{{Montant}}": formattedAmount,
                     "{{Capital}}": formattedAmount,
+                    "{{Montant}}": formattedAmount,
+                    "{{Montant à Payer}}": formattedAmount,
                     "{{Date}}": data.date || '',
-                    "{{Id_Dossier}}": data.id || '',
-                    "{{ID}}": data.id || ''
+                    "{{Date d'Échéance}}": data.date || '',
+                    "{{Activité}}": data.activity || '',
+                    "{{ID}}": data.id || '',
+                    "{{Id_Dossier}}": data.id || ''
                 };
 
                 Object.keys(replaceMap).forEach(tag => {
@@ -6207,8 +6241,8 @@ Suivant
             selectedCreditIds.clear();
             updateCreditSelectionBar();
 
-            const _unpaidFC = await getLastUnpaidMap(data.map(c => c.id));
-            const _nextUpFC = await getNextUpcomingMap(data.map(c => c.id));
+            const _unpaidFC = await getLastUnpaidMap(data);
+            const _nextUpFC = await getNextUpcomingMap(data);
 
             container.innerHTML = data.map(credit => {
                 const clientName = (credit.clients && credit.clients.full_name) || credit.client_name || 'Prospect Anonyme';
@@ -6234,9 +6268,15 @@ Suivant
                             </div>
                         </div>
                         <p class="text-xs font-semibold text-primary mt-1">${parseInt(credit.amount || 0).toLocaleString('fr-FR')} FCFA</p>
-                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
-                        ${_unpaidFC[credit.id] ? unpaidBadgePC(_unpaidFC[credit.id].id, _unpaidFC[credit.id].date) : ''}
-                        ${_nextUpFC[credit.id] ? nextUpcomingBadgePC(_nextUpFC[credit.id]) : ''}
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;align-items:center">
+                          <button onclick="event.stopPropagation(); quickCall('${credit.clients?.phone1 || credit.phone || ''}')" class="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Appeler"><span class="material-symbols-outlined text-[14px]">call</span></button>
+                          <button onclick="event.stopPropagation(); quickWhatsapp('${credit.clients?.phone1 || credit.phone || ''}', '${clientName.replace(/'/g,"\\'")}','Crédit',${credit.amount},'${credit.id}')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="WhatsApp"><span class="material-symbols-outlined text-[14px]">chat</span></button>
+                          <button onclick="event.stopPropagation(); quickSms('${credit.clients?.phone1 || credit.phone || ''}', '${clientName.replace(/'/g,"\\'")}','Crédit',${credit.amount},'${credit.id}')" class="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Envoyer SMS"><span class="material-symbols-outlined text-[14px]">sms</span></button>
+                          
+                          <div style="margin-left:auto; display:flex; gap:4px">
+                            ${_unpaidFC[credit.id] ? unpaidBadgePC(_unpaidFC[credit.id].id, _unpaidFC[credit.id].date) : ''}
+                            ${_nextUpFC[credit.id] ? nextUpcomingBadgePC(_nextUpFC[credit.id]) : ''}
+                          </div>
                         </div>
                     </div>
                 </div>
@@ -7781,7 +7821,10 @@ Suivant
                             </a>
                             <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
                                 <span class="material-symbols-outlined text-sm">chat</span>
-                            </a>` : ''}
+                            </a>
+                            <button onclick="event.stopPropagation(); quickSms('${phoneClean}', '${c.client_name?.replace(/'/g,"\\'")}','Crédit',${c.amount},'${c.id}')" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-primary/10 text-slate-500 hover:text-primary transition-all" title="Envoyer SMS">
+                                <span class="material-symbols-outlined text-sm">sms</span>
+                            </button>` : ''}
                         </div>
                     </td>
                 </tr>`;
@@ -7931,9 +7974,12 @@ Suivant
                             <a href="tel:${phoneClean}" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 transition-all" title="Appeler">
                                 <span class="material-symbols-outlined text-sm">call</span>
                             </a>
-                            <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
+                             <a href="https://wa.me/${phoneClean}" target="_blank" onclick="event.stopPropagation()" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all" title="WhatsApp">
                                 <span class="material-symbols-outlined text-sm">chat</span>
-                            </a>` : ''}
+                            </a>
+                            <button onclick="event.stopPropagation(); quickSms('${phoneClean}', '${c.name.replace(/'/g,"\\'")}','Crédit',${c.amount},'${c.credit_id}')" class="size-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-primary/10 text-slate-500 hover:text-primary transition-all" title="Envoyer SMS">
+                                <span class="material-symbols-outlined text-sm">sms</span>
+                            </button>` : ''}
                         </div>
                     </td>
                 </tr>`;
@@ -8635,6 +8681,54 @@ Suivant
             await sendSmsMessage(currentProspect.phone, data);
         }
 
+        async function handleConvertProspect() {
+            if (!currentProspect) return alert("Sélectionnez un prospect.");
+            
+            // 1. Demander confirmation
+            if (!confirm(`Souhaitez-vous convertir ${currentProspect.full_name} en dossier crédit ?\n\nCela marquera le prospect comme 'Converti'.`)) return;
+
+            try {
+                // 2. Marquer le prospect comme converti
+                const { error } = await _supabase
+                    .from('prospects')
+                    .update({ status: 'Converti' })
+                    .eq('id', currentProspect.id);
+                
+                if (error) throw error;
+                
+                showNotification("Statut prospect mis à jour en 'Converti'", "success");
+                
+                // 3. Ouvrir le formulaire de nouveau crédit
+                const pName = currentProspect.full_name;
+                const pPhone = currentProspect.phone;
+                const pPhone2 = currentProspect.phone2;
+                const pActivity = currentProspect.activity;
+                const pEmail = currentProspect.email || '';
+                const pAddress = currentProspect.address || '';
+
+                openModal('credits_new_dossier');
+                
+                // Attendre l'injection du DOM
+                setTimeout(() => {
+                    if (document.getElementById('credit-name')) document.getElementById('credit-name').value = pName || '';
+                    if (document.getElementById('credit-phone1')) document.getElementById('credit-phone1').value = pPhone || '';
+                    if (document.getElementById('credit-phone2')) document.getElementById('credit-phone2').value = pPhone2 || '';
+                    if (document.getElementById('credit-activity')) document.getElementById('credit-activity').value = pActivity || '';
+                    if (document.getElementById('credit-email')) document.getElementById('credit-email').value = pEmail;
+                    if (document.getElementById('credit-address')) document.getElementById('credit-address').value = pAddress;
+                    
+                    // Optionnel : Notification supplémentaire
+                    showNotification("Informations pré-remplies depuis le prospect", "info");
+                }, 150);
+                
+                fetchProspects(); // Rafraîchir la liste
+                
+            } catch (err) {
+                console.error("Conversion Error:", err);
+                alert("Erreur lors de la conversion : " + err.message);
+            }
+        }
+
         async function handleEditProspect() {
             if (!currentProspect) return alert("Sélectionnez un prospect.");
             openModal('prospection_add');
@@ -9273,6 +9367,13 @@ Suivant
                     <td class="px-4 py-3">
                         <span class="px-2 py-0.5 bg-${color}-100 text-${color}-700 text-[9px] font-black rounded-full uppercase tracking-tighter border border-${color}-200">${statusName}</span>
                     </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2 justify-center">
+                            <button onclick="event.stopPropagation(); quickCall('${p.phone || ''}')" class="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Appeler"><span class="material-symbols-outlined text-[14px]">call</span></button>
+                            <button onclick="event.stopPropagation(); quickWhatsapp('${p.phone || ''}', '${p.full_name.replace(/'/g,"\\'")}','Prospection',0,'${p.id}')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="WhatsApp"><span class="material-symbols-outlined text-[14px]">chat</span></button>
+                            <button onclick="event.stopPropagation(); quickSms('${p.phone || ''}', '${p.full_name.replace(/'/g,"\\'")}','Prospection',0,'${p.id}')" class="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Envoyer SMS"><span class="material-symbols-outlined text-[14px]">sms</span></button>
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -9796,6 +9897,20 @@ Suivant
             } finally {
                 window.resumeInactivityTimer?.();
             }
+        }
+        async function quickCall(phone) {
+            if (!phone) return showNotification("Numéro non disponible", "error");
+            window.open(`tel:${phone.replace(/\s+/g, '')}`, '_self');
+        }
+
+        async function quickWhatsapp(phone, name, category, amount, id) {
+            if (!phone) return showNotification("Numéro non disponible", "error");
+            await sendWhatsAppMessage(phone, { name, amount, id }, category);
+        }
+
+        async function quickSms(phone, name, category, amount, id) {
+            if (!phone) return showNotification("Numéro non disponible", "error");
+            await sendSmsMessage(phone, { name, amount, id }, category);
         }
     </script>
 

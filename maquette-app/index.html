@@ -543,19 +543,20 @@ function closeCtxMenu(){
 function credMenu(btn,cid){
   const c=_credCache[cid];if(!c)return;
   const name=getName(c);
-  const phone=getPhone(c.clients);
+  const phone=getPhone(c);
   const items=[
+    {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
+    {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount,c.end_date||'','',cid),color:'#22c55e'},
+    {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Crédit',c.amount,c.end_date||'','',cid),color:'#3b82f6'},
+    {sep:true},
     {icon:'calendar_month',label:'Échéancier',fn:()=>viewEcheancier(cid,name)},
     {icon:'sticky_note_2',label:'Notes',fn:()=>openCreditNotes(cid,name)},
     {icon:'swap_horiz',label:'Changer statut',fn:()=>changeCreditStatus(cid,name,c.status||'')},
+    {icon:'health_and_safety',label:'Changer santé',fn:()=>toggleCreditHealth(cid,c.health||'Sain'),color:c.health==='Souffrance'?'#22c55e':'#ef4444'},
     {sep:true},
-    ...(phone?[
-      {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount||0,c.end_date||'',(c.activity||''),cid)},
-      {icon:'call',label:'Appeler',fn:()=>call(phone)},
-      {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
-      {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
-      {sep:true},
-    ]:[]),
+    {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
+    {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
     {sep:true},
     {icon:'edit',label:'Modifier',fn:()=>openClientEditForm(cid)},
@@ -566,17 +567,17 @@ function credMenu(btn,cid){
 function prosMenu(btn,pid){
   const p=_prosCache[pid];if(!p)return;
   const name=p.full_name||'Inconnu';
-  const phone=p.phone||'';
+  const phone=getPhone(p);
   const items=[
-    ...(phone?[
-      {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid)},
-      {icon:'call',label:'Appeler',fn:()=>call(phone)},
-      {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
-      {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
-      {sep:true},
-    ]:[]),
+    {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
+    {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#22c55e'},
+    {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#3b82f6'},
+    {sep:true},
     {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
     {icon:'person_add',label:'Convertir en crédit',fn:()=>convertProspect(pid,name,phone)},
+    {sep:true},
+    {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(pid,name,'prospect'),color:'#a855f7'},
     {sep:true},
@@ -749,6 +750,88 @@ function sendWaFinal(phone, textareaId){
   if(!msg){toast('Message vide','err');return;}
   closeModal();
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+async function sms(phone, name='', category='Crédit', amount=0, date='', activity='', id=''){
+  const p=(phone||'').replace(/\D/g,'');
+  if(!p){toast('Numéro introuvable','err');return;}
+
+  let template=null;
+  try{
+    let{data:tpl}=await sb.from('communication_models')
+      .select('title,body,category')
+      .eq('active',true)
+      .ilike('type','SMS%')
+      .eq('category',category)
+      .limit(1);
+    
+    if(!tpl||!tpl.length){
+      const fallback=category.includes('rosp')?'Prospection':'Crédit';
+      const res=await sb.from('communication_models')
+        .select('title,body,category')
+        .eq('active',true)
+        .ilike('type','SMS%')
+        .eq('category',fallback)
+        .limit(1);
+      tpl=res.data;
+    }
+    template=tpl&&tpl[0]||null;
+  }catch(e){console.error("SMS Template Error:",e);}
+
+  if(!template || !template.body){
+    toast(`Aucun modèle SMS actif pour "${category}"`,'err');
+    template = { body: `Bonjour ${name},`, title: 'Par défaut', category: 'Système' };
+  }
+
+  const formattedAmount=amount?new Intl.NumberFormat('fr-FR').format(amount):'';
+  const fmtDate_=date?fmtDate(date):'';
+  
+  const replaceMap = {
+    "{{Nom du Client}}": name,
+    "{{Nom du Prospect}}": name,
+    "{{Nom}}": name,
+    "{{Capital}}": formattedAmount,
+    "{{Montant}}": formattedAmount,
+    "{{Montant à Payer}}": formattedAmount,
+    "{{Date}}": fmtDate_,
+    "{{Date d'Échéance}}": fmtDate_,
+    "{{Activité}}": activity || '',
+    "{{ID}}": id ? id.substring(0,8) : '',
+    "{{Id_Dossier}}": id ? id.substring(0,8) : ''
+  };
+
+  let msgBody = template.body;
+  Object.keys(replaceMap).forEach(tag => {
+    msgBody = msgBody.split(tag).join(replaceMap[tag]);
+  });
+
+  openModal(`
+    <div style="padding:0 20px 24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span class="material-symbols-outlined filled" style="color:#3b82f6;font-size:20px">sms</span>
+        </div>
+        <div>
+          <p style="font-size:10px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">SMS</p>
+          <p style="font-size:15px;font-weight:700;color:var(--text);margin:0">${name}</p>
+        </div>
+      </div>
+      <p style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Modèle : <strong>${template.title}</strong> (${template.category})</p>
+      <textarea id="sms-msg-preview" class="m-input" rows="7" style="resize:none;font-size:13px;line-height:1.6">${msgBody}</textarea>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+        <button onclick="sendSmsFinal('${p}','sms-msg-preview')" class="btn-primary" style="flex:2;background:linear-gradient(135deg,#3b82f6,#2563eb);box-shadow:0 4px 15px rgba(59,130,246,.3)">
+          <span class="material-symbols-outlined filled" style="font-size:18px">send</span> Envoyer via SMS
+        </button>
+      </div>
+    </div>`);
+}
+
+function sendSmsFinal(phone, textareaId){
+  const msg=(document.getElementById(textareaId).value||'').trim();
+  if(!msg){toast('Message vide','err');return;}
+  closeModal();
+  window.location.href=`sms:${phone}?body=${encodeURIComponent(msg)}`;
 }
 function call(phone){
   const p=(phone||'').replace(/[\s\-]/g,'');
@@ -1063,6 +1146,9 @@ function repRow(r){
         <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')">
           <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>
         </button>
+        <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="background:rgba(59,130,246,.15);color:#3b82f6">
+          <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>
+        </button>
         <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')">
           <span class="material-symbols-outlined filled" style="font-size:18px">call</span>
         </button>
@@ -1181,7 +1267,11 @@ async function loadCredits(){
       } else {
         c.nextUpcoming = null;
       }
-      
+
+      // Filtrer les échéances hors de la période du crédit
+      if(c.nextUnpaid && c.end_date && c.nextUnpaid.scheduled_date > c.end_date) c.nextUnpaid = null;
+      if(c.nextUpcoming && c.end_date && c.nextUpcoming.scheduled_date > c.end_date) c.nextUpcoming = null;
+
       _credCache[c.id]=c;
     });
 
@@ -1224,9 +1314,15 @@ function credRow(c){
           })()}
         </div>
       </div>
-      <button class="action-btn" style="background:var(--bg);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0;color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
-        <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
-      </button>
+      <div style="display:flex;align-items:center;gap:6px">
+        ${getPhone(c)?`
+        <button class="action-btn ab-sms" style="background:rgba(59,130,246,.12);color:#3b82f6;width:32px;height:32px;border-radius:10px" onclick="event.stopPropagation();sms('${getPhone(c)}','${name.replace(/'/g,"\\'")}','Crédit',${c.amount},'${c.end_date||''}','','${c.id}')">
+          <span class="material-symbols-outlined" style="font-size:18px">sms</span>
+        </button>`:''}
+        <button class="action-btn" style="background:var(--bg);border:1px solid var(--border2);width:32px;height:32px;flex-shrink:0;color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
+          <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
+        </button>
+      </div>
     </div>
     
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
@@ -1880,6 +1976,10 @@ function renderProspectDetail(p) {
         <button onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#25d366">chat</span>
           <span style="font-size:10px;font-weight:700;color:#25d366">WhatsApp</span>
+        </button>
+        <button onclick="sms('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#3b82f6">sms</span>
+          <span style="font-size:10px;font-weight:700;color:#3b82f6">SMS</span>
         </button>` : ''}
         <button onclick="openProspectNotes('${p.id}','${name.replace(/'/g,"\\'")}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#f27f0d">sticky_note_2</span>
@@ -2075,7 +2175,11 @@ function prosRow(p){
       </div>
 
       <!-- Actions -->
-      <div style="display:flex;align-items:center;padding-top:4px">
+      <div style="display:flex;align-items:center;padding-top:4px;gap:6px">
+        ${phone?`
+        <button class="action-btn ab-sms" style="background:rgba(59,130,246,.12);color:#3b82f6;width:34px;height:34px;border-radius:10px" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')">
+          <span class="material-symbols-outlined" style="font-size:18px">sms</span>
+        </button>`:''}
         <button class="action-btn" style="background:var(--card2);border:1px solid var(--border);width:36px;height:36px;border-radius:12px;color:var(--text2)" onclick="event.stopPropagation();prosMenu(this,'${p.id}')">
           <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
         </button>
@@ -2833,7 +2937,7 @@ function renderTaskFormMobile(t){
       <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Client / Prospect lié</label>
       <div style="position:relative">
         <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text2);pointer-events:none">person_search</span>
-        <input id="tmob-entity" value="" oninput="searchTaskEntityMob(this.value)" autocomplete="off" placeholder="Rechercher client ou prospect…" style="width:100%;padding:12px 14px 12px 36px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+        <input id="tmob-entity" value="${esc(t?.entity_name)}" oninput="searchTaskEntityMob(this.value)" autocomplete="off" placeholder="Rechercher client ou prospect…" style="width:100%;padding:12px 14px 12px 36px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
         <div id="tmob-entity-res" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:10;max-height:180px;overflow-y:auto"></div>
       </div>
       <input type="hidden" id="tmob-entity-id" value="${esc(t?.entity_id)}"/>
@@ -2966,8 +3070,17 @@ function exportTaskToGCalMobile(taskId){
   if(!t)return;
   const subs=Array.isArray(t.subtasks)?t.subtasks:(t.subtasks?JSON.parse(t.subtasks):[]);
   const details=subs.map(s=>(s.done?'✓ ':'○ ')+s.text).join('\n')+(t.notes?'\n\n'+t.notes:'');
-  const d=(t.due_date||new Date().toISOString().split('T')[0]).replace(/-/g,'');
-  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title||'Tâche')}&dates=${d}/${d}&details=${encodeURIComponent(details)}&sf=true&output=xml`,'_blank');
+  const dateStr=(t.due_date||new Date().toISOString().split('T')[0]).replace(/-/g,'');
+  let dates=dateStr+'/'+dateStr;
+  if(t.due_time){
+    const startH=t.due_time.split(':').slice(0,2).join('')+'00';
+    const start=dateStr+'T'+startH;
+    const endD=new Date(t.due_date+'T'+t.due_time);
+    endD.setHours(endD.getHours()+1);
+    const endStr=endD.toISOString().split('T')[0].replace(/-/g,'')+'T'+endD.toISOString().split('T')[1].replace(/[:.]/g,'').slice(0,6);
+    dates=start+'/'+endStr;
+  }
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title||'Tâche')}&dates=${dates}&details=${encodeURIComponent(details)}&sf=true&output=xml`,'_blank');
 }
 
 let _taskMobEntityTimeout=null;
@@ -3408,6 +3521,10 @@ function renderCreditDetail(c) {
         <button onclick="wa('${phone1}','${name.replace(/'/g,"\\'")}','Relance Crédit',${c.amount},'${c.status||''}','','${c.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#25d366">chat</span>
           <span style="font-size:10px;font-weight:700;color:#25d366">WhatsApp</span>
+        </button>
+        <button onclick="sms('${phone1}','${name.replace(/'/g,"\\'")}','Relance Crédit',${c.amount},'${c.end_date||''}','','${c.id}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#3b82f6">sms</span>
+          <span style="font-size:10px;font-weight:700;color:#3b82f6">SMS</span>
         </button>` : ''}
       </div>
     </div>
