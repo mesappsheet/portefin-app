@@ -22,7 +22,7 @@ Sauf si l'utilisateur dit explicitement **"implémente"** ou **"vas-y"** — dan
 
 ---
 
-## Règle n°2 : Toujours valider l'architecture avant de toucher au code
+## Règle n°2 : Toujours implémenter dans les deux apps simultanément
 
 Ce projet a deux applications distinctes :
 
@@ -31,7 +31,23 @@ Ce projet a deux applications distinctes :
 | PC (bureau) | `MAQUETTE_COMPLETE.html` | `_supabase` |
 | Mobile (PWA) | `maquette-app/index.html` | `sb` |
 
-Toute modification touchant l'une **doit être évaluée** pour l'autre.
+### Obligation de parité
+
+**Toute fonctionnalité implémentée dans une app DOIT être implémentée dans l'autre dans le même commit.** Pas de "je ferai le mobile après" — les deux fichiers sont modifiés en même temps.
+
+### Différences d'architecture à respecter
+
+| Élément | PC (`MAQUETTE_COMPLETE.html`) | Mobile (`maquette-app/index.html`) |
+|---------|-------------------------------|-------------------------------------|
+| Rendu HTML | Template literals dans `SCREENS` | Fonctions `viewXxx()` / `innerHTML` direct |
+| Requêtes Supabase | `_supabase.from(...)` | `sb.from(...)` |
+| Navigation | `loadScreen('nom')` / `switchModule()` | `navTo('nom')` |
+| Modales | `openModal()` / overlays dédiés | `openConfirm()` / overlays fullscreen |
+| Toast/notif | `showNotification()` | `toast()` |
+
+### Règle sur les données
+
+Les deux apps partagent la même base Supabase. **Toujours faire des requêtes directes sur les tables** (`repayments`, `credits`, etc.) plutôt que de s'appuyer sur des vues calculées (comme `credit_stats`) pour des données dynamiques liées à la date du jour — les vues ne garantissent pas la même logique temporelle qu'une requête avec `>= today`.
 
 ---
 
