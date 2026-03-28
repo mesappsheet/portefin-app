@@ -1047,6 +1047,9 @@ async function viewRepayments(){
         </select>
         <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${repFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
       </div>
+      <button onclick="copyClientsOfDayMob(this)" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:10px 12px;border-radius:10px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" title="Copier clients du jour">
+        <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
+      </button>
     </div>
     <!-- Liste -->
     <div id="rep-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
@@ -1195,6 +1198,9 @@ async function viewCredits(){
         </select>
         <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${credFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
       </div>
+      <button onclick="copyClientsOfDayMob(this)" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:10px 12px;border-radius:10px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" title="Copier clients du jour">
+        <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
+      </button>
     </div>
     <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -1333,6 +1339,30 @@ function credRow(c){
       <p style="font-size:11px;font-weight:900;color:var(--text);margin:0">${pct}% payé</p>
     </div>
   </div>`;
+}
+
+async function copyClientsOfDayMob(btn) {
+  const today = new Date().toISOString().split('T')[0];
+  const salut = new Date().getHours() >= 18 ? 'Bonsoir' : 'Bonjour';
+  const icon = btn ? btn.querySelector('.material-symbols-outlined') : null;
+  if (icon) { icon.textContent = 'hourglass_top'; btn.disabled = true; }
+  try {
+    const { data, error } = await sb.from('repayments')
+      .select('credits(client_name, clients(full_name))')
+      .eq('scheduled_date', today)
+      .order('is_paid', { ascending: true });
+    if (error) throw error;
+    if (!data || !data.length) { toast('Aucun client prévu aujourd\'hui', 'info'); return; }
+    const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
+    const liste = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
+    const msg = `${salut},\n\nVeuillez vérifier si ces clients sont déjà venus payer.\n\n${liste}\n\nMerci de répondre.`;
+    await navigator.clipboard.writeText(msg);
+    toast(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''}`, 'ok');
+  } catch(e) {
+    toast('Erreur lors de la copie', 'err');
+  } finally {
+    if (icon) { icon.textContent = 'content_copy'; btn.disabled = false; }
+  }
 }
 
 function confirmPayInstallment(repId, dateStr, amountStr) {
