@@ -1426,8 +1426,16 @@ function repRow(r){
   const isSolde=['Soldé','SOLDÉ','soldé'].includes(status);
   const isEchu=status==='Échu';
   const statusClass=isSolde?'badge-blue':isEchu?'badge-red':'badge-orange';
-  const dueBadge = !isPaid && r.scheduled_date && r.scheduled_date.split('T')[0] <= new Date().toISOString().split('T')[0]
-    ? `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${fmtDate(r.scheduled_date.split('T')[0])}','${fmt(r.amount||0)}')" style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>${fmtDate(r.scheduled_date.split('T')[0])}</button>` : '';
+  const repDateStr=r.scheduled_date?r.scheduled_date.split('T')[0]:'';
+  const todayRep=new Date().toISOString().split('T')[0];
+  const repBadge=(()=>{
+    if(isPaid) return '<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 14px rgba(34,197,94,.45)" title="Payé"><span class="material-symbols-outlined" style="font-size:20px;color:#fff">task_alt</span></div>';
+    if(!repDateStr) return '';
+    const d=fmtDate(repDateStr);
+    const amt=fmt(r.amount||0);
+    if(repDateStr<=todayRep) return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="Non payée — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(239,68,68,.45);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>${d}</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">Non payée</span></button>`;
+    return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="À venir — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(34,197,94,.4);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${d}</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">À venir</span></button>`;
+  })();
   return `<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'}">
     <!-- Header: Bento Style -->
     <div style="display:flex;align-items:flex-start;gap:14px">
@@ -1454,10 +1462,7 @@ function repRow(r){
       </div>
       <!-- Actions Droite -->
       <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
-        <button class="toggle-paid ${isPaid?'paid':'pending'}" onclick="event.stopPropagation();toggleRepPaid('${r.id}',${isPaid},this)" style="height:42px;padding:0 14px;border-radius:14px;border-width:1.5px">
-          <span class="material-symbols-outlined" style="font-size:20px;margin-right:4px">${isPaid?'check_circle':'radio_button_unchecked'}</span>
-          <span style="font-size:11px;font-weight:900">${isPaid?'Payé':'Attente'}</span>
-        </button>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">${repBadge}</div>
         <button class="action-btn" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);flex-shrink:0" onclick="event.stopPropagation();repMenu(this,'${r.id}','${cid}',${isPaid},'${phone}','${name.replace(/'/g,"\\'")}',${ r.amount||0},'${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${health}','${status}')">
           <span class="material-symbols-outlined" style="font-size:20px">more_vert</span>
         </button>
