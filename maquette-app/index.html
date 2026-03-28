@@ -2973,28 +2973,10 @@ async function handleStatusChangeClick(cid, newStatus, currentStatus){
   
   if(newStatus === 'Souffrance'){
     closeModal();
-    // Vérifier si un solde_initial existe déjà
-    const{data:existing}=await sb.from('recovery_ledger').select('id').eq('credit_id',cid).eq('type','solde_initial').limit(1);
-    const hasDup=existing&&existing.length>0;
-    openModal(`
-      <div style="padding:0 20px 24px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
-          <span class="material-symbols-outlined filled" style="color:#ef4444;font-size:24px">warning</span>
-          <p style="font-size:16px;font-weight:800;color:var(--text);margin:0">Passage en Souffrance</p>
-        </div>
-        ${hasDup?`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="color:#ef4444;font-size:16px">info</span><p style="font-size:12px;color:#ef4444;margin:0">Un solde initial existe déjà pour ce dossier.</p></div>`:''}
-        <p style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:16px">
-          Veuillez saisir le <strong>montant total dû</strong> à ce jour pour établir le solde de référence.
-        </p>
-        <label class="m-label">Montant dû initial (FCFA) *</label>
-        <input id="souff-amount" type="number" class="m-input" placeholder="Ex: 50000" style="margin-bottom:12px">
-        <label class="m-label">Note / Observations (optionnel)</label>
-        <textarea id="souff-note" class="m-input" rows="2" placeholder="Ex: Impayés depuis mars 2026..." style="margin-bottom:20px;resize:none"></textarea>
-        <div style="display:flex;gap:10px">
-          <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
-          <button onclick="confirmSouffranceFlow('${cid}')" class="btn-primary" style="flex:2;background:#ef4444">Valider</button>
-        </div>
-      </div>`);
+    const c=_credCache[cid]||{};
+    const name=getName(c)||c.client_name||'—';
+    const amount=parseFloat(c.amount||0);
+    openSouffranceFormMob(cid, name, amount);
     return;
   }
 
@@ -3250,8 +3232,124 @@ async function viewRecouvrement(){
   }).join('');
 }
 
-// ── ÉTAPE 1 : sélection du crédit ───────────────────────────────────────────
+// ── NOUVEAU CLIENT EN SOUFFRANCE (bouton +) ───────────────────────────────────
 async function openNouveauDossierMob(){
+  const t=today();
+  openModal(`<div style="padding:8px 16px 24px">
+    <p style="font-size:17px;font-weight:900;color:var(--text);margin:0 0 4px">Nouveau dossier en souffrance</p>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 18px">Créez un nouveau client directement en souffrance.</p>
+
+    <p style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Informations Client</p>
+
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Nom complet *</p>
+      <input type="text" id="nd-nom" placeholder="Ex : DUPONT Jean" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Téléphone *</p>
+        <input type="tel" id="nd-phone" placeholder="+229 …" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Activité</p>
+        <input type="text" id="nd-activity" placeholder="Ex : Commerce" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+      </div>
+    </div>
+
+    <p style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Dossier en Souffrance</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Date *</p>
+        <input type="date" id="nd-date" value="${t}" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Type de crédit</p>
+        <select id="nd-ctype" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none">
+          <option value="Consommation">Consommation</option>
+          <option value="Immobilier">Immobilier</option>
+          <option value="Commercial">Commercial</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Montant initial dû (FCFA) *</p>
+      <input type="number" id="nd-amount" placeholder="0" min="0" step="100" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-weight:800;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Recouvrements déjà effectués (FCFA)</p>
+      <input type="number" id="nd-recovered" placeholder="0 (optionnel)" min="0" step="100" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-weight:800;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="margin-bottom:20px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Description / Notes</p>
+      <textarea id="nd-notes" rows="3" placeholder="Précisez les circonstances du dossier…" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeModal()" style="flex:1;padding:14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">Annuler</button>
+      <button onclick="saveNouveauClientSouffrance()" style="flex:2;padding:14px;border-radius:14px;border:none;background:#ef4444;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">Valider</button>
+    </div>
+  </div>`);
+}
+
+async function saveNouveauClientSouffrance(){
+  const nom      = document.getElementById('nd-nom')?.value?.trim();
+  const phone    = document.getElementById('nd-phone')?.value?.trim();
+  const activity = document.getElementById('nd-activity')?.value?.trim()||'';
+  const date     = document.getElementById('nd-date')?.value||today();
+  const ctype    = document.getElementById('nd-ctype')?.value||'Consommation';
+  const amount   = parseFloat(document.getElementById('nd-amount')?.value);
+  const recovered= parseFloat(document.getElementById('nd-recovered')?.value)||0;
+  const notes    = (document.getElementById('nd-notes')?.value||'').trim();
+
+  if(!nom){toast('Nom complet requis','err');return;}
+  if(!phone){toast('Téléphone requis','err');return;}
+  if(!amount||amount<=0){toast('Montant initial requis (> 0)','err');return;}
+  if(recovered<0){toast('Le recouvrement ne peut pas être négatif','err');return;}
+  if(recovered>amount){toast('Le recouvrement dépasse le montant initial','err');return;}
+
+  openConfirm(`Créer le dossier — ${nom} ?`,`${parseInt(amount).toLocaleString('fr-FR')} FCFA initial`,async()=>{
+    // 1. Créer le client
+    const{data:client,error:e1}=await sb.from('clients').insert({
+      full_name:nom, phone1:phone, activity:activity||null, health:'Souffrance', is_active:true
+    }).select('id').single();
+    if(e1||!client){toast('Erreur création client','err');console.error(e1);return;}
+
+    // 2. Créer le crédit
+    const{data:credit,error:e2}=await sb.from('credits').insert({
+      client_id:client.id, client_name:nom, phone, activity:activity||null,
+      amount, start_date:date, end_date:date,
+      health:'Souffrance', status:'Souffrance', type:ctype
+    }).select('id').single();
+    if(e2||!credit){toast('Client créé — erreur création crédit','err');console.error(e2);return;}
+
+    // 3. INSERT solde_initial
+    const{error:e3}=await sb.from('recovery_ledger').insert({
+      credit_id:credit.id, type:'solde_initial', amount, op_date:date,
+      description:notes||`Passage en souffrance — Solde initial : ${parseInt(amount).toLocaleString('fr-FR')} FCFA`
+    });
+    if(e3){toast('Crédit OK — erreur solde initial','err');console.error(e3);return;}
+
+    // 4. Recouvrement antérieur
+    if(recovered>0){
+      const{error:e4}=await sb.from('recovery_ledger').insert({
+        credit_id:credit.id, type:'versement_client', amount:recovered, op_date:date,
+        description:'Recouvrement antérieur enregistré lors du passage en souffrance'
+      });
+      if(e4){toast('Dossier créé — erreur recouvrement antérieur','err');console.error(e4);}
+    }
+
+    toast('Nouveau dossier en souffrance créé ✓','ok');
+    closeModal();
+    loadCredits();
+    viewRecouvrement();
+  },'Créer le dossier','#ef4444');
+}
+
+// ── ANCIEN openNouveauDossierMob (sélection d'un crédit existant) — supprimé ──
+// Désormais le bouton + crée un nouveau client. Pour passer un crédit existant
+// en souffrance, utiliser openSouffranceExistantMob() depuis handleStatusChangeClick.
+async function _legacyCreditSelect(){
   const{data:allCredits}=await sb.from('credits')
     .select('id,client_name,amount,status,clients(full_name)')
     .neq('health','Souffrance').in('status',['En cours','En attente','Échu'])
@@ -3293,82 +3391,77 @@ async function openNouveauDossierMob(){
   </div>`);
 }
 
-// ── ÉTAPE 2 : formulaire complet ─────────────────────────────────────────────
+// ── PASSAGE EN SOUFFRANCE — CRÉDIT EXISTANT ──────────────────────────────────
+// Même style que "Enregistrer une Opération" du grand livre
 function openSouffranceFormMob(creditId, creditName, creditAmount){
-  openModal(`<div style="padding:0 20px 24px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
-      <span class="material-symbols-outlined filled" style="color:#ef4444;font-size:22px">gavel</span>
+  const t=today();
+  openModal(`<div style="padding:8px 16px 24px">
+    <p style="font-size:17px;font-weight:900;color:var(--text);margin:0 0 4px">Enregistrer en Souffrance</p>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 20px">${creditName}</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
-        <p style="font-size:15px;font-weight:900;color:var(--text);margin:0">Enregistrer en souffrance</p>
-        <p style="font-size:11px;color:#ef4444;font-weight:700;margin:2px 0 0">${creditName}</p>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Date</p>
+        <input type="date" id="sf-date" value="${t}" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Type</p>
+        <input type="text" value="Solde Initial" disabled style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.04);color:var(--text2);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
       </div>
     </div>
 
-    <label class="m-label">Date *</label>
-    <input id="nd-date" type="date" class="m-input" value="${today()}" style="margin-bottom:12px">
-
-    <label class="m-label">Montant initial dû (FCFA) *</label>
-    <input id="nd-amount" type="number" class="m-input" placeholder="Ex : 500 000" value="${creditAmount||''}" style="margin-bottom:12px">
-
-    <label class="m-label">Recouvrements déjà effectués (FCFA)</label>
-    <input id="nd-recovered" type="number" class="m-input" placeholder="Optionnel — Ex : 50 000" style="margin-bottom:12px">
-
-    <label class="m-label">Notes / Observations</label>
-    <textarea id="nd-notes" class="m-input" rows="2" placeholder="Ex : Dossier transmis depuis agence X, impayés depuis…" style="margin-bottom:20px;resize:none"></textarea>
-
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Montant initial dû (FCFA) *</p>
+      <input type="number" id="sf-amount" placeholder="0" min="0" step="100" value="${creditAmount||''}" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-weight:800;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Recouvrements déjà effectués (FCFA)</p>
+      <input type="number" id="sf-recovered" placeholder="0 (optionnel)" min="0" step="100" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-weight:800;font-family:inherit;box-sizing:border-box;outline:none"/>
+    </div>
+    <div style="margin-bottom:20px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Description / Notes</p>
+      <textarea id="sf-notes" rows="3" placeholder="Précisez l'origine du paiement…" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none"></textarea>
+    </div>
     <div style="display:flex;gap:10px">
-      <button class="btn-ghost" onclick="openNouveauDossierMob()" style="flex:1">← Retour</button>
-      <button onclick="saveNouveauDossierMob('${creditId}','${creditName}')" class="btn-primary" style="flex:2;background:#ef4444">Enregistrer</button>
+      <button onclick="closeModal()" style="flex:1;padding:14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">Annuler</button>
+      <button onclick="saveSouffranceFormMob('${creditId}','${creditName.replace(/'/g,"\\'")}')" style="flex:2;padding:14px;border-radius:14px;border:none;background:#ef4444;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">Valider</button>
     </div>
   </div>`);
 }
 
-// ── ÉTAPE 3 : sauvegarde ─────────────────────────────────────────────────────
-async function saveNouveauDossierMob(creditId, creditName){
-  const date      = document.getElementById('nd-date')?.value || today();
-  const amount    = parseFloat(document.getElementById('nd-amount')?.value);
-  const recovered = parseFloat(document.getElementById('nd-recovered')?.value) || 0;
-  const notes     = (document.getElementById('nd-notes')?.value || '').trim();
+async function saveSouffranceFormMob(creditId, creditName){
+  const date     = document.getElementById('sf-date')?.value||today();
+  const amount   = parseFloat(document.getElementById('sf-amount')?.value);
+  const recovered= parseFloat(document.getElementById('sf-recovered')?.value)||0;
+  const notes    = (document.getElementById('sf-notes')?.value||'').trim();
 
-  if(!amount || amount <= 0){ toast('Montant initial requis (> 0)','err'); return; }
-  if(recovered < 0){ toast('Le recouvrement ne peut pas être négatif','err'); return; }
-  if(recovered > amount){ toast('Le recouvrement dépasse le montant initial','err'); return; }
+  if(!amount||amount<=0){toast('Montant initial requis (> 0)','err');return;}
+  if(recovered<0){toast('Le recouvrement ne peut pas être négatif','err');return;}
+  if(recovered>amount){toast('Le recouvrement dépasse le montant initial','err');return;}
 
-  const recap = recovered > 0
-    ? `${parseInt(amount).toLocaleString('fr-FR')} FCFA initial · ${parseInt(recovered).toLocaleString('fr-FR')} FCFA déjà recouvrés`
-    : `${parseInt(amount).toLocaleString('fr-FR')} FCFA initial`;
+  openConfirm(`Enregistrer ${creditName} en souffrance ?`,`${parseInt(amount).toLocaleString('fr-FR')} FCFA initial`,async()=>{
+    const{error:e1}=await sb.from('recovery_ledger').insert({
+      credit_id:creditId, type:'solde_initial', amount, op_date:date,
+      description:notes||`Passage en souffrance — Solde initial : ${parseInt(amount).toLocaleString('fr-FR')} FCFA`
+    });
+    if(e1){toast('Erreur solde initial','err');console.error(e1);return;}
 
-  openConfirm(
-    `Créer le dossier — ${creditName} ?`,
-    recap,
-    async () => {
-      // 1. Solde initial
-      const{error:e1}=await sb.from('recovery_ledger').insert({
-        credit_id:creditId, type:'solde_initial', amount, op_date:date,
-        description: notes || `Passage en souffrance — Solde initial : ${parseInt(amount).toLocaleString('fr-FR')} FCFA`
+    if(recovered>0){
+      const{error:e2}=await sb.from('recovery_ledger').insert({
+        credit_id:creditId, type:'versement_client', amount:recovered, op_date:date,
+        description:'Recouvrement antérieur enregistré lors du passage en souffrance'
       });
-      if(e1){ toast('Erreur enregistrement solde initial','err'); console.error(e1); return; }
+      if(e2)console.error(e2);
+    }
 
-      // 2. Recouvrement antérieur si saisi
-      if(recovered > 0){
-        const{error:e2}=await sb.from('recovery_ledger').insert({
-          credit_id:creditId, type:'versement_client', amount:recovered, op_date:date,
-          description:'Recouvrement antérieur enregistré lors du passage en souffrance'
-        });
-        if(e2){ toast('Solde OK — erreur recouvrement antérieur','err'); console.error(e2); }
-      }
+    const{error:e3}=await sb.from('credits').update({health:'Souffrance',status:'Souffrance'}).eq('id',creditId);
+    if(e3){toast('Grand livre OK — erreur màj crédit','err');console.error(e3);}
+    else toast('Dossier en souffrance enregistré ✓','ok');
 
-      // 3. Mise à jour du crédit
-      const{error:e3}=await sb.from('credits').update({health:'Souffrance',status:'Souffrance'}).eq('id',creditId);
-      if(e3){ toast('Grand livre OK — erreur màj crédit','err'); console.error(e3); }
-      else   toast('Dossier en souffrance créé ✓','ok');
-
-      closeModal();
-      loadCredits();
-      viewRecouvrement();
-    },
-    'Confirmer', '#ef4444'
-  );
+    closeModal();
+    loadCredits();
+    if(document.getElementById('rec-mob-list'))viewRecouvrement();
+  },'Confirmer','#ef4444');
 }
 
 async function openGrandLivreMob(creditId){
