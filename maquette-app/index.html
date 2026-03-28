@@ -1350,7 +1350,7 @@ async function copyClientsOfDayMob(btn) {
     const { data, error } = await sb.from('repayments')
       .select('credits(client_name, clients(full_name))')
       .eq('scheduled_date', today)
-      .order('is_paid', { ascending: true });
+      .eq('is_paid', false);
     if (error) throw error;
     if (!data || !data.length) { toast('Aucun client prévu aujourd\'hui', 'info'); return; }
     const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
