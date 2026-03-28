@@ -248,6 +248,27 @@ html, body {
 }
 .action-btn:active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
 
+/* FAB — bouton "+" flottant */
+button.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f27f0d, #c96a00);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(242,127,13,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 40;
+  transition: transform .15s, box-shadow .15s;
+}
+button.fab:active { transform: scale(0.93); box-shadow: 0 3px 10px rgba(242,127,13,.3); }
+
 .detail-card {
   background: var(--card);
   border: 1px solid var(--border);
