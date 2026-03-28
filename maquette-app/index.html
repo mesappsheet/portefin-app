@@ -574,7 +574,7 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
 
 <div id="grand-livre-mob-view" style="position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column;animation:slideInRight .3s cubic-bezier(.4,0,.2,1)">
   <div id="topbar" style="flex-shrink:0">
-    <button onclick="closeGrandLivreMob()" class="action-btn"><span class="material-symbols-outlined">arrow_back</span></button>
+    <button onclick="navTo('recouvrement')" class="action-btn"><span class="material-symbols-outlined">arrow_back</span></button>
     <h2 style="font-size:15px;font-weight:900">Grand Livre</h2>
     <button onclick="openEnregistrerOpMob(window._glMobCreditId)" class="action-btn" style="background:rgba(242,127,13,.12);border:1px solid rgba(242,127,13,.3);color:#f27f0d" title="Nouvelle opération">
       <span class="material-symbols-outlined">add</span>
@@ -3372,6 +3372,7 @@ async function saveOpMob(creditId){
   closeModal();
   toast('Opération enregistrée ✓','ok');
   await openGrandLivreMob(creditId);
+  viewRecouvrement(); // Refresh la liste en arrière-plan
 }
 
 // ─── FIN MODULE RECOUVREMENT MOBILE ──────────────────────────────────────────
