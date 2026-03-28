@@ -3164,8 +3164,8 @@ async function viewRecouvrement(){
   view.innerHTML=`<div style="padding:16px 16px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <h2 style="font-size:20px;font-weight:900;color:var(--text);margin:0">Recouvrement</h2>
-      <button onclick="openNouveauDossierMob()" style="display:flex;align-items:center;gap:6px;background:#ef4444;color:#fff;border:none;border-radius:12px;padding:8px 12px;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer">
-        <span class="material-symbols-outlined" style="font-size:15px">add</span>Nouveau dossier
+      <button onclick="openNouveauDossierMob()" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:#ef4444;color:#fff;border:none;border-radius:50%;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,.35);flex-shrink:0" title="Nouveau dossier en souffrance">
+        <span class="material-symbols-outlined" style="font-size:22px">add</span>
       </button>
     </div>
     <p style="font-size:12px;color:var(--text2);margin:0 0 16px">Dossiers en souffrance</p>
@@ -3250,34 +3250,125 @@ async function viewRecouvrement(){
   }).join('');
 }
 
+// ── ÉTAPE 1 : sélection du crédit ───────────────────────────────────────────
 async function openNouveauDossierMob(){
-  // Charger les crédits sains (sans entrée solde_initial dans recovery_ledger)
   const{data:allCredits}=await sb.from('credits')
     .select('id,client_name,amount,status,clients(full_name)')
-    .neq('health','Souffrance').in('status',['En cours','En attente','Échu']);
+    .neq('health','Souffrance').in('status',['En cours','En attente','Échu'])
+    .order('client_name',{ascending:true});
+
   if(!allCredits||!allCredits.length){
-    openModal(`<div style="padding:20px 20px 28px;text-align:center">
-      <span class="material-symbols-outlined" style="font-size:40px;color:var(--text2)">check_circle</span>
+    openModal(`<div style="padding:24px 20px 28px;text-align:center">
+      <span class="material-symbols-outlined" style="font-size:44px;color:var(--text2)">check_circle</span>
       <p style="font-size:15px;font-weight:800;color:var(--text);margin:12px 0 4px">Aucun crédit éligible</p>
       <p style="font-size:13px;color:var(--text2);margin:0 0 20px">Tous les crédits actifs sont déjà en souffrance.</p>
       <button class="btn-ghost" onclick="closeModal()" style="width:100%">Fermer</button>
     </div>`);
     return;
   }
+
   const options=allCredits.map(c=>{
-    const name=c.clients?.full_name||c.client_name||'—';
-    const amt=parseInt(c.amount||0).toLocaleString('fr-FR');
-    return`<button onclick="closeModal();handleStatusChangeClick('${c.id}','Souffrance','${c.status}')" style="width:100%;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);margin-bottom:8px;cursor:pointer;font-family:inherit">
-      <p style="font-size:13px;font-weight:800;color:var(--text);margin:0 0 2px">${name}</p>
-      <p style="font-size:11px;color:var(--text2);margin:0">${amt} FCFA · ${c.status}</p>
+    const name=(c.clients?.full_name||c.client_name||'—').replace(/'/g,"\\'");
+    const amt=parseInt(c.amount||0);
+    const amtFmt=amt.toLocaleString('fr-FR');
+    const init=(name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase());
+    return`<button onclick="openSouffranceFormMob('${c.id}','${name}',${amt})" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--card);margin-bottom:8px;cursor:pointer;font-family:inherit">
+      <div style="width:38px;height:38px;border-radius:12px;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#ef4444;flex-shrink:0">${init}</div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:13px;font-weight:800;color:var(--text);margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        <p style="font-size:11px;color:var(--text2);margin:0">${amtFmt} FCFA · ${c.status}</p>
+      </div>
+      <span class="material-symbols-outlined" style="font-size:18px;color:var(--text2);flex-shrink:0">chevron_right</span>
     </button>`;
   }).join('');
+
   openModal(`<div style="padding:0 20px 24px">
-    <p class="sheet-title" style="padding:0 0 16px;margin-bottom:16px">Nouveau dossier en souffrance</p>
-    <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Sélectionnez le crédit à passer en souffrance :</p>
-    <div style="max-height:55vh;overflow-y:auto">${options}</div>
-    <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:8px">Annuler</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+      <span class="material-symbols-outlined filled" style="color:#ef4444;font-size:22px">warning</span>
+      <p style="font-size:15px;font-weight:900;color:var(--text);margin:0">Nouveau dossier en souffrance</p>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin:0 0 14px">Sélectionnez le crédit à enregistrer :</p>
+    <div style="max-height:52vh;overflow-y:auto;padding-right:2px">${options}</div>
+    <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:10px">Annuler</button>
   </div>`);
+}
+
+// ── ÉTAPE 2 : formulaire complet ─────────────────────────────────────────────
+function openSouffranceFormMob(creditId, creditName, creditAmount){
+  openModal(`<div style="padding:0 20px 24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--sep)">
+      <span class="material-symbols-outlined filled" style="color:#ef4444;font-size:22px">gavel</span>
+      <div>
+        <p style="font-size:15px;font-weight:900;color:var(--text);margin:0">Enregistrer en souffrance</p>
+        <p style="font-size:11px;color:#ef4444;font-weight:700;margin:2px 0 0">${creditName}</p>
+      </div>
+    </div>
+
+    <label class="m-label">Date *</label>
+    <input id="nd-date" type="date" class="m-input" value="${today()}" style="margin-bottom:12px">
+
+    <label class="m-label">Montant initial dû (FCFA) *</label>
+    <input id="nd-amount" type="number" class="m-input" placeholder="Ex : 500 000" value="${creditAmount||''}" style="margin-bottom:12px">
+
+    <label class="m-label">Recouvrements déjà effectués (FCFA)</label>
+    <input id="nd-recovered" type="number" class="m-input" placeholder="Optionnel — Ex : 50 000" style="margin-bottom:12px">
+
+    <label class="m-label">Notes / Observations</label>
+    <textarea id="nd-notes" class="m-input" rows="2" placeholder="Ex : Dossier transmis depuis agence X, impayés depuis…" style="margin-bottom:20px;resize:none"></textarea>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" onclick="openNouveauDossierMob()" style="flex:1">← Retour</button>
+      <button onclick="saveNouveauDossierMob('${creditId}','${creditName}')" class="btn-primary" style="flex:2;background:#ef4444">Enregistrer</button>
+    </div>
+  </div>`);
+}
+
+// ── ÉTAPE 3 : sauvegarde ─────────────────────────────────────────────────────
+async function saveNouveauDossierMob(creditId, creditName){
+  const date      = document.getElementById('nd-date')?.value || today();
+  const amount    = parseFloat(document.getElementById('nd-amount')?.value);
+  const recovered = parseFloat(document.getElementById('nd-recovered')?.value) || 0;
+  const notes     = (document.getElementById('nd-notes')?.value || '').trim();
+
+  if(!amount || amount <= 0){ toast('Montant initial requis (> 0)','err'); return; }
+  if(recovered < 0){ toast('Le recouvrement ne peut pas être négatif','err'); return; }
+  if(recovered > amount){ toast('Le recouvrement dépasse le montant initial','err'); return; }
+
+  const recap = recovered > 0
+    ? `${parseInt(amount).toLocaleString('fr-FR')} FCFA initial · ${parseInt(recovered).toLocaleString('fr-FR')} FCFA déjà recouvrés`
+    : `${parseInt(amount).toLocaleString('fr-FR')} FCFA initial`;
+
+  openConfirm(
+    `Créer le dossier — ${creditName} ?`,
+    recap,
+    async () => {
+      // 1. Solde initial
+      const{error:e1}=await sb.from('recovery_ledger').insert({
+        credit_id:creditId, type:'solde_initial', amount, op_date:date,
+        description: notes || `Passage en souffrance — Solde initial : ${parseInt(amount).toLocaleString('fr-FR')} FCFA`
+      });
+      if(e1){ toast('Erreur enregistrement solde initial','err'); console.error(e1); return; }
+
+      // 2. Recouvrement antérieur si saisi
+      if(recovered > 0){
+        const{error:e2}=await sb.from('recovery_ledger').insert({
+          credit_id:creditId, type:'versement_client', amount:recovered, op_date:date,
+          description:'Recouvrement antérieur enregistré lors du passage en souffrance'
+        });
+        if(e2){ toast('Solde OK — erreur recouvrement antérieur','err'); console.error(e2); }
+      }
+
+      // 3. Mise à jour du crédit
+      const{error:e3}=await sb.from('credits').update({health:'Souffrance',status:'Souffrance'}).eq('id',creditId);
+      if(e3){ toast('Grand livre OK — erreur màj crédit','err'); console.error(e3); }
+      else   toast('Dossier en souffrance créé ✓','ok');
+
+      closeModal();
+      loadCredits();
+      viewRecouvrement();
+    },
+    'Confirmer', '#ef4444'
+  );
 }
 
 async function openGrandLivreMob(creditId){
