@@ -2240,8 +2240,42 @@ async function saveClientEdit(creditId,clientId){
     }
     const{error:cErr}=await sb.from('credits').update({client_name:name,phone:phone1,email,activity,address,exclude_automation:excludeAuto}).eq('id',creditId);
     if(cErr)throw cErr;
-    toast('Client mis à jour ✓','ok');
+    // Mettre à jour le cache immédiatement
+    if(_credCache[creditId]){
+      _credCache[creditId].client_name=name;
+      _credCache[creditId].phone=phone1||_credCache[creditId].phone;
+      _credCache[creditId].email=email||_credCache[creditId].email;
+      _credCache[creditId].activity=activity||_credCache[creditId].activity;
+      _credCache[creditId].address=address||_credCache[creditId].address;
+      if(_credCache[creditId].clients){
+        _credCache[creditId].clients.full_name=name;
+        _credCache[creditId].clients.phone1=phone1||_credCache[creditId].clients.phone1;
+        _credCache[creditId].clients.phone2=phone2||_credCache[creditId].clients.phone2;
+        _credCache[creditId].clients.email=email||_credCache[creditId].clients.email;
+        _credCache[creditId].clients.activity=activity||_credCache[creditId].clients.activity;
+        _credCache[creditId].clients.address=address||_credCache[creditId].clients.address;
+      }
+    }
     closeModal();
+    // Mettre à jour la ligne dans la liste
+    const rowEl=document.getElementById('cred-row-'+creditId);
+    if(rowEl&&_credCache[creditId]) rowEl.outerHTML=credRow(_credCache[creditId]);
+    // Re-rendre le détail si ouvert + afficher banner de succès
+    if(currentCreditId===creditId){
+      const det=document.getElementById('credit-detail-content');
+      if(det&&_credCache[creditId]){
+        det.innerHTML=`<div id="save-success-banner" style="margin:16px 0;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#15803d);display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(34,197,94,.35);transition:opacity .4s ease">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span class="material-symbols-outlined" style="font-size:20px;color:#fff">check_circle</span>
+          </div>
+          <div>
+            <p style="font-size:13px;font-weight:800;color:#fff;margin:0">Modification enregistrée</p>
+            <p style="font-size:11px;color:rgba(255,255,255,.85);margin:2px 0 0">Les informations du client ont bien été mises à jour.</p>
+          </div>
+        </div>`+renderCreditDetail(_credCache[creditId]);
+        setTimeout(()=>{const b=document.getElementById('save-success-banner');if(b){b.style.opacity='0';setTimeout(()=>b.remove(),400);}},3500);
+      }
+    }
     loadCredits();
   }catch(e){
     toast('Erreur : '+(e.message||'inconnue'),'err');

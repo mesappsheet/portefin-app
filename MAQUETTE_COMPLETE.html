@@ -9403,15 +9403,30 @@ Suivant
             } else {
                 showNotification("Dossier de crédit enregistré !", "success");
                 closeModal();
-                
-                // 3. AUTO-GENERATE SCHEDULE 
+
+                // 3. AUTO-GENERATE SCHEDULE
                 if (createdCredits && createdCredits.length > 0) {
                     const credit = createdCredits[0];
-                    
+
                     // RE-CLEAN schedule if already exists for this credit (in case of update)
                     await _supabase.from('repayments').delete().eq('credit_id', credit.id);
-                    
+
                     generateRepaymentsSilently(credit);
+
+                    // Mettre à jour le panneau détail immédiatement
+                    currentCredit = { ...credit, clients: client };
+                    showCreditDetails(currentCredit);
+                    // Banner de confirmation sur le panneau détail
+                    const detPanel = document.getElementById('credit-detail-panel');
+                    if (detPanel) {
+                        const banner = document.createElement('div');
+                        banner.id = 'pc-save-banner';
+                        banner.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:100;background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;padding:12px 24px;border-radius:14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(34,197,94,.4);font-weight:800;font-size:13px;white-space:nowrap;transition:opacity .4s ease';
+                        banner.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">check_circle</span> Modification enregistrée avec succès';
+                        detPanel.style.position = 'relative';
+                        detPanel.prepend(banner);
+                        setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => banner.remove(), 400); }, 3500);
+                    }
                 }
 
                 if (currentScreen === 'credits_clients') fetchCredits();
