@@ -1233,44 +1233,30 @@ async function loadCredits(){
     }
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">account_balance</span><p>Aucun crédit trouvé</p></div>`;return;}
 
-    // Pour chaque crédit, lire les statistiques depuis la vue
+    // Statistiques depuis la vue (compteurs uniquement)
     const ids=rows.map(c=>c.id);
-    const {data: statsData} = await sb.from('credit_stats').select('*').in('credit_id', ids);
-    const statsMap = {};
-    (statsData||[]).forEach(s => { statsMap[s.credit_id] = s; });
+    const today=new Date().toISOString().split('T')[0];
+    const [{data:statsData},{data:unpaidData},{data:upcomingData}]=await Promise.all([
+      sb.from('credit_stats').select('credit_id,nombre_echeances_total,nombre_echeances_payees').in('credit_id',ids),
+      sb.from('repayments').select('id,credit_id,scheduled_date,amount').in('credit_id',ids).eq('is_paid',false).lte('scheduled_date',today).order('scheduled_date',{ascending:false}),
+      sb.from('repayments').select('id,credit_id,scheduled_date,is_paid,amount').in('credit_id',ids).gte('scheduled_date',today).order('scheduled_date',{ascending:true})
+    ]);
+    const statsMap={};
+    (statsData||[]).forEach(s=>{statsMap[s.credit_id]=s;});
+    const unpaidMap={};
+    (unpaidData||[]).forEach(r=>{if(!unpaidMap[r.credit_id])unpaidMap[r.credit_id]=r;});
+    const upcomingMap={};
+    (upcomingData||[]).forEach(r=>{if(!upcomingMap[r.credit_id])upcomingMap[r.credit_id]=r;});
 
     rows.forEach(c=>{
-      const s = statsMap[c.id] || { nombre_echeances_total:0, nombre_echeances_payees:0 };
-      
-      c.reps = {
-        total: s.nombre_echeances_total,
-        paid: s.nombre_echeances_payees
-      };
+      const s=statsMap[c.id]||{nombre_echeances_total:0,nombre_echeances_payees:0};
+      c.reps={total:s.nombre_echeances_total,paid:s.nombre_echeances_payees};
 
-      if(s.plus_ancienne_echeance_impayee_id) {
-        c.nextUnpaid = {
-          id: s.plus_ancienne_echeance_impayee_id,
-          scheduled_date: s.plus_ancienne_echeance_impayee_date,
-          amount: s.plus_ancienne_echeance_impayee_montant
-        };
-      } else {
-        c.nextUnpaid = null;
-      }
-
-      if(s.prochaine_echeance_id) {
-        c.nextUpcoming = {
-          id: s.prochaine_echeance_id,
-          scheduled_date: s.prochaine_echeance_date,
-          amount: s.prochaine_echeance_montant,
-          is_paid: s.prochaine_echeance_is_paid
-        };
-      } else {
-        c.nextUpcoming = null;
-      }
-
-      // Filtrer les échéances hors de la période du crédit
-      if(c.nextUnpaid && c.end_date && c.nextUnpaid.scheduled_date > c.end_date) c.nextUnpaid = null;
-      if(c.nextUpcoming && c.end_date && c.nextUpcoming.scheduled_date > c.end_date) c.nextUpcoming = null;
+      // Badges : requêtes directes sur repayments (même logique que PC)
+      const u=unpaidMap[c.id];
+      c.nextUnpaid=(u&&(!c.end_date||u.scheduled_date<=c.end_date))?{id:u.id,scheduled_date:u.scheduled_date,amount:u.amount}:null;
+      const n=upcomingMap[c.id];
+      c.nextUpcoming=(n&&(!c.end_date||n.scheduled_date<=c.end_date))?{id:n.id,scheduled_date:n.scheduled_date,is_paid:n.is_paid,amount:n.amount}:null;
 
       _credCache[c.id]=c;
     });
