@@ -3094,6 +3094,9 @@
                     <button onclick="insertTag('{{Salutation}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Salutation
                     </button>
+                    <button onclick="insertTag('{{Mot_de_fin}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
+                        <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Mot_de_fin
+                    </button>
                     <button onclick="insertTag('{{Nom du Prospect}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Nom_Prospect
                     </button>
@@ -4264,6 +4267,9 @@ Suivant
                 <div class="flex flex-wrap gap-2.5">
                     <button onclick="insertTag('{{Salutation}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Salutation
+                    </button>
+                    <button onclick="insertTag('{{Mot_de_fin}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
+                        <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Mot_de_fin
                     </button>
                     <button onclick="insertTag('{{Nom du Client}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Nom_Client
@@ -6510,6 +6516,7 @@ Suivant
                 const _h1=new Date().getHours();
                 const replaceMap = {
                     "{{Salutation}}": _h1 < 12 ? 'Bonjour' : 'Bonsoir',
+                    "{{Mot_de_fin}}": _h1 < 12 ? 'Bonne journée' : 'Bonne soirée',
                     "{{Nom du Client}}": data.name || '',
                     "{{Nom du Prospect}}": data.name || '',
                     "{{Nom}}": data.name || '',
@@ -6593,6 +6600,7 @@ Suivant
                 const _h2=new Date().getHours();
                 const replaceMap = {
                     "{{Salutation}}": _h2 < 12 ? 'Bonjour' : 'Bonsoir',
+                    "{{Mot_de_fin}}": _h2 < 12 ? 'Bonne journée' : 'Bonne soirée',
                     "{{Nom du Client}}": data.name || '',
                     "{{Nom du Prospect}}": data.name || '',
                     "{{Nom}}": data.name || '',

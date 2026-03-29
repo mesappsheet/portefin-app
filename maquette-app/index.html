@@ -1083,6 +1083,7 @@ async function wa(phone, name='', category='Crédit', amount=0, date='', activit
   const _hWa=new Date().getHours();
   const replaceMap = {
     "{{Salutation}}": _hWa < 12 ? 'Bonjour' : 'Bonsoir',
+    "{{Mot_de_fin}}": _hWa < 12 ? 'Bonne journée' : 'Bonne soirée',
     "{{Nom du Client}}": name,
     "{{Nom du Prospect}}": name,
     "{{Nom}}": name,
@@ -1180,6 +1181,7 @@ async function sms(phone, name='', category='Crédit', amount=0, date='', activi
   const _hSms=new Date().getHours();
   const replaceMap = {
     "{{Salutation}}": _hSms < 12 ? 'Bonjour' : 'Bonsoir',
+    "{{Mot_de_fin}}": _hSms < 12 ? 'Bonne journée' : 'Bonne soirée',
     "{{Nom du Client}}": name,
     "{{Nom du Prospect}}": name,
     "{{Nom}}": name,
@@ -4353,7 +4355,7 @@ async function previewModel(id){
       <div class="glass-sm" style="padding:14px 16px;line-height:1.7;font-size:13px;white-space:pre-wrap">${data.body}</div>
       <div style="margin-top:12px;padding:10px 14px;background:rgba(242,127,13,.08);border-radius:10px;border:1px solid rgba(242,127,13,.15)">
         <p style="font-size:10px;color:#f27f0d;font-weight:700;margin:0 0 4px;text-transform:uppercase;letter-spacing:.08em">Balises disponibles</p>
-        <p style="font-size:10px;color:var(--text2);margin:0;line-height:1.7">{{Salutation}} · {{Nom}} · {{Nom du Client}} · {{Nom du Prospect}} · {{Capital}} · {{Montant}} · {{Montant à Payer}} · {{Date}} · {{Date d'Échéance}} · {{Activité}} · {{Id_Dossier}}</p>
+        <p style="font-size:10px;color:var(--text2);margin:0;line-height:1.7">{{Salutation}} · {{Mot_de_fin}} · {{Nom}} · {{Nom du Client}} · {{Nom du Prospect}} · {{Capital}} · {{Montant}} · {{Montant à Payer}} · {{Date}} · {{Date d'Échéance}} · {{Activité}} · {{Id_Dossier}}</p>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn-ghost" onclick="closeModal()" style="flex:1">Fermer</button>
@@ -4425,7 +4427,7 @@ function applyProsFilters(){
 
 // ─── EDIT MODEL ───────────────────────────────
 const BALISES=[
-  "{{Salutation}}","{{Nom}}","{{Nom du Client}}","{{Nom du Prospect}}","{{Capital}}",
+  "{{Salutation}}","{{Mot_de_fin}}","{{Nom}}","{{Nom du Client}}","{{Nom du Prospect}}","{{Capital}}",
   "{{Montant}}","{{Montant à Payer}}","{{Date}}","{{Date d'Échéance}}",
   "{{Activité}}","{{Id_Dossier}}"
 ];
