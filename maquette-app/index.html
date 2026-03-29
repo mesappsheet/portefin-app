@@ -1055,8 +1055,19 @@ async function wa(phone, name='', category='Crédit', amount=0, date='', activit
   }
 
   const formattedAmount=amount?new Intl.NumberFormat('fr-FR').format(amount):'';
-  const fmtDate_=date?fmtDate(date):'';
-  
+  // Prochaine échéance non payée si credit id fourni
+  let nextEcheanceDate=date||'';
+  if(id){
+    try{
+      const today=new Date().toISOString().split('T')[0];
+      const{data:nxt}=await sb.from('repayments')
+        .select('scheduled_date').eq('credit_id',id).eq('is_paid',false)
+        .gte('scheduled_date',today).order('scheduled_date',{ascending:true}).limit(1);
+      if(nxt&&nxt[0])nextEcheanceDate=nxt[0].scheduled_date.split('T')[0];
+    }catch(e){}
+  }
+  const fmtDate_=nextEcheanceDate?fmtDate(nextEcheanceDate):'';
+
   const _hWa=new Date().getHours();
   const replaceMap = {
     "{{Salutation}}": _hWa < 12 ? 'Bonjour' : 'Bonsoir',
@@ -1139,8 +1150,19 @@ async function sms(phone, name='', category='Crédit', amount=0, date='', activi
   }
 
   const formattedAmount=amount?new Intl.NumberFormat('fr-FR').format(amount):'';
-  const fmtDate_=date?fmtDate(date):'';
-  
+  // Prochaine échéance non payée si credit id fourni
+  let nextEcheanceDateSms=date||'';
+  if(id){
+    try{
+      const today=new Date().toISOString().split('T')[0];
+      const{data:nxt}=await sb.from('repayments')
+        .select('scheduled_date').eq('credit_id',id).eq('is_paid',false)
+        .gte('scheduled_date',today).order('scheduled_date',{ascending:true}).limit(1);
+      if(nxt&&nxt[0])nextEcheanceDateSms=nxt[0].scheduled_date.split('T')[0];
+    }catch(e){}
+  }
+  const fmtDate_=nextEcheanceDateSms?fmtDate(nextEcheanceDateSms):'';
+
   const _hSms=new Date().getHours();
   const replaceMap = {
     "{{Salutation}}": _hSms < 12 ? 'Bonjour' : 'Bonsoir',

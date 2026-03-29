@@ -6488,6 +6488,18 @@ Suivant
                 let message = template.body;
                 const formattedAmount = data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) : '';
 
+                // Prochaine échéance non payée
+                let nextEchDate = data.date || '';
+                if(data.id){
+                  try{
+                    const tod=new Date().toISOString().split('T')[0];
+                    const{data:nxt}=await _supabase.from('repayments')
+                      .select('scheduled_date').eq('credit_id',data.id).eq('is_paid',false)
+                      .gte('scheduled_date',tod).order('scheduled_date',{ascending:true}).limit(1);
+                    if(nxt&&nxt[0])nextEchDate=nxt[0].scheduled_date.split('T')[0];
+                  }catch(e){}
+                }
+
                 const _h1=new Date().getHours();
                 const replaceMap = {
                     "{{Salutation}}": _h1 < 12 ? 'Bonjour' : 'Bonsoir',
@@ -6497,8 +6509,8 @@ Suivant
                     "{{Capital}}": formattedAmount,
                     "{{Montant}}": formattedAmount,
                     "{{Montant à Payer}}": formattedAmount,
-                    "{{Date}}": data.date || '',
-                    "{{Date d'Échéance}}": data.date || '',
+                    "{{Date}}": nextEchDate,
+                    "{{Date d'Échéance}}": nextEchDate,
                     "{{Activité}}": data.activity || '',
                     "{{ID}}": data.id || '',
                     "{{Id_Dossier}}": data.id || ''
@@ -6557,6 +6569,18 @@ Suivant
                 let message = template.body;
                 const formattedAmount = data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) : '';
 
+                // Prochaine échéance non payée
+                let nextEchDateSms = data.date || '';
+                if(data.id){
+                  try{
+                    const tod=new Date().toISOString().split('T')[0];
+                    const{data:nxt}=await _supabase.from('repayments')
+                      .select('scheduled_date').eq('credit_id',data.id).eq('is_paid',false)
+                      .gte('scheduled_date',tod).order('scheduled_date',{ascending:true}).limit(1);
+                    if(nxt&&nxt[0])nextEchDateSms=nxt[0].scheduled_date.split('T')[0];
+                  }catch(e){}
+                }
+
                 const _h2=new Date().getHours();
                 const replaceMap = {
                     "{{Salutation}}": _h2 < 12 ? 'Bonjour' : 'Bonsoir',
@@ -6566,8 +6590,8 @@ Suivant
                     "{{Capital}}": formattedAmount,
                     "{{Montant}}": formattedAmount,
                     "{{Montant à Payer}}": formattedAmount,
-                    "{{Date}}": data.date || '',
-                    "{{Date d'Échéance}}": data.date || '',
+                    "{{Date}}": nextEchDateSms,
+                    "{{Date d'Échéance}}": nextEchDateSms,
                     "{{Activité}}": data.activity || '',
                     "{{ID}}": data.id || '',
                     "{{Id_Dossier}}": data.id || ''
