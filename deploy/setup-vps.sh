@@ -56,6 +56,16 @@ server {
         try_files \$uri \$uri/ /MAQUETTE_COMPLETE.html;
     }
 
+    # App Mobile accessible via IP (/maquette-app/)
+    location /maquette-app/ {
+        alias $APP_DIR/maquette-app/;
+        try_files \$uri \$uri/ /maquette-app/index.html;
+        location ~ \.(css|js|png|jpg|ico|woff2)$ {
+            expires 7d;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
     # Cache statique
     location ~* \.(css|js|png|jpg|ico|woff2)$ {
         expires 7d;

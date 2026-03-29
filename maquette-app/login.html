@@ -112,11 +112,14 @@ const SB_URL="https://lkuwgggwdtbzjgplwylr.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo";
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
+// Détecte si on est servi depuis /maquette-app/ (accès IP) ou depuis la racine (sous-domaine)
+function _mobileHome(){return location.pathname.startsWith('/maquette-app')?'/maquette-app/':'/mobile';}
+
 (async()=>{
   try{
-    if(sessionStorage.getItem('portefin_session'))return window.location.replace('/mobile');
+    if(sessionStorage.getItem('portefin_session'))return window.location.replace(_mobileHome());
     const{data:{session}}=await sb.auth.getSession();
-    if(session)window.location.replace('/mobile');
+    if(session)window.location.replace(_mobileHome());
   }catch(e){}
 })();
 
@@ -163,7 +166,7 @@ async function doLogin(){
     }
     sessionStorage.setItem('portefin_session',JSON.stringify({name:'Administrateur',email:'admin@portefin.app',role:'Administrateur',id:'admin'}));
     toast('Bienvenue, Administrateur !','success');
-    setTimeout(()=>window.location.replace('/mobile'),600);
+    setTimeout(()=>window.location.replace(_mobileHome()),600);
     return;
   }
 
@@ -175,7 +178,7 @@ async function doLogin(){
     const name=user.user_metadata?.full_name||user.email.split('@')[0];
     sessionStorage.setItem('portefin_session',JSON.stringify({name,email:user.email,role:'Utilisateur',id:user.id}));
     toast('Connexion réussie !','success');
-    setTimeout(()=>window.location.replace('/mobile'),600);
+    setTimeout(()=>window.location.replace(_mobileHome()),600);
   }catch(e){
     btn.disabled=false;
     btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">login</span> Se connecter';
