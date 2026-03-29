@@ -524,6 +524,33 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
 .amt-pwa { font-size: 14px; font-weight: 900; color: var(--primary); letter-spacing: -0.2px; }
 .date-pwa { font-size: 11px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
+/* ===== RESPONSIVE PETIT ECRAN (≤390px) ===== */
+@media (max-width: 390px) {
+  /* Topbar */
+  #topbar { padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* Cards listes */
+  .rep-item, .cred-item { margin: 8px 10px !important; padding: 14px !important; }
+
+  /* Montants */
+  .amt-pwa { font-size: 13px !important; }
+
+  /* Badges */
+  .badge { padding: 3px 7px !important; font-size: 9px !important; }
+  .badge .material-symbols-outlined { font-size: 12px !important; }
+
+  /* Détail */
+  .detail-content { padding: 12px !important; }
+
+  /* Stats dashboard */
+  .stat-card { padding: 12px 14px !important; }
+  .stat-val { font-size: 20px !important; }
+  .stat-label { font-size: 10px !important; }
+
+  /* Tâches */
+  .task-card { padding: 12px !important; gap: 10px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1471,20 +1498,19 @@ function repRow(r){
     if(!repDateStr) return '';
     const d=fmtDate(repDateStr);
     const amt=fmt(r.amount||0);
-    if(repDateStr<=todayRep) return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="Non payée — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(239,68,68,.45);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>${d}</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">Non payée</span></button>`;
-    return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="À venir — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(34,197,94,.4);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>${d}</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">À venir</span></button>`;
+    if(repDateStr<=todayRep) return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="Non payée — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(239,68,68,.45);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>${d}</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">Non payée</span></button>`;
+    return `<button onclick="event.stopPropagation();confirmPayInstallment('${r.id}','${d}','${amt}')" title="À venir — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(34,197,94,.4);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_upcoming</span>${d}</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">À venir</span></button>`;
   })();
   return `<div class="rep-item" id="rep-${r.id}" onclick="if(!event.target.closest('button')&&'${cid}')openCreditDetail('${cid}')" style="cursor:${cid?'pointer':'default'}">
     <!-- Header: Bento Style -->
-    <div style="display:flex;align-items:flex-start;gap:14px">
-      <div class="rep-avatar" style="width:52px;height:52px;font-size:20px">${initials(name)}</div>
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div class="rep-avatar" style="width:44px;height:44px;font-size:17px;flex-shrink:0">${initials(name)}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
-          <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+          <p style="font-size:15px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.25;word-break:break-word;flex:1">${name}</p>
         </div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
           <span class="amt-pwa">${fmt(r.amount)} <small style="font-size:9px;opacity:0.8">FCFA</small></span>
-          ${r.scheduled_date ? `<span class="date-pwa">${fmtDate(r.scheduled_date.split('T')[0])}</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">
