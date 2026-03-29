@@ -1583,18 +1583,6 @@ function repRow(r){
       ${r.credits?.end_date?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);font-size:10px;font-weight:800;color:#f97316"><span class="material-symbols-outlined" style="font-size:12px">flag</span>${fmtDate(r.credits.end_date)}</span>`:''}
     </div>`:''}
 
-    <!-- Actions Rapides -->
-    ${phone?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:14px;border-top:1px solid var(--border2);margin-top:2px">
-      <button class="action-btn ab-wa" onclick="event.stopPropagation();wa('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
-        <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>WA
-      </button>
-      <button class="action-btn ab-sms" onclick="event.stopPropagation();sms('${phone}','${name.replace(/'/g,"\\'")}','Suivi',${r.amount||0},'${r.scheduled_date}','','${r.credits?.id||''}')" style="width:100%;border-radius:14px;height:42px;gap:6px;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
-        <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>SMS
-      </button>
-      <button class="action-btn ab-call" onclick="event.stopPropagation();call('${phone}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
-        <span class="material-symbols-outlined filled" style="font-size:18px">call</span>Appel
-      </button>
-    </div>`:''}
   </div>`;
 }
 
@@ -2775,17 +2763,7 @@ function prosRow(p){
            ${address?`<div style="display:flex;align-items:center;gap:8px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:16px;opacity:0.7">location_on</span><span style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${address}</span></div>`:''}
         </div>
 
-        ${phone?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:14px;border-top:1px solid var(--border2)" onclick="event.stopPropagation()">
-          <button class="action-btn ab-wa" onclick="wa('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
-            <span class="material-symbols-outlined filled" style="font-size:18px">chat</span>WA
-          </button>
-          <button class="action-btn ab-sms" onclick="sms('${phone}','${name.replace(/'/g,"\\'")}','Prospection',0,'','${(p.activity||'').replace(/'/g,"\\'")}','${p.id}')" style="width:100%;border-radius:14px;height:42px;gap:6px;background:rgba(59,130,246,.12);color:#3b82f6;border-color:rgba(59,130,246,.25)">
-            <span class="material-symbols-outlined filled" style="font-size:18px">sms</span>SMS
-          </button>
-          <button class="action-btn ab-call" onclick="call('${phone}')" style="width:100%;border-radius:14px;height:42px;gap:6px">
-            <span class="material-symbols-outlined filled" style="font-size:18px">call</span>Appel
-          </button>
-        </div>`:''}
+
       </div>
     </div>
   </div>`;
