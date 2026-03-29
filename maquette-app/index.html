@@ -988,14 +988,25 @@ function initials(name){if(!name)return'?';return name.trim().split(' ').map(w=>
 function getName(r){return r?.clients?.full_name||r?.client_name||r?.full_name||'Inconnu';}
 function getPhone(r){return r?.clients?.phone1||r?.phone||r?.phone1||'';}
 
+function _fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{document.execCommand('copy');return true;}catch(e){return false;}
+  finally{document.body.removeChild(ta);}
+}
+
 function copyToClipboard(text){
   if(!text)return;
-  navigator.clipboard.writeText(text).then(()=>{
-    toast("Nom copié !");
-  }).catch(e=>{
-    console.error("Clipboard Error:",e);
-    toast("Erreur de copie","err");
-  });
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>toast('Nom copié !')).catch(()=>{
+      _fallbackCopy(text)?toast('Nom copié !'):toast('Erreur de copie','err');
+    });
+  } else {
+    _fallbackCopy(text)?toast('Nom copié !'):toast('Erreur de copie','err');
+  }
 }
 
 function downloadVCard(name, p1, p2) {
@@ -1835,10 +1846,16 @@ async function executeCopyClientsMob(btn) {
     const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
     const liste = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
     const msg = `${salut},\n\nVeuillez vérifier si ces clients sont déjà venus payer.\n\n${liste}\n\nMerci de répondre.`;
-    await navigator.clipboard.writeText(msg);
+    let copied=false;
+    if(navigator.clipboard&&window.isSecureContext){
+      try{await navigator.clipboard.writeText(msg);copied=true;}catch(e){}
+    }
+    if(!copied) copied=_fallbackCopy(msg);
     document.getElementById('copy-clients-ov-mob').style.display = 'none';
-    const fmtDate = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    toast(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''} (${fmtDate})`, 'ok');
+    const fmtDateLabel = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    copied
+      ? toast(`✓ ${names.length} client${names.length > 1 ? 's' : ''} copié${names.length > 1 ? 's' : ''} (${fmtDateLabel})`, 'ok')
+      : toast('Erreur lors de la copie', 'err');
   } catch(e) {
     toast('Erreur lors de la copie', 'err');
   } finally {
