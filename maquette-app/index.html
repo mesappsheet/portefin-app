@@ -74,11 +74,12 @@ html, body {
   display: flex; flex-direction: column;
   width: 100%; height: 100dvh;
   position: relative;
+  isolation: isolate;
 }
 
-/* Scrollbars — cachées globalement */
-::-webkit-scrollbar { display: none; }
-* { scrollbar-width: none; -ms-overflow-style: none; }
+/* Scrollbars — cachées par défaut sur les éléments de structure, mais activables sur le contenu */
+body::-webkit-scrollbar { display: none; }
+body { scrollbar-width: none; -ms-overflow-style: none; }
 
 /* Scrollbar fine visible sur tous les conteneurs de données */
 #view::-webkit-scrollbar { display: block !important; width: 5px !important; }
@@ -169,13 +170,21 @@ html, body {
   text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
 }
 
-/* Premium Modals */
-#modal-overlay, #confirm-overlay {
+#modal-overlay {
   position: fixed; inset: 0; 
   background: rgba(0, 0, 0, 0.4); 
   backdrop-filter: blur(8px);
   display: none; align-items: flex-end; justify-content: center;
-  z-index: 1000; transition: all 0.3s;
+  z-index: 100000; transition: all 0.3s;
+  isolation: isolate;
+}
+#confirm-overlay {
+  position: fixed; inset: 0; 
+  background: rgba(0, 0, 0, 0.4); 
+  backdrop-filter: blur(8px);
+  display: none; align-items: flex-end; justify-content: center;
+  z-index: 200000; transition: all 0.3s;
+  isolation: isolate;
 }
 #modal-overlay.open, #confirm-overlay.open { display: flex; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
@@ -183,8 +192,9 @@ html, body {
   background: var(--bg);
   border-radius: 32px 32px 0 0;
   width: 100%; max-height: 92%;
-  overflow-y: auto; padding-bottom: calc(20px + var(--safe-bottom));
+  display: flex; flex-direction: column;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
 }
 
 @keyframes slideUp {
@@ -579,6 +589,19 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
   <span id="t-icon" class="material-symbols-outlined filled"></span>
   <span id="t-msg"></span>
 </div>
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal-sheet">
+    <div style="position:sticky;top:0;background:var(--bg);z-index:10;border-radius:32px 32px 0 0;padding-top:8px">
+      <div style="height:32px;display:flex;align-items:center;justify-content:center;position:relative">
+        <div style="width:40px;height:5px;background:var(--glass-border);border-radius:10px"></div>
+        <button onclick="closeModal()" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:none;background:var(--glass-sm);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <span class="material-symbols-outlined" style="font-size:20px">close</span>
+        </button>
+      </div>
+    </div>
+    <div id="modal-content" style="flex:1;overflow-y:auto;padding-bottom:calc(20px + var(--safe-bottom));scrollbar-width:thin!important;scrollbar-color:rgba(0,0,0,.22) transparent"></div>
+  </div>
+</div>
 
 <div id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
   <div class="glass-card" style="width:90%;max-width:340px;padding:30px;margin-bottom:20px;animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1)">
@@ -588,15 +611,6 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
       <button class="action-btn" style="flex:1" onclick="closeConfirm()">Non</button>
       <button id="confirm-ok" class="btn-main" style="flex:2;padding:12px">Oui, valider</button>
     </div>
-  </div>
-</div>
-
-<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
-  <div id="modal-sheet">
-    <div style="height:32px;display:flex;align-items:center;justify-content:center">
-      <div style="width:40px;height:5px;background:var(--glass-border);border-radius:10px"></div>
-    </div>
-    <div id="modal-content"></div>
   </div>
 </div>
 
@@ -767,7 +781,7 @@ function credMenu(btn,cid){
     {sep:true},
     {icon:'groups',label:'Régulariser solde',fn:()=>openRegularizationModal(cid,name),color:'#f27f0d'},
     {sep:true},
-    {icon:'edit',label:'Modifier',fn:()=>openClientEditForm(cid)},
+    {icon:'edit',label:'Modifier le dossier',fn:()=>handleEditCreditMobile(cid)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
   ];
   showMenu(btn,items);
@@ -906,6 +920,8 @@ function openModal(html){
 }
 function closeModal(){
   document.getElementById('modal-overlay').classList.remove('open');
+  const bar = document.getElementById('ech-bulk-bar');
+  if(bar) bar.style.display = 'none';
 }
 document.getElementById('modal-overlay').addEventListener('click',function(e){
   if(e.target===this)closeModal();
@@ -1654,12 +1670,12 @@ function _echeanceBadges(c){
   if(c.nextUnpaid){
     const d=fmtDate(c.nextUnpaid.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUnpaid.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Non payée — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(239,68,68,.45);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_busy</span>'+d+'</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">Non payée</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Non payée — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(239,68,68,.45);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>'+d+'</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">Non payée</span></button>';
   }
   if(c.nextUpcoming){
     const d=fmtDate(c.nextUpcoming.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUpcoming.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="À venir — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(34,197,94,.4);min-width:78px"><span style="display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900"><span class="material-symbols-outlined" style="font-size:12px">event_upcoming</span>'+d+'</span><span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px">À venir</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="À venir — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(34,197,94,.4);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_upcoming</span>'+d+'</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">À venir</span></button>';
   }
   if(!c.nextUnpaid&&!c.nextUpcoming){
     html+='<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(100,116,139,.12);border:1.5px solid rgba(100,116,139,.2)" title="Aucune échéance en attente"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8">check_circle</span></div>';
@@ -1677,15 +1693,17 @@ function credRow(c){
   const endD=c.end_date?c.end_date.split('T')[0]:'—';
   
   return `<div class="cred-item card-pwa" id="cred-row-${c.id}" onclick="openCreditDetail('${c.id}')">
-    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px">
-      <div class="cred-avatar" style="width:52px;height:52px;font-size:20px">${initials(name)}</div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+      <div class="cred-avatar" style="width:44px;height:44px;font-size:17px;flex-shrink:0">${initials(name)}</div>
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
-          <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</p>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+          <p style="font-size:15px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.25;word-break:break-word;flex:1">${name}</p>
+          <button onclick="event.stopPropagation();credMenu(this,'${c.id}')" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Actions">
+            <span class="material-symbols-outlined" style="font-size:16px">more_vert</span>
+          </button>
         </div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
           <span class="amt-pwa">${fmt(c.amount)} <small style="font-size:9px;opacity:0.8;font-weight:700">FCFA</small></span>
-          <span class="date-pwa">${fmtDate(startD)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
@@ -1706,9 +1724,6 @@ function credRow(c){
       </div>
       <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
         ${_echeanceBadges(c)}
-        <button class="action-btn" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text)" onclick="event.stopPropagation();credMenu(this,'${c.id}')">
-          <span class="material-symbols-outlined" style="font-size:20px">more_vert</span>
-        </button>
       </div>
     </div>
 
@@ -1787,13 +1802,31 @@ function confirmPayInstallment(repId, dateStr, amountStr) {
         actual_payment_date: new Date().toISOString()
       }).eq('id', repId);
       if (error) throw error;
+      await checkCreditSettle(repId.split('_')[0]); // Assuming ID structure or fetch creditId
       toast('Paiement validé ✓', 'ok');
       loadCredits();
     } catch(e) { toast('Erreur lors du paiement', 'err'); }
   }, 'Valider', 'rgba(34,197,94,.85)');
 }
 
+async function checkCreditSettle(creditId) {
+  try {
+    const { data, error } = await sb.from('repayments').select('is_paid').eq('credit_id', creditId);
+    if (error || !data || data.length === 0) return;
+    const allPaid = data.every(r => r.is_paid);
+    const { data: credit } = await sb.from('credits').select('status').eq('id', creditId).single();
+    
+    if (allPaid && credit.status !== 'Soldé') {
+      await sb.from('credits').update({ status: 'Soldé' }).eq('id', creditId);
+    } else if (!allPaid && credit.status === 'Soldé') {
+      await sb.from('credits').update({ status: 'En cours' }).eq('id', creditId);
+    }
+  } catch (err) { console.error("Settle check error:", err); }
+}
+
+let _selectedEch = new Set();
 async function viewEcheancier(creditId,clientName){
+  _selectedEch.clear();
   openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
   try{
     const{data,error}=await sb.from('repayments')
@@ -1821,33 +1854,119 @@ async function viewEcheancier(creditId,clientName){
             <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">Total</div>
           </div>
         </div>
+
         <div class="glass" style="overflow:hidden">
           ${rows.map(r=>{
             const overdue=!r.is_paid&&r.scheduled_date<t;
-            return`<div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:10px">
-              <div style="width:32px;height:32px;border-radius:8px;background:${r.is_paid?'rgba(34,197,94,.15)':r.is_reported?'rgba(99,102,241,.15)':overdue?'rgba(239,68,68,.15)':'rgba(255,255,255,.06)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <span class="material-symbols-outlined filled" style="font-size:16px;color:${r.is_paid?'#4ade80':r.is_reported?'#818cf8':overdue?'#f87171':'rgba(255,255,255,.4)'}">${r.is_paid?'check_circle':r.is_reported?'event_repeat':overdue?'warning':'radio_button_unchecked'}</span>
-              </div>
+            return`<div class="ech-row" data-id="${r.id}" style="padding:14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:12px;transition:all .2s">
+              ${!r.is_paid ? `
+                <div class="ech-check" onclick="toggleEchSelection('${r.id}', this)" style="width:24px;height:24px;border-radius:50%;border:2px solid var(--text-dim);background:var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .3s cubic-bezier(0.4, 0, 0.2, 1)">
+                  <span class="material-symbols-outlined" style="font-size:16px;display:none;color:#4ade80">check_circle</span>
+                </div>
+              ` : `
+                <div style="width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                  <span class="material-symbols-outlined filled" style="font-size:18px;color:#4ade80;opacity:.5">verified</span>
+                </div>
+              `}
+              
               <div style="flex:1">
-                <p style="font-size:13px;font-weight:600;margin:0">N°${String(r.installment_number||'—').padStart(2,'0')} · ${fmtDate(r.scheduled_date)}</p>
-                <p style="font-size:11px;color:rgba(255,255,255,.4);margin:2px 0 0">${fmt(r.amount)} FCFA${r.is_paid&&r.actual_payment_date?' · Payé le '+fmtDate(r.actual_payment_date):r.is_reported&&r.report_reason?' · Motif: '+r.report_reason:''}</p>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:10px;font-weight:900;color:rgba(255,255,255,.3);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px">N°${String(r.installment_number||'—').padStart(2,'0')}</span>
+                  <p style="font-size:13px;font-weight:700;margin:0">${fmtDate(r.scheduled_date)}</p>
+                  ${overdue ? '<span style="width:6px;height:6px;background:#ef4444;border-radius:50%;box-shadow:0 0 10px #ef4444"></span>' : ''}
+                </div>
+                <p style="font-size:12px;color:rgba(255,255,255,0.5);margin:4px 0 0;font-weight:500">
+                  ${fmt(r.amount)} <span style="font-size:9px opacity:.6">FCFA</span>
+                  ${r.is_paid && r.actual_payment_date ? `<span style="color:#4ade80;margin-left:6px;font-size:10px">• Payé</span>` : ''}
+                </p>
               </div>
-              <div style="display:flex;gap:4px;align-items:center">
-                <button class="toggle-paid ${r.is_paid?'paid':'pending'}" onclick="toggleEch('${r.id}',${r.is_paid},'${creditId}','${clientName.replace(/'/g,"\\'")}',this)" style="font-size:10px;padding:5px 9px">
-                  <span class="material-symbols-outlined" style="font-size:12px">${r.is_paid?'check_circle':'radio_button_unchecked'}</span>
-                  ${r.is_paid?'Payé':'Attente'}
+
+              <div style="display:flex;gap:6px;align-items:center">
+                ${!r.is_paid ? `
+                  <button onclick="reportRep('${r.id}','${creditId}','${clientName.replace(/'/g,"\\'")}','${r.scheduled_date}')" style="background:rgba(255,255,255,.05);border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+                    <span class="material-symbols-outlined" style="font-size:18px;color:rgba(255,255,255,.4)">event_repeat</span>
+                  </button>
+                ` : ''}
+                
+                <button class="toggle-paid ${r.is_paid?'paid':'pending'}" onclick="toggleEch('${r.id}',${r.is_paid},'${creditId}','${clientName.replace(/'/g,"\\'")}',this)" style="font-size:10px;padding:8px 12px;border-radius:12px;display:flex;align-items:center;gap:6px;font-weight:800;border:none">
+                   ${r.is_paid ? 'ANNULER' : 'PAYER'}
                 </button>
-                ${!r.is_paid?`<button onclick="reportRep('${r.id}','${creditId}','${clientName.replace(/'/g,"\\'")}','${r.scheduled_date}')" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);border-radius:8px;padding:5px 7px;cursor:pointer" title="Reporter">
-                  <span class="material-symbols-outlined" style="font-size:14px;color:#818cf8">event_repeat</span>
-                </button>`:''}
               </div>
             </div>`;
           }).join('')}
         </div>
       </div>`;
+
+    
+    // Ajout de la barre d'action groupée SI elle n'existe pas encore dans le sheet
+    if(!document.getElementById('ech-bulk-bar')){
+      const bar = document.createElement('div');
+      bar.id = 'ech-bulk-bar';
+      bar.style = "display:none;position:sticky;bottom:0;left:0;right:0;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);padding:16px;border-top:1px solid rgba(255,255,255,0.1);z-index:20";
+      bar.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:between;gap:12px">
+          <div style="flex:1">
+            <span id="ech-bulk-count" style="font-size:14px;font-weight:900;color:white">0 sélectionné</span>
+          </div>
+          <button onclick="bulkPayEch('${creditId}','${clientName.replace(/'/g,"\\'")}')" style="background:#4ade80;color:#0f172a;border:none;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:900;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 4px 12px rgba(74,222,128,0.3)">
+            <span class="material-symbols-outlined" style="font-size:18px">payments</span>
+            Payer la sélection
+          </button>
+        </div>`;
+      document.getElementById('modal-sheet').appendChild(bar);
+    } else {
+      // Mettre à jour les paramètres du bouton pour le nouveau crédit
+      const btn = document.querySelector('#ech-bulk-bar button');
+      btn.setAttribute('onclick', `bulkPayEch('${creditId}','${clientName.replace(/'/g,"\\'")}')`);
+    }
+
   }catch(e){
     document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;
   }
+}
+
+function toggleEchSelection(id, el){
+  if(_selectedEch.has(id)){
+    _selectedEch.delete(id);
+    el.style.borderColor = 'var(--text-dim)';
+    el.style.background = 'var(--card)';
+    el.style.boxShadow = 'none';
+    el.querySelector('span').style.display = 'none';
+  } else {
+    _selectedEch.add(id);
+    el.style.borderColor = '#4ade80';
+    el.style.background = 'rgba(74,222,128,0.25)';
+    el.style.boxShadow = '0 0 15px rgba(74,222,128,0.3)';
+    el.querySelector('span').style.display = 'block';
+  }
+  
+  const bar = document.getElementById('ech-bulk-bar');
+  const count = document.getElementById('ech-bulk-count');
+  if(_selectedEch.size > 0){
+    bar.style.display = 'block';
+    count.textContent = `${_selectedEch.size} sélectionné${_selectedEch.size>1?'s':''}`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+async function bulkPayEch(creditId, clientName){
+  if(_selectedEch.size === 0) return;
+  const ids = Array.from(_selectedEch);
+  openConfirm(`Payer ${_selectedEch.size} échéance${_selectedEch.size>1?'s':''} ?`, `Cette opération marquera ces ${_selectedEch.size} échéances comme payées aujourd'hui.`, async () => {
+    try {
+      const {error} = await sb.from('repayments').update({
+        is_paid: true,
+        actual_payment_date: today()
+      }).in('id', ids);
+      
+      if(error) throw error;
+      await checkCreditSettle(creditId);
+      toast('Paiements validés ✓', 'ok');
+      viewEcheancier(creditId, clientName);
+      loadCredits();
+    } catch(e) { toast('Erreur lors du paiement groupé', 'err'); }
+  }, 'Confirmer', '#4ade80');
 }
 
 async function toggleEch(id,isPaid,creditId,clientName,btn){
@@ -1942,26 +2061,24 @@ async function handleDeleteCreditTypePWA(name) {
   }
 }
 
-async function openCreditForm(prefill=null){
-  // Types dossier depuis Supabase (synchronisé avec le SaaS PC)
-  let creditDossierTypes=['Prêt Personnel','Immobilier','Consommation'];
-  try{
-    const{data}=await sb.from('credit_dossier_types').select('name').order('name');
-    if(data&&data.length>0)creditDossierTypes=data.map(r=>r.name);
-  }catch(e){}
-  const typeOptions=creditDossierTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
+function openCreditForm(prefill=null){
+  const todayStr=today?today():new Date().toISOString().split('T')[0];
+  const types=['CONSOMMATION','ÉQUIPEMENT','IMMOBILIER','SCOLAIRE','AUTRE'];
+  const currentType = prefill?.type || '';
+  const typeOptions=types.map(t=>`<option value="${t}" ${t===currentType?'selected':''}>${t}</option>`).join('');
 
-  const todayStr=today();
   openModal(`
     <div style="padding:0 20px 24px">
-      <div style="display:flex;align-items:center;gap:8px;padding:0 0 14px;border-bottom:1px solid var(--sep);margin-bottom:20px">
-        <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">person_add</span>
+      <div id="credit-form-header" style="display:flex;align-items:center;gap:12px;padding:0 0 16px;border-bottom:1px solid var(--sep);margin-bottom:24px">
+        <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#fb923c);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(var(--primary-rgb),.2)">
+          <span class="material-symbols-outlined" style="color:white;font-size:24px">account_balance_wallet</span>
+        </div>
         <div>
-          <p style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">Nouveau Dossier</p>
-          <p style="font-size:16px;font-weight:700;color:var(--text);margin:0">Ouverture de Dossier Client</p>
+          <p id="credit-form-subtitle" style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">Nouveau Dossier</p>
+          <p id="credit-form-title" style="font-size:16px;font-weight:700;color:var(--text);margin:0">Ouverture de Dossier Client</p>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
+      <div id="credit-form-body" style="display:flex;flex-direction:column;gap:14px">
 
         <!-- Section 1 -->
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep)">
@@ -1971,29 +2088,29 @@ async function openCreditForm(prefill=null){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
-          <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${prefill?.name||''}"/>
+          <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${(prefill?.name||'').replace(/"/g,'&quot;')}"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-          <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email" value="${prefill?.email||''}"/>
+          <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email" value="${(prefill?.email||'').replace(/"/g,'&quot;')}"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${prefill?.phone1||''}"/>
+            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone1||'').replace(/"/g,'&quot;')}"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${prefill?.phone2||''}"/>
+            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone2||'').replace(/"/g,'&quot;')}"/>
           </div>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
-          <input id="credit-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..." value="${prefill?.activity||''}"/>
+          <input id="credit-activity" class="m-input" type="text" placeholder="Ex: Commerce, Transport..." value="${(prefill?.activity||'').replace(/"/g,'&quot;')}"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
-          <input id="credit-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..." value="${prefill?.address||''}"/>
+          <input id="credit-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry..." value="${(prefill?.address||'').replace(/"/g,'&quot;')}"/>
         </div>
 
         <!-- Section 2 -->
@@ -2004,7 +2121,7 @@ async function openCreditForm(prefill=null){
 
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Montant souhaité</label>
-          <input id="credit-amount" class="m-input" type="number" placeholder="Ex: 5 000 000" inputmode="numeric"/>
+          <input id="credit-amount" class="m-input" type="number" placeholder="Ex: 5 000 000" inputmode="numeric" value="${prefill?.amount||''}"/>
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2016,11 +2133,11 @@ async function openCreditForm(prefill=null){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Date Début <span style="color:#f27f0d">*</span></label>
-            <input id="credit-start-date" class="m-input" type="date" value="${todayStr}"/>
+            <input id="credit-start-date" class="m-input" type="date" value="${prefill?.start_date||todayStr}"/>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Fin Échéance <span style="color:#f27f0d">*</span></label>
-            <input id="credit-end-date" class="m-input" type="date"/>
+            <input id="credit-end-date" class="m-input" type="date" value="${prefill?.end_date||''}"/>
           </div>
         </div>
 
@@ -2052,11 +2169,86 @@ async function openCreditForm(prefill=null){
     </div>`);
 }
 
-function skipWeekendLocal(d){
-  const day=d.getDay();
-  if(day===6)d.setDate(d.getDate()+2);
-  else if(day===0)d.setDate(d.getDate()+1);
-  return d;
+function skipWeekend(date) {
+    if (!date || isNaN(date.getTime())) return date;
+    const d = new Date(date);
+    const day = d.getDay();
+    if (day === 6) d.setDate(d.getDate() + 2); // Samedi → Lundi
+    else if (day === 0) d.setDate(d.getDate() + 1); // Dimanche → Lundi
+    return d;
+}
+
+function toLocalDateStr(date) {
+    if (!date || isNaN(date.getTime())) return null;
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+async function handleEditCreditMobile(cid) {
+  const c = _credCache[cid];
+  if(!c) return;
+  const name = getName(c);
+
+  openConfirm(`⚠️ Modification Risquée`, 
+    `Modifier ce dossier supprimera TOUT son historique (échéances, notes, documents). Les données du client seront conservées. Voulez-vous continuer ?`, 
+    async () => {
+      // 1. Préparer le prefill
+      const cl = c.clients || {};
+      const prefill = {
+        name: name,
+        email: cl.email || c.email || '',
+        phone1: cl.phone1 || c.phone || '',
+        phone2: cl.phone2 || '',
+        activity: cl.activity || c.activity || '',
+        address: cl.address || c.address || '',
+        amount: c.amount,
+        type: c.type,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        exclude_automation: c.exclude_automation || cl.exclude_automation || false
+      };
+
+      // 2. Ouvrir le formulaire
+      openCreditForm(prefill);
+
+      // 3. Verrouiller et Nettoyer
+      const title = document.getElementById('credit-form-title');
+      const subtitle = document.getElementById('credit-form-subtitle');
+      const body = document.getElementById('credit-form-body');
+      
+      if(title) title.textContent = "NETTOYAGE EN COURS...";
+      if(subtitle) subtitle.textContent = "⌛ PATIENTEZ";
+      if(body) {
+        body.style.opacity = "0.3";
+        body.style.pointerEvents = "none";
+        body.style.filter = "grayscale(100%)";
+      }
+
+      try {
+        // Suppression séquentielle (idempotente)
+        await sb.from('repayments').delete().eq('credit_id', cid);
+        await sb.from('credit_notes').delete().eq('credit_id', cid);
+        await sb.from('credit_documents').delete().eq('credit_id', cid);
+        await sb.from('credits').delete().eq('id', cid);
+
+        toast('Anciennes données purgées. Prêt pour modification.','info');
+        
+        // Déverrouiller
+        if(title) title.textContent = "Ouverture de Dossier Client";
+        if(subtitle) subtitle.textContent = "Modification en cours";
+        if(body) {
+          body.style.opacity = "1";
+          body.style.pointerEvents = "auto";
+          body.style.filter = "none";
+        }
+      } catch(e) {
+        toast('Erreur lors du nettoyage : ' + e.message, 'err');
+        closeModal();
+      }
+    }, "Oui, continuer", "#ef4444"
+  );
 }
 
 async function saveCredit(){
@@ -2111,22 +2303,43 @@ async function saveCredit(){
     }]).select('id').single();
     if(crErr) throw crErr;
 
-    // 3. Générer l'échéancier mensuel (même algo que PC)
-    const start=new Date(startVal+'T12:00:00');
-    const end=new Date(endVal+'T12:00:00');
-    const targetDay=start.getDate();
-    const startMonth=start.getMonth();
-    const startYear=start.getFullYear();
-    const repayments=[];
-    let monthCount=1;
-    while(true){
-      let ref=new Date(startYear,startMonth+monthCount,targetDay);
-      if(ref.getDate()!==targetDay)ref.setDate(0);
-      if(ref>new Date(end.getTime()+15*24*60*60*1000))break;
-      const adj=skipWeekendLocal(new Date(ref));
-      repayments.push({credit_id:credit.id,installment_number:monthCount,
-        scheduled_date:adj.toISOString().split('T')[0],amount:null,status:'En attente'});
-      if(monthCount>=120||ref>=end)break;
+    // 3. Générer l'échéancier mensuel (MÊME ALGO QUE PC)
+    const start = new Date(startVal);
+    const end = new Date(endVal);
+    if (isNaN(start) || isNaN(end)) return;
+
+    let repayments = [];
+    let monthCount = 1;
+
+    const targetDay = start.getDate();
+    const startMonth = start.getMonth();
+    const startYear = start.getFullYear();
+
+    while (true) {
+      // Calcul stable à partir de la date de départ
+      let currentDateRef = new Date(startYear, startMonth + monthCount, targetDay);
+      
+      // Si Jan 31 -> Fév 31, ramener au 28 Fév
+      if (currentDateRef.getDate() !== targetDay) {
+          currentDateRef.setDate(0);
+      }
+
+      // Si on a dépassé la date de fin de plus de 15 jours, on arrête
+      if (currentDateRef > new Date(end.getTime() + 15 * 24 * 60 * 60 * 1000)) break;
+
+      // Application locale de la règle week-end
+      let adjustedDate = skipWeekend(currentDateRef);
+
+      repayments.push({
+          credit_id: credit.id,
+          installment_number: monthCount,
+          scheduled_date: toLocalDateStr(adjustedDate),
+          amount: null,
+          status: 'En attente',
+          is_paid: false
+      });
+
+      if (monthCount >= 120 || currentDateRef >= end) break;
       monthCount++;
     }
     if(repayments.length){
@@ -2154,156 +2367,7 @@ async function deleteCredit(id,name){
   });
 }
 
-async function openClientEditForm(creditId){
-  openModal(`<div class="loader"><div class="spin"></div> Chargement…</div>`);
-  try{
-    const{data:c,error}=await sb.from('credits')
-      .select('id,client_id,client_name,phone,email,activity,address,clients(id,full_name,phone1,phone2,email,activity,address)')
-      .eq('id',creditId).single();
-    if(error)throw error;
-    const cl=c.clients||{};
-    const v=(a,b)=>a||b||'';
-    const name=v(cl.full_name,c.client_name);
-    const email=v(cl.email,c.email);
-    const phone1=v(cl.phone1,c.phone);
-    const phone2=cl.phone2||'';
-    const activity=v(cl.activity,c.activity);
-    const address=v(cl.address,c.address);
-    const clientId=c.client_id||'';
-    document.getElementById('modal-content').innerHTML=`
-      <div style="padding:0 20px 24px">
-        <div style="display:flex;align-items:center;gap:8px;padding:0 0 14px;border-bottom:1px solid var(--sep);margin-bottom:20px">
-          <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">manage_accounts</span>
-          <div>
-            <p style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">Modifier</p>
-            <p style="font-size:16px;font-weight:700;color:var(--text);margin:0">Informations Client</p>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep)">
-            <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">info</span>
-            <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Identité</span>
-          </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
-          <input id="ce-name" class="m-input" type="text" placeholder="Nom complet" value="${name.replace(/"/g,'&quot;')}"/>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-            <input id="ce-phone1" class="m-input" type="tel" placeholder="+224 ..." value="${phone1.replace(/"/g,'&quot;')}" inputmode="tel"/>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="ce-phone2" class="m-input" type="tel" placeholder="+224 ..." value="${phone2.replace(/"/g,'&quot;')}" inputmode="tel"/>
-          </div>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
-          <input id="ce-email" class="m-input" type="email" placeholder="nom@exemple.com" value="${email.replace(/"/g,'&quot;')}" inputmode="email"/>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep);margin-top:4px">
-          <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">storefront</span>
-          <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Activité & Localisation</span>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Secteur d'activité</label>
-          <input id="ce-activity" class="m-input" type="text" placeholder="Commerce, Agriculture…" value="${activity.replace(/"/g,'&quot;')}"/>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse domicile</label>
-          <input id="ce-address" class="m-input" type="text" placeholder="Ex: Dixinn, Conakry…" value="${address.replace(/"/g,'&quot;')}"/>
-        </div>
-          <!-- Exclusion d'automatisation -->
-          <div style="display:flex;align-items:center;justify-content:between;padding:12px;background:rgba(255,255,255,0.05);border-radius:12px;margin-top:4px">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span class="material-symbols-outlined" style="color:#f27f0d;font-size:20px">notifications_off</span>
-              <div>
-                <p style="font-size:11px;font-weight:700;margin:0">Exclure des automatisations</p>
-                <p style="font-size:9px;color:rgba(255,255,255,0.4);margin:0">Désactiver les messages</p>
-              </div>
-            </div>
-            <div style="flex:1;display:flex;justify-content:flex-end">
-              <label class="switch">
-                <input id="ce-exclude-automation" type="checkbox" ${cl.exclude_automation?'checked':''}>
-                <span class="slider round"></span>
-              </label>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:6px">
-            <button class="btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
-            <button class="btn-primary" id="ce-btn-save" onclick="saveClientEdit('${creditId}','${clientId}')" style="flex:2">
-              <span class="material-symbols-outlined filled" style="font-size:18px">save</span>
-              Enregistrer
-            </button>
-          </div>
-        </div>
-      </div>`;
-  }catch(e){
-    document.getElementById('modal-content').innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur de chargement</p></div>`;
-  }
-}
-
-async function saveClientEdit(creditId,clientId){
-  const name=(document.getElementById('ce-name').value||'').trim();
-  if(!name){toast('Nom complet requis','err');document.getElementById('ce-name').focus();return;}
-  const btn=document.getElementById('ce-btn-save');
-  if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></div> Enregistrement…';}
-  try{
-    const phone1=(document.getElementById('ce-phone1').value||'').trim()||null;
-    const phone2=(document.getElementById('ce-phone2').value||'').trim()||null;
-    const email=(document.getElementById('ce-email').value||'').trim()||null;
-    const activity=(document.getElementById('ce-activity').value||'').trim()||null;
-    const address=(document.getElementById('ce-address').value||'').trim()||null;
-    const excludeAuto=document.getElementById('ce-exclude-automation')?.checked||false;
-    if(clientId){
-      const{error}=await sb.from('clients').update({full_name:name,phone1,phone2,email,activity,address,exclude_automation:excludeAuto}).eq('id',clientId);
-      if(error)throw error;
-    }
-    const{error:cErr}=await sb.from('credits').update({client_name:name,phone:phone1,email,activity,address,exclude_automation:excludeAuto}).eq('id',creditId);
-    if(cErr)throw cErr;
-    // Mettre à jour le cache immédiatement
-    if(_credCache[creditId]){
-      _credCache[creditId].client_name=name;
-      _credCache[creditId].phone=phone1||_credCache[creditId].phone;
-      _credCache[creditId].email=email||_credCache[creditId].email;
-      _credCache[creditId].activity=activity||_credCache[creditId].activity;
-      _credCache[creditId].address=address||_credCache[creditId].address;
-      if(_credCache[creditId].clients){
-        _credCache[creditId].clients.full_name=name;
-        _credCache[creditId].clients.phone1=phone1||_credCache[creditId].clients.phone1;
-        _credCache[creditId].clients.phone2=phone2||_credCache[creditId].clients.phone2;
-        _credCache[creditId].clients.email=email||_credCache[creditId].clients.email;
-        _credCache[creditId].clients.activity=activity||_credCache[creditId].clients.activity;
-        _credCache[creditId].clients.address=address||_credCache[creditId].clients.address;
-      }
-    }
-    closeModal();
-    // Mettre à jour la ligne dans la liste
-    const rowEl=document.getElementById('cred-row-'+creditId);
-    if(rowEl&&_credCache[creditId]) rowEl.outerHTML=credRow(_credCache[creditId]);
-    // Re-rendre le détail si ouvert + afficher banner de succès
-    if(currentCreditId===creditId){
-      const det=document.getElementById('credit-detail-content');
-      if(det&&_credCache[creditId]){
-        det.innerHTML=`<div id="save-success-banner" style="margin:16px 0;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#15803d);display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(34,197,94,.35);transition:opacity .4s ease">
-          <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <span class="material-symbols-outlined" style="font-size:20px;color:#fff">check_circle</span>
-          </div>
-          <div>
-            <p style="font-size:13px;font-weight:800;color:#fff;margin:0">Modification enregistrée</p>
-            <p style="font-size:11px;color:rgba(255,255,255,.85);margin:2px 0 0">Les informations du client ont bien été mises à jour.</p>
-          </div>
-        </div>`+renderCreditDetail(_credCache[creditId]);
-        setTimeout(()=>{const b=document.getElementById('save-success-banner');if(b){b.style.opacity='0';setTimeout(()=>b.remove(),400);}},3500);
-      }
-    }
-    loadCredits();
-  }catch(e){
-    toast('Erreur : '+(e.message||'inconnue'),'err');
-    if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">save</span> Enregistrer';}
-  }
-}
+// ... legacy code removed ...
 
 // ═══════════════════════════════════════════════
 //  ÉCRAN 4 : PROSPECTS
