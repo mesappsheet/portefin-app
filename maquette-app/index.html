@@ -1625,25 +1625,26 @@ let credFilter='all';
 async function viewCredits(){
   document.getElementById('view').innerHTML=`
   <div style="padding-top:12px;padding-bottom:80px">
-    <div style="display:flex;align-items:center;gap:8px;padding:0 16px;margin-bottom:12px">
-      <div class="search-wrap" style="flex:1;margin:0">
+    <div style="padding:0 16px 12px">
+      <div class="search-wrap" style="margin-bottom:10px">
         <span class="material-symbols-outlined">search</span>
         <input class="search-inp" type="search" placeholder="Rechercher un dossier…" value="${credSearch}"
           oninput="credSearch=this.value;loadCredits()"/>
       </div>
-      <div style="position:relative;flex-shrink:0">
-        <select class="m-input" style="padding:10px 32px 10px 14px; appearance:none; background:${credFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1px solid ${credFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'}; color:${credFilter==='all'?'var(--text3)':'#f27f0d'}; border-radius:10px; font-weight:600; font-size:13px;" onchange="setCredFilter(this.value)">
-          <option value="all" ${credFilter==='all'?'selected':''}>Tous</option>
-          <option value="encours" ${credFilter==='encours'?'selected':''}>En cours</option>
-          <option value="souffrance" ${credFilter==='souffrance'?'selected':''}>Souffrance</option>
-          <option value="solde" ${credFilter==='solde'?'selected':''}>Soldés</option>
-        </select>
-        <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${credFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="position:relative;flex:1">
+          <select class="m-input" style="width:100%;padding:10px 32px 10px 14px;appearance:none;background:${credFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'};border:1px solid ${credFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'};color:${credFilter==='all'?'var(--text3)':'#f27f0d'};border-radius:10px;font-weight:600;font-size:13px;margin:0" onchange="setCredFilter(this.value)">
+            <option value="all" ${credFilter==='all'?'selected':''}>Tous les dossiers</option>
+            <option value="encours" ${credFilter==='encours'?'selected':''}>En cours</option>
+            <option value="souffrance" ${credFilter==='souffrance'?'selected':''}>Souffrance</option>
+            <option value="solde" ${credFilter==='solde'?'selected':''}>Soldés</option>
+          </select>
+          <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${credFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
+        </div>
+        <button onclick="copyClientsOfDayMob()" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:10px 14px;border-radius:10px;background:rgba(242,127,13,.12);border:1px solid rgba(242,127,13,.35);color:#f27f0d;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+          <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>Copier
+        </button>
       </div>
-      <button onclick="copyClientsOfDayMob()" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:10px 12px;border-radius:10px;background:rgba(242,127,13,.12);border:1px solid rgba(242,127,13,.35);color:#f27f0d;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
-        <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
-        Copier
-      </button>
     </div>
     <div id="cred-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -1727,15 +1728,15 @@ function _echeanceBadges(c){
   if(c.nextUnpaid){
     const d=fmtDate(c.nextUnpaid.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUnpaid.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Non payée — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(239,68,68,.45);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_busy</span>'+d+'</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">Non payée</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUnpaid.id+'\',\''+d+'\',\''+amt+'\')" title="Non payée — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(239,68,68,.45);min-width:80px"><span style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px">event_busy</span>'+d+'</span><span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:2px 7px;letter-spacing:.02em">Non payée</span></button>';
   }
   if(c.nextUpcoming){
     const d=fmtDate(c.nextUpcoming.scheduled_date.split('T')[0]);
     const amt=fmt(c.nextUpcoming.amount);
-    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="À venir — cliquer pour enregistrer le paiement" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(34,197,94,.4);min-width:64px;max-width:72px"><span style="display:flex;align-items:center;gap:2px;font-size:9px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:11px">event_upcoming</span>'+d+'</span><span style="font-size:8px;font-weight:700;background:rgba(255,255,255,.25);border-radius:5px;padding:1px 5px">À venir</span></button>';
+    html+='<button onclick="event.stopPropagation();confirmPayInstallment(\''+c.nextUpcoming.id+'\',\''+d+'\',\''+amt+'\')" title="À venir — cliquer pour enregistrer" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 10px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(34,197,94,.4);min-width:80px"><span style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:900;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px">event_upcoming</span>'+d+'</span><span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:6px;padding:2px 7px;letter-spacing:.02em">À venir</span></button>';
   }
   if(!c.nextUnpaid&&!c.nextUpcoming){
-    html+='<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(100,116,139,.12);border:1.5px solid rgba(100,116,139,.2)" title="Aucune échéance en attente"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8">check_circle</span></div>';
+    html+='<div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(100,116,139,.12);border:1.5px solid rgba(100,116,139,.2)" title="Aucune échéance"><span class="material-symbols-outlined" style="font-size:18px;color:#94a3b8">check_circle</span></div>';
   }
   html+='</div>';
   return html;
@@ -1750,41 +1751,37 @@ function credRow(c){
   const endD=c.end_date?c.end_date.split('T')[0]:'—';
   
   return `<div class="cred-item card-pwa" id="cred-row-${c.id}" onclick="openCreditDetail('${c.id}')">
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
-          <p style="font-size:15px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.25;word-break:break-word;flex:1">${name}</p>
-          <button onclick="event.stopPropagation();credMenu(this,'${c.id}')" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Actions">
-            <span class="material-symbols-outlined" style="font-size:16px">more_vert</span>
-          </button>
-        </div>
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
-          <span class="amt-pwa">${fmt(c.amount)} <small style="font-size:9px;opacity:0.8;font-weight:700">FCFA</small></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
-            <span class="material-symbols-outlined filled" style="font-size:14px">${isS?'health_and_safety':'verified_user'}</span>
-            ${c.health||'Sain'}
-          </span>
-          ${(() => {
-            const st = c.status || 'En cours';
-            const isSolde = ['Soldé','SOLDÉ','soldé'].includes(st);
-            const isEchu = st === 'Échu';
-            const bClass = isSolde ? 'badge-blue' : (isEchu ? 'badge-red' : 'badge-orange');
-            return `<span class="badge ${bClass}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')">
-              <span class="material-symbols-outlined filled" style="font-size:14px">info</span>
-              ${st}
-            </span>`;
-          })()}
-        </div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
-        ${_echeanceBadges(c)}
-      </div>
+
+    <!-- Ligne 1 : Nom + Badge échéance -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.3;word-break:break-word;flex:1">${name}</p>
+      <div style="flex-shrink:0">${_echeanceBadges(c)}</div>
     </div>
 
-    <!-- Dates début / fin -->
-    <div style="display:flex;gap:6px;padding-top:10px;border-top:1px solid var(--border2);margin-bottom:8px;flex-wrap:wrap">
+    <!-- Montant -->
+    <div style="margin-bottom:10px">
+      <span class="amt-pwa">${fmt(c.amount)} <small style="font-size:9px;opacity:0.8;font-weight:700">FCFA</small></span>
+    </div>
+
+    <!-- Badges statut -->
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${c.id}','${c.health||'Sain'}')">
+        <span class="material-symbols-outlined filled" style="font-size:14px">${isS?'health_and_safety':'verified_user'}</span>
+        ${c.health||'Sain'}
+      </span>
+      ${(() => {
+        const st = c.status || 'En cours';
+        const isSolde = ['Soldé','SOLDÉ','soldé'].includes(st);
+        const isEchu = st === 'Échu';
+        const bClass = isSolde ? 'badge-blue' : (isEchu ? 'badge-red' : 'badge-orange');
+        return `<span class="badge ${bClass}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();changeCreditStatus('${c.id}','${name.replace(/'/g,"\\'")}','${st}')">
+          <span class="material-symbols-outlined filled" style="font-size:14px">info</span>${st}
+        </span>`;
+      })()}
+    </div>
+
+    <!-- Dates -->
+    <div style="display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--border2);margin-bottom:10px;flex-wrap:wrap">
       <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);font-size:10px;font-weight:800;color:#3b82f6">
         <span class="material-symbols-outlined" style="font-size:12px">play_arrow</span>${fmtDate(startD)}
       </span>
@@ -1793,12 +1790,15 @@ function credRow(c){
       </span>
     </div>
 
-    <div style="background:rgba(255,255,255,.05);height:6px;border-radius:10px;overflow:hidden;margin-bottom:8px">
+    <!-- Progress bar + ⋮ -->
+    <div style="background:rgba(0,0,0,.06);height:5px;border-radius:10px;overflow:hidden;margin-bottom:6px">
       <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:10px;transition:width .6s ease"></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <p style="font-size:11px;color:var(--text2);margin:0;font-weight:700">${reps.paid}/${reps.total} échéances</p>
-      <p style="font-size:11px;font-weight:900;color:var(--primary);margin:0">${pct}%</p>
+      <p style="font-size:11px;color:var(--text2);margin:0;font-weight:700">${reps.paid}/${reps.total} échéances · <span style="color:var(--primary);font-weight:900">${pct}%</span></p>
+      <button onclick="event.stopPropagation();credMenu(this,'${c.id}')" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Actions">
+        <span class="material-symbols-outlined" style="font-size:18px">more_horiz</span>
+      </button>
     </div>
   </div>`;
 }
