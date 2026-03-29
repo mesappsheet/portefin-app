@@ -45,6 +45,13 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdXdnZ2d3ZHRiempncGx3eWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDgxMDQsImV4cCI6MjA4OTA4NDEwNH0.YPqCCqhhVvu9iJXqwUP57A-u8mBFf4nARtSyGmCxfgo";
         const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
+        // Format date en toutes lettres : "lundi 30 mars 2026"
+        function fmtDateLong(d){
+          if(!d) return '';
+          const dt = new Date(d+'T12:00:00');
+          return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        }
+
         // Session helper (Simulé pour la maquette)
         const getSessionUser = () => {
             return { id: '00000000-0000-0000-0000-000000000000', role: 'admin', email: 'jean.kouassi@example.com' };
@@ -6509,10 +6516,10 @@ Suivant
                     "{{Capital}}": formattedAmount,
                     "{{Montant}}": formattedAmount,
                     "{{Montant à Payer}}": formattedAmount,
-                    "{{Date}}": nextEchDate,
-                    "{{Date_Echeance}}": nextEchDate,
-                    "{{Date_Échéance}}": nextEchDate,
-                    "{{Date d'Échéance}}": nextEchDate,
+                    "{{Date}}": nextEchDate ? fmtDateLong(nextEchDate) : '',
+                    "{{Date_Echeance}}": nextEchDate ? fmtDateLong(nextEchDate) : '',
+                    "{{Date_Échéance}}": nextEchDate ? fmtDateLong(nextEchDate) : '',
+                    "{{Date d'Échéance}}": nextEchDate ? fmtDateLong(nextEchDate) : '',
                     "{{Activité}}": data.activity || '',
                     "{{ID}}": data.id || '',
                     "{{Id_Dossier}}": data.id || ''
@@ -6592,8 +6599,10 @@ Suivant
                     "{{Capital}}": formattedAmount,
                     "{{Montant}}": formattedAmount,
                     "{{Montant à Payer}}": formattedAmount,
-                    "{{Date}}": nextEchDateSms,
-                    "{{Date d'Échéance}}": nextEchDateSms,
+                    "{{Date}}": nextEchDateSms ? fmtDateLong(nextEchDateSms) : '',
+                    "{{Date_Echeance}}": nextEchDateSms ? fmtDateLong(nextEchDateSms) : '',
+                    "{{Date_Échéance}}": nextEchDateSms ? fmtDateLong(nextEchDateSms) : '',
+                    "{{Date d'Échéance}}": nextEchDateSms ? fmtDateLong(nextEchDateSms) : '',
                     "{{Activité}}": data.activity || '',
                     "{{ID}}": data.id || '',
                     "{{Id_Dossier}}": data.id || ''
