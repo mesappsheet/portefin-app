@@ -3084,6 +3084,9 @@
                     <span class="text-[9px] font-bold text-slate-400">Cliquez pour insérer</span>
                 </div>
                 <div class="flex flex-wrap gap-2.5">
+                    <button onclick="insertTag('{{Salutation}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
+                        <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Salutation
+                    </button>
                     <button onclick="insertTag('{{Nom du Prospect}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Nom_Prospect
                     </button>
@@ -3175,9 +3178,20 @@
             <h3 class="font-bold text-sm uppercase tracking-widest text-slate-400">Liste des Clients</h3>
         </div>
         <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner-sm">
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-<input oninput="handleSearchCredits(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 border rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all shadow-sm" placeholder="Rechercher un client..." type="text"/>
+<div class="flex flex-col gap-3">
+    <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+        <input oninput="handleSearchCredits(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 border rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all shadow-sm" placeholder="Rechercher un client..." type="text"/>
+    </div>
+    <div class="relative">
+        <select onchange="handleStatusFilterCredits(this.value)" class="w-full appearance-none bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 border rounded-xl py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-600 dark:text-slate-400 focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none cursor-pointer transition-all shadow-sm">
+            <option value="all">Tous les crédits</option>
+            <option value="EN COURS">En cours</option>
+            <option value="SOUFFRANCE">Souffrance</option>
+            <option value="Soldé">Soldés</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">filter_list</span>
+    </div>
 </div>
 </div>
 <div class="flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
@@ -3492,6 +3506,9 @@ Générer / Actualiser l'échéancier
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-slate-50/50 dark:bg-slate-800/50">
+<th class="w-10 px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+    <input type="checkbox" id="check-all-repayments" onclick="toggleAllRepayments(this.checked)" class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/20 cursor-pointer">
+</th>
 <th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">N°</th>
 <th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Date Mensuelle de Paiement</th>
 <th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 text-right">Action</th>
@@ -4238,6 +4255,9 @@ Suivant
                     <span class="text-[9px] font-bold text-slate-400">Cliquez pour insérer</span>
                 </div>
                 <div class="flex flex-wrap gap-2.5">
+                    <button onclick="insertTag('{{Salutation}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
+                        <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Salutation
+                    </button>
                     <button onclick="insertTag('{{Nom du Client}}')" class="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-xl border border-slate-100 dark:border-white/10 hover:border-primary/50 hover:text-primary transition-all shadow-sm group">
                         <span class="text-primary/40 group-hover:text-primary transition-colors pr-1">#</span>Nom_Client
                     </button>
@@ -5785,6 +5805,7 @@ Suivant
             if (error) { showNotification('Erreur lors de l\'enregistrement', 'error'); return; }
             closeModal();
             showNotification('Opération enregistrée avec succès', 'success');
+            await checkCreditSettle(creditId);
             await loadGrandLivre(creditId);
             loadRecouvrementDashboard(); // Refresh les KPIs du dashboard en arrière-plan
         }
@@ -6467,7 +6488,9 @@ Suivant
                 let message = template.body;
                 const formattedAmount = data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) : '';
 
+                const _h1=new Date().getHours();
                 const replaceMap = {
+                    "{{Salutation}}": _h1 < 12 ? 'Bonjour' : 'Bonsoir',
                     "{{Nom du Client}}": data.name || '',
                     "{{Nom du Prospect}}": data.name || '',
                     "{{Nom}}": data.name || '',
@@ -6534,7 +6557,9 @@ Suivant
                 let message = template.body;
                 const formattedAmount = data.amount ? new Intl.NumberFormat('fr-FR').format(data.amount) : '';
 
+                const _h2=new Date().getHours();
                 const replaceMap = {
+                    "{{Salutation}}": _h2 < 12 ? 'Bonjour' : 'Bonsoir',
                     "{{Nom du Client}}": data.name || '',
                     "{{Nom du Prospect}}": data.name || '',
                     "{{Nom}}": data.name || '',
@@ -6811,15 +6836,22 @@ Suivant
             fetchCredits();
         }
 
-        async function fetchCredits(search = '') {
+        let currentCreditSearch = '';
+        let currentCreditStatusFilter = 'all';
+
+        async function fetchCredits(search = '', filter = 'all') {
             const container = document.getElementById('credits-list-container');
             if (!container) return;
+
+            // Mettre à jour les filtres globaux si passés en argument
+            if (arguments.length > 0) currentCreditSearch = search;
+            if (arguments.length > 1) currentCreditStatusFilter = filter;
 
             selectedCreditIds.clear();
             updateCreditSelectionBar();
             container.innerHTML = '<div class="p-8 text-center text-slate-400">Chargement...</div>';
 
-            let query = _supabase
+            let queryBuilder = _supabase
                 .from('credits')
                 .select(`
                     id, 
@@ -6847,11 +6879,20 @@ Suivant
                     )
                 `);
 
-            if (search) {
-                query = query.or(`client_name.ilike.%${search}%,phone.ilike.%${search}%,activity.ilike.%${search}%`);
+            if (currentCreditSearch) {
+                queryBuilder = queryBuilder.or(`client_name.ilike.%${currentCreditSearch}%,phone.ilike.%${currentCreditSearch}%,activity.ilike.%${currentCreditSearch}%`);
             }
 
-            const { data, error } = await query.order('start_date', { ascending: false });
+            if (currentCreditStatusFilter !== 'all') {
+                if (currentCreditStatusFilter === 'SOUFFRANCE') {
+                    queryBuilder = queryBuilder.ilike('health', 'Souffrance');
+                } else {
+                    // Match En cours / Soldé
+                    queryBuilder = queryBuilder.ilike('status', `%${currentCreditStatusFilter}%`);
+                }
+            }
+
+            const { data, error } = await queryBuilder.order('start_date', { ascending: false });
 
             if (error) {
                 container.innerHTML = `<div class="p-4 text-red-500">Erreur : ${error.message}</div>`;
@@ -6903,13 +6944,86 @@ Suivant
                           <div style="margin-left:auto; display:flex; gap:4px; align-items:center">
                             ${_unpaidFC[credit.id] ? unpaidBadgePC(_unpaidFC[credit.id].id, _unpaidFC[credit.id].date) : ''}
                             ${_nextUpFC[credit.id] ? nextUpcomingBadgePC(_nextUpFC[credit.id]) : ''}
-                            <button onclick="openCreditRowMenuPC(${JSON.stringify(credit).replace(/'/g,"&#39;")}, this)" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;flex-shrink:0;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'" title="Actions"><span class="material-symbols-outlined" style="font-size:16px">more_vert</span></button>
+                            <button onclick="openCreditRowMenuPC(${JSON.stringify(credit).replace(/'/g,"&#39;")}, this)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group-hover:border-primary/30 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-primary" title="Actions">
+                              <span class="material-symbols-outlined text-base">more_vert</span>
+                            </button>
                           </div>
                         </div>
                     </div>
                 </div>
                 `;
             }).join('');
+        }
+
+        async function openCreditRowMenuPC(credit, btn) {
+            // Empêcher l'ouverture des détails du client par défaut lors du clic sur le bouton menu
+            if (event) event.stopPropagation();
+            
+            const existing = document.getElementById('row-context-menu');
+            if (existing) existing.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'row-context-menu';
+            menu.className = "fixed z-[6000] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-60 overflow-hidden animate-in fade-in zoom-in duration-200 pointer-events-auto";
+            
+            const rect = btn.getBoundingClientRect();
+            let top = rect.bottom + 8;
+            let left = rect.right - 240;
+
+            // Ajustement si débordement écran
+            if (top + 400 > window.innerHeight) top = rect.top - 380;
+            if (left < 10) left = 10;
+
+            menu.style.top = top + 'px';
+            menu.style.left = left + 'px';
+
+            const clientName = (credit.clients && credit.clients.full_name) || credit.client_name || 'Client';
+            const phone = credit.clients?.phone1 || credit.phone || '';
+
+            menu.innerHTML = `
+                <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">${clientName}</p>
+                </div>
+                <div class="p-1.5 space-y-0.5">
+                    <button onclick="event.stopPropagation(); quickCall('${phone}'); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/5 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-primary text-lg opacity-60 group-hover:opacity-100">call</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Appeler</span>
+                    </button>
+                    <button onclick="event.stopPropagation(); quickWhatsapp('${phone}', '${clientName.replace(/'/g,"\\'")}', 'Crédit', ${credit.amount}, '${credit.id}'); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-emerald-600 text-lg opacity-60 group-hover:opacity-100">chat</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">WhatsApp</span>
+                    </button>
+                    <button onclick="event.stopPropagation(); quickSms('${phone}', '${clientName.replace(/'/g,"\\'")}', 'Crédit', ${credit.amount}, '${credit.id}'); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-blue-600 text-lg opacity-60 group-hover:opacity-100">sms</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Envoyer SMS</span>
+                    </button>
+                    <div class="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2"></div>
+                    <button onclick="event.stopPropagation(); populateScheduleView(${JSON.stringify(credit).replace(/"/g, '&quot;')}); loadScreen('credits_schedule'); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/5 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-primary text-lg opacity-60 group-hover:opacity-100">calendar_month</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Échéancier</span>
+                    </button>
+                    <button onclick="event.stopPropagation(); openNoteModalPC('${credit.id}'); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-amber-500 text-lg opacity-60 group-hover:opacity-100">sticky_note_2</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Notes / Obs.</span>
+                    </button>
+                    <div class="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2"></div>
+                    <button onclick="event.stopPropagation(); currentCredit=${JSON.stringify(credit).replace(/"/g, '&quot;')}; handleEditCredit(); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors text-left group">
+                        <span class="material-symbols-outlined text-slate-500 text-lg opacity-60 group-hover:opacity-100">edit</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Modifier</span>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(menu);
+
+            // Fermer en cliquant à l'extérieur
+            const closer = (e) => {
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closer);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closer), 10);
         }
 
 
@@ -7528,8 +7642,14 @@ Suivant
             ).join('');
         }
 
+        let _selectedRepayments = new Set();
+
         async function populateScheduleView(credit) {
             currentCredit = credit;
+            _selectedRepayments.clear();
+            const checkAll = document.getElementById('check-all-repayments');
+            if(checkAll) checkAll.checked = false;
+            updateBulkRepaymentBar();
             // Update Header/Summary
             const clientName = credit.clients?.full_name || credit.client_name || 'Client inconnu';
             document.getElementById('schedule-client-name').textContent = `Échéancier du Crédit - ${clientName}`;
@@ -7554,6 +7674,17 @@ Suivant
 
             tbody.innerHTML = repayments.map(r => `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${r.is_reported ? 'bg-orange-50/30' : ''}">
+                    <td class="px-6 py-5">
+                        ${!r.is_paid ? `
+                            <div class="repayment-check-pc" onclick="toggleRepaymentSelectionPC('${r.id}', this)" style="width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;background:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s">
+                                <span class="material-symbols-outlined" style="font-size:14px;display:none;color:#10b981;font-weight:bold">check_circle</span>
+                            </div>
+                        ` : `
+                            <div class="w-5 h-5 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-emerald-500/50" style="font-size:18px">verified</span>
+                            </div>
+                        `}
+                    </td>
                     <td class="px-6 py-5 text-sm font-medium text-slate-400">${String(r.installment_number).padStart(2, '0')}</td>
                     <td class="px-6 py-5 text-sm font-semibold">
                         ${new Date(r.scheduled_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -7570,6 +7701,139 @@ Suivant
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function toggleRepaymentSelectionPC(id, el) {
+            if (_selectedRepayments.has(id)) {
+                _selectedRepayments.delete(id);
+                el.style.borderColor = '#d1d5db'; // Visible sur blanc
+                el.style.background = '#f9fafb';
+                el.querySelector('span').style.display = 'none';
+            } else {
+                _selectedRepayments.add(id);
+                el.style.borderColor = '#10b981';
+                el.style.background = 'rgba(16, 185, 129, 0.1)';
+                el.querySelector('span').style.display = 'block';
+            }
+            updateBulkRepaymentBar();
+        }
+
+        function toggleAllRepayments(checked) {
+            const checks = document.querySelectorAll('.repayment-check-pc');
+            checks.forEach(el => {
+                const id = el.getAttribute('onclick').match(/'([^']+)'/)[1];
+                if (checked) {
+                    _selectedRepayments.add(id);
+                    el.style.borderColor = '#10b981';
+                    el.style.background = 'rgba(16, 185, 129, 0.1)';
+                    el.querySelector('span').style.display = 'block';
+                } else {
+                    _selectedRepayments.delete(id);
+                    el.style.borderColor = '#d1d5db';
+                    el.style.background = '#f9fafb';
+                    el.querySelector('span').style.display = 'none';
+                }
+            });
+            updateBulkRepaymentBar();
+        }
+
+        function updateBulkRepaymentBar() {
+            let bar = document.getElementById('bulk-repayment-bar');
+            if (_selectedRepayments.size > 0) {
+                if (!bar) {
+                    bar = document.createElement('div');
+                    bar.id = 'bulk-repayment-bar';
+                    bar.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700/50 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 z-[300000] animate-in slide-in-from-bottom-4 duration-300';
+                    document.body.appendChild(bar);
+                }
+                bar.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest text-[9px]">Paiement Groupé</span>
+                        <span class="text-sm font-black text-emerald-400">${_selectedRepayments.size} échéance${_selectedRepayments.size > 1 ? 's' : ''} choisie${_selectedRepayments.size > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-800"></div>
+                    <button onclick="bulkPayRepayments()" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+                        <span class="material-symbols-outlined text-lg">payments</span>
+                        Valider le Paiement
+                    </button>
+                    <button onclick="clearRepaymentSelection()" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                `;
+            } else if (bar) {
+                bar.remove();
+            }
+        }
+
+        function clearRepaymentSelection() {
+            _selectedRepayments.clear();
+            const checks = document.querySelectorAll('.repayment-check-pc');
+            checks.forEach(el => {
+                el.style.borderColor = '#94a3b8';
+                el.style.background = 'transparent';
+                el.querySelector('span').style.display = 'none';
+            });
+            const checkAll = document.getElementById('check-all-repayments');
+            if(checkAll) checkAll.checked = false;
+            updateBulkRepaymentBar();
+        }
+
+        async function checkCreditSettlePC(creditId) {
+            try {
+                const { data, error } = await _supabase.from('repayments').select('is_paid').eq('credit_id', creditId);
+                if (error || !data || data.length === 0) return;
+                const allPaid = data.every(r => r.is_paid);
+                const { data: credit } = await _supabase.from('credits').select('status').eq('id', creditId).single();
+                
+                if (allPaid && credit.status !== 'Soldé') {
+                    await _supabase.from('credits').update({ status: 'Soldé' }).eq('id', creditId);
+                } else if (!allPaid && credit.status === 'Soldé') {
+                    await _supabase.from('credits').update({ status: 'En cours' }).eq('id', creditId);
+                }
+            } catch (err) { console.error("Settle check PC error:", err); }
+        }
+
+        async function bulkPayRepayments() {
+            if (_selectedRepayments.size === 0) return;
+            
+            const go = await openConfirm({
+                title: "Paiement Groupé",
+                message: `Confirmer le paiement de ${_selectedRepayments.size} échéances ?`,
+                icon: "payments",
+                confirmText: "Oui, confirmer",
+                confirmColor: "emerald"
+            });
+            if (!go) return;
+
+            const ids = Array.from(_selectedRepayments);
+            const now = new Date().toISOString().split('T')[0];
+            const creditId = currentCredit?.id;
+
+            try {
+                const { error } = await _supabase
+                    .from('repayments')
+                    .update({ 
+                        is_paid: true, 
+                        actual_payment_date: now,
+                        status: 'Payé'
+                    })
+                    .in('id', ids);
+
+                if (error) throw error;
+
+                if (creditId) await checkCreditSettlePC(creditId);
+
+                showNotification(`${_selectedRepayments.size} échéances validées ✓`, "success");
+                _selectedRepayments.clear();
+                if (currentCredit) populateScheduleView(currentCredit);
+                
+                // Refresh other views
+                if (typeof fetchProgressCredits === 'function' && document.getElementById('credits-progress-body')) {
+                    fetchProgressCredits();
+                }
+            } catch (err) {
+                showNotification("Erreur lors du paiement groupé : " + err.message, "error");
+            }
         }
 
         async function handleMarkAsPaid(id) {
@@ -7594,6 +7858,9 @@ Suivant
             if (error) {
                 showNotification("Erreur lors du paiement : " + error.message, "error");
             } else {
+                const { data: rep } = await _supabase.from('repayments').select('credit_id').eq('id', id).single();
+                if (rep?.credit_id) await checkCreditSettlePC(rep.credit_id);
+                
                 showNotification("Paiement enregistré !", "success");
                 if (currentCredit) populateScheduleView(currentCredit);
             }
@@ -8022,10 +8289,16 @@ Suivant
         }
 
         function handleSearchCredits(query) {
+            currentCreditSearch = query;
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                fetchCredits(query);
+                fetchCredits(currentCreditSearch, currentCreditStatusFilter);
             }, 300);
+        }
+
+        function handleStatusFilterCredits(status) {
+            currentCreditStatusFilter = status;
+            fetchCredits(currentCreditSearch, currentCreditStatusFilter);
         }
 
         let repaymentSearch = '';
@@ -8089,6 +8362,10 @@ Suivant
                     return;
                 }
 
+                // Check if credit is settled
+                const { data: r } = await _supabase.from('repayments').select('credit_id').eq('id', id).single();
+                if (r?.credit_id) await checkCreditSettlePC(r.credit_id);
+
                 showNotification(nowPaid ? "Échéance marquée comme PAYÉE ✅" : "Paiement annulé. Échéance remise EN ATTENTE 🔄", "success");
 
                 // Rafraîchissement intelligent de toutes les vues concernées
@@ -8142,6 +8419,9 @@ Suivant
                 if (currentCredit) fetchCreditScheduleInDetails(currentCredit.id);
                 if (typeof fetchProgressCredits === 'function') fetchProgressCredits();
             } else {
+                const { data: r } = await _supabase.from('repayments').select('credit_id').eq('id', id).single();
+                if (r?.credit_id) await checkCreditSettlePC(r.credit_id);
+                
                 showNotification(`Statut : ${newStatus}`, "success");
                 if (typeof fetchProgressCredits === 'function') fetchProgressCredits();
                 if (currentCredit) fetchCreditScheduleInDetails(currentCredit.id);
