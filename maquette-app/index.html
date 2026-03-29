@@ -1243,145 +1243,177 @@ async function viewDashboard(){
   document.getElementById('view').innerHTML=`<div class="loader"><div class="spin"></div> Chargement…</div>`;
   const t=today();
   try{
-    const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff}]=await Promise.all([
+    const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff},{data:prosData}]=await Promise.all([
       sb.from('repayments').select('id,amount,is_paid,credits(client_name,clients(full_name,phone1))').eq('scheduled_date',t),
       sb.from('credits').select('amount,type').in('status',['En cours','en cours','EN COURS','ENCOURS']).neq('health','Souffrance'),
       sb.from('repayments').select('id').lt('scheduled_date',t).eq('is_paid',false),
-      sb.from('credits').select('id').eq('health','Souffrance')
+      sb.from('credits').select('id').eq('health','Souffrance'),
+      sb.from('prospects').select('id',{count:'exact',head:true})
     ]);
     const reps=todayReps||[];
     const paid=reps.filter(r=>r.is_paid).length;
     const pending=reps.length-paid;
+    const pct=reps.length>0?Math.round(paid/reps.length*100):0;
     const encours=(activeC||[]).reduce((s,c)=>s+(c.amount||0),0);
+    const nbSouff=(souff||[]).length;
+    const nbOverdue=(overdueR||[]).length;
+    const nbPros=prosData?.length||0;
+
+    // Salutation
+    const hr=new Date().getHours();
+    const sal=hr<12?'Bonjour':'Bonsoir';
+    const sess=sessionStorage.getItem('portefin_session');
+    const userName=sess?JSON.parse(sess).name:'':''
+    const firstName=userName.split(' ')[0]||'';
 
     // Group by category
-    const cats = (activeC||[]).reduce((acc,c)=>{
-      const key = c.type||'Autre';
-      if(!acc[key]) acc[key] = {count:0, total:0};
-      acc[key].count++; acc[key].total += (c.amount||0);
+    const cats=(activeC||[]).reduce((acc,c)=>{
+      const key=c.type||'Autre';
+      if(!acc[key])acc[key]={count:0,total:0};
+      acc[key].count++;acc[key].total+=(c.amount||0);
       return acc;
-    }, {});
-
-    const catGrid = Object.entries(cats).map(([name, data])=>{
-      let icon = 'account_balance';
-      let color = '#94a3b8';
-      if(name.toLowerCase().includes('immo')) { icon='home'; color='#10b981'; }
-      else if(name.toLowerCase().includes('pro')) { icon='business'; color='#6366f1'; }
-      else if(name.toLowerCase().includes('conso')) { icon='shopping_cart'; color='#f59e0b'; }
-      
-      return `
-        <div class="glass" style="padding:10px;display:flex;flex-direction:column;gap:4px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span class="material-symbols-outlined" style="font-size:16px;color:${color}">${icon}</span>
-            <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase">${name}</span>
-          </div>
-          <div style="font-size:13px;font-weight:800;color:var(--text)">${fmt(data.total)}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.4)">${data.count} dossier${data.count>1?'s':''}</div>
+    },{});
+    const catColors=['#f27f0d','#6366f1','#10b981','#3b82f6','#f59e0b','#ec4899'];
+    const catIcons={'Commerce':'storefront','Immobilier':'home','Professionnel':'business_center','Consommation':'shopping_cart','Agriculture':'grass','Éducation':'school'};
+    const catCards=Object.entries(cats).map(([name,data],i)=>{
+      const col=catColors[i%catColors.length];
+      const icon=catIcons[name]||'account_balance';
+      return `<div onclick="credFilter='encours';navTo('credits')" style="flex-shrink:0;width:140px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.06)">
+        <div style="width:34px;height:34px;border-radius:10px;background:${col}18;display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+          <span class="material-symbols-outlined filled" style="font-size:18px;color:${col}">${icon}</span>
         </div>
-      `;
+        <p style="font-size:11px;font-weight:700;color:var(--text2);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em">${name}</p>
+        <p style="font-size:15px;font-weight:900;color:var(--text);margin:0 0 2px">${fmt(data.total)}</p>
+        <p style="font-size:10px;color:var(--text2);margin:0">${data.count} dossier${data.count>1?'s':''}</p>
+      </div>`;
     }).join('');
-
 
     const topReps=reps.filter(r=>!r.is_paid).slice(0,5);
     const repsHtml=topReps.length?topReps.map(r=>`
-      <div class="rep-item" style="padding:12px 16px">
-        <div class="rep-avatar" style="width:36px;height:36px;font-size:13px">${initials(getName(r.credits))}</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border2)">
         <div style="flex:1;min-width:0">
-          <p style="font-size:13px;font-weight:600;margin:0">${getName(r.credits)}</p>
-          <p style="font-size:11px;color:rgba(255,255,255,.4);margin:0">${fmt(r.amount)} FCFA</p>
+          <p style="font-size:13px;font-weight:700;margin:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${getName(r.credits)}</p>
+          <p style="font-size:12px;font-weight:800;color:#f27f0d;margin:2px 0 0">${fmt(r.amount)} <span style="font-size:9px;font-weight:600;color:var(--text2)">FCFA</span></p>
         </div>
-        <button class="toggle-paid pending" onclick="quickToggle('${r.id}',false,this)" style="font-size:10px;padding:5px 9px">
-          <span class="material-symbols-outlined" style="font-size:13px">radio_button_unchecked</span> En attente
+        <button onclick="quickToggle('${r.id}',false,this)" style="display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:20px;background:rgba(242,127,13,.1);border:1.5px solid rgba(242,127,13,.35);color:#f27f0d;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+          <span class="material-symbols-outlined filled" style="font-size:14px">radio_button_unchecked</span>Encaisser
         </button>
       </div>`).join('')
-    :`<div style="padding:20px 16px;text-align:center;color:rgba(255,255,255,.3);font-size:13px">✓ Tous les remboursements du jour sont à jour</div>`;
+    :`<div style="padding:24px 16px;text-align:center">
+        <span class="material-symbols-outlined filled" style="font-size:36px;color:#22c55e;display:block;margin-bottom:8px">task_alt</span>
+        <p style="font-size:13px;font-weight:600;color:var(--text2);margin:0">Tout est à jour pour aujourd'hui</p>
+      </div>`;
 
     document.getElementById('view').innerHTML=`
-    <div style="padding:16px;padding-bottom:80px">
+    <div style="padding-bottom:90px">
 
-      <!-- Stats grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-
-        <div class="glass stat-card" style="grid-column:1/-1;cursor:pointer;transition:opacity .15s" onclick="navTo('repayments')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div class="stat-lbl">Remboursements aujourd'hui</div>
-              <div class="stat-val" style="color:#f27f0d;font-size:28px;margin-top:4px">${reps.length}</div>
-              <div class="stat-sub">${paid} encaissé${paid>1?'s':''} · <span style="color:#fb923c">${pending} en attente</span></div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-              <div style="width:52px;height:52px;border-radius:14px;background:rgba(242,127,13,.12);display:flex;align-items:center;justify-content:center">
-                <span class="material-symbols-outlined filled" style="color:#f27f0d;font-size:28px">payments</span>
-              </div>
-              <span style="font-size:9px;color:#f27f0d;font-weight:700">Voir →</span>
-            </div>
+      <!-- HERO -->
+      <div style="background:linear-gradient(135deg,#f27f0d 0%,#c96a00 100%);padding:22px 20px 28px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+        <div style="position:absolute;bottom:-20px;left:60px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+        <p style="font-size:13px;font-weight:600;color:rgba(255,255,255,.75);margin:0 0 2px">${sal}${firstName?' '+firstName:''} 👋</p>
+        <p style="font-size:22px;font-weight:900;color:#fff;margin:0 0 18px;letter-spacing:-.3px">Tableau de bord</p>
+        <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8)">Remboursements du jour</span>
+            <span style="font-size:11px;font-weight:800;color:#fff">${paid}/${reps.length} encaissés</span>
           </div>
-        </div>
-
-        <div class="glass stat-card" style="cursor:pointer;transition:opacity .15s" onclick="credFilter='encours';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between">
-            <div>
-              <div class="stat-lbl">Encours total</div>
-              <div class="stat-val" style="color:#60a5fa;font-size:16px;margin-top:4px">${fmt(encours)}</div>
-              <div class="stat-sub">FCFA actifs</div>
-            </div>
-            <span style="font-size:9px;color:#60a5fa;font-weight:700;margin-top:2px">Voir →</span>
+          <div style="background:rgba(255,255,255,.25);border-radius:10px;height:8px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:#fff;border-radius:10px;transition:width .8s ease"></div>
           </div>
-        </div>
-
-        <div class="glass stat-card" style="cursor:pointer;transition:opacity .15s;border-color:${(overdueR||[]).length>0?'rgba(248,113,113,.2)':'var(--border)'}" onclick="credFilter='souffrance';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between">
-            <div>
-              <div class="stat-lbl">Impayés</div>
-              <div class="stat-val" style="color:#f87171;font-size:20px;margin-top:4px">${(overdueR||[]).length}</div>
-              <div class="stat-sub">échéances dépassées</div>
-            </div>
-            <span style="font-size:9px;color:#f87171;font-weight:700;margin-top:2px">Voir →</span>
-          </div>
-        </div>
-
-        ${(souff||[]).length>0?`
-        <div class="glass stat-card" style="grid-column:1/-1;border-color:rgba(239,68,68,.2);cursor:pointer;transition:opacity .15s" onclick="credFilter='souffrance';navTo('credits')" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="material-symbols-outlined filled" style="color:#f87171;font-size:20px">warning</span>
-              <div>
-                <div class="stat-lbl" style="color:#f87171">Dossiers en souffrance</div>
-                <div class="stat-val" style="color:#f87171;font-size:18px;margin-top:2px">${souff.length} dossier${souff.length>1?'s':''}</div>
-              </div>
-            </div>
-            <span style="font-size:9px;color:#f87171;font-weight:700">Voir →</span>
-          </div>
-        </div>`:''}
-
-        <!-- Categories Grid -->
-        <div style="grid-column:1/-1;padding-top:6px">
-          <div class="stat-lbl" style="margin-bottom:8px">Par Catégorie</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            ${catGrid}
-          </div>
+          <p style="font-size:10px;color:rgba(255,255,255,.7);margin:6px 0 0;font-weight:600">${pct}% complété · ${pending} en attente</p>
         </div>
       </div>
 
+      <!-- KPI SCROLL -->
+      <div style="padding:16px 16px 0">
+        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Indicateurs clés</p>
+      </div>
+      <div style="display:flex;gap:10px;padding:0 16px 16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+        <div onclick="credFilter='encours';navTo('credits')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(59,130,246,.08));border:1.5px solid rgba(59,130,246,.25);border-radius:18px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:11px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+            <span class="material-symbols-outlined filled" style="font-size:20px;color:#60a5fa">account_balance</span>
+          </div>
+          <p style="font-size:10px;font-weight:700;color:#60a5fa;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Encours</p>
+          <p style="font-size:18px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${fmt(encours)}</p>
+          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">FCFA actifs</p>
+        </div>
+        <div onclick="navTo('repayments')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(242,127,13,.15),rgba(249,115,22,.08));border:1.5px solid rgba(242,127,13,.3);border-radius:18px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:11px;background:rgba(242,127,13,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+            <span class="material-symbols-outlined filled" style="font-size:20px;color:#f27f0d">payments</span>
+          </div>
+          <p style="font-size:10px;font-weight:700;color:#f27f0d;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Aujourd'hui</p>
+          <p style="font-size:28px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${reps.length}</p>
+          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">remboursements</p>
+        </div>
+        <div onclick="navTo('repayments')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1.5px solid ${nbOverdue>0?'rgba(239,68,68,.35)':'var(--border)'};border-radius:18px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:11px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+            <span class="material-symbols-outlined filled" style="font-size:20px;color:#f87171">event_busy</span>
+          </div>
+          <p style="font-size:10px;font-weight:700;color:#f87171;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Impayés</p>
+          <p style="font-size:28px;font-weight:900;color:${nbOverdue>0?'#f87171':'var(--text)'};margin:0 0 2px;line-height:1">${nbOverdue}</p>
+          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">échéances dépassées</p>
+        </div>
+        <div onclick="credFilter='souffrance';navTo('credits')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(185,28,28,.06));border:1.5px solid ${nbSouff>0?'rgba(185,28,28,.4)':'var(--border)'};border-radius:18px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:11px;background:rgba(185,28,28,.12);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+            <span class="material-symbols-outlined filled" style="font-size:20px;color:#ef4444">warning</span>
+          </div>
+          <p style="font-size:10px;font-weight:700;color:#ef4444;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Souffrance</p>
+          <p style="font-size:28px;font-weight:900;color:${nbSouff>0?'#ef4444':'var(--text)'};margin:0 0 2px;line-height:1">${nbSouff}</p>
+          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">dossiers critiques</p>
+        </div>
+        <div onclick="navTo('prospects')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(79,70,229,.08));border:1.5px solid rgba(99,102,241,.25);border-radius:18px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:11px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+            <span class="material-symbols-outlined filled" style="font-size:20px;color:#818cf8">person_search</span>
+          </div>
+          <p style="font-size:10px;font-weight:700;color:#818cf8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Prospects</p>
+          <p style="font-size:28px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${nbPros}</p>
+          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">en portefeuille</p>
+        </div>
+      </div>
 
-      <!-- Remboursements en attente today -->
-      ${topReps.length>0?`
-      <div style="margin-top:4px">
-        <div class="section-h"><h2>À encaisser aujourd'hui</h2><span onclick="navTo('repayments')" style="cursor:pointer;color:#f27f0d;font-size:12px;font-weight:600">Tout voir →</span></div>
-        <div class="glass" style="overflow:hidden">${repsHtml}</div>
+      <!-- À ENCAISSER -->
+      <div style="padding:0 16px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <p style="font-size:13px;font-weight:800;color:var(--text);margin:0">À encaisser aujourd'hui</p>
+          <button onclick="navTo('repayments')" style="font-size:11px;font-weight:700;color:#f27f0d;background:none;border:none;cursor:pointer;padding:0;font-family:inherit">Tout voir →</button>
+        </div>
+        <div style="background:var(--card);border-radius:16px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06)">
+          ${repsHtml}
+        </div>
+      </div>
+
+      <!-- PAR CATÉGORIE -->
+      ${Object.keys(cats).length?`
+      <div style="padding:0 0 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:10px">
+          <p style="font-size:13px;font-weight:800;color:var(--text);margin:0">Par catégorie</p>
+        </div>
+        <div style="display:flex;gap:10px;padding:0 16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+          ${catCards}
+          <div style="flex-shrink:0;width:1px"></div>
+        </div>
       </div>`:''}
 
-      <!-- Boutons rapides -->
-      <div style="margin-top:16px">
-        <div class="section-h"><h2>Actions rapides</h2></div>
+      <!-- ACTIONS RAPIDES -->
+      <div style="padding:0 16px">
+        <p style="font-size:13px;font-weight:800;color:var(--text);margin:0 0 10px">Actions rapides</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <button class="btn-primary" onclick="navTo('repayments')" style="padding:14px;flex-direction:column;gap:6px;border-radius:12px">
-            <span class="material-symbols-outlined filled" style="font-size:24px">payments</span>
-            <span style="font-size:12px">Remboursements</span>
+          <button onclick="navTo('repayments')" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;border-radius:16px;background:linear-gradient(135deg,#f27f0d,#c96a00);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(242,127,13,.35)">
+            <span class="material-symbols-outlined filled" style="font-size:26px">payments</span>
+            <span style="font-size:12px;font-weight:700">Remboursements</span>
           </button>
-          <button class="btn-primary" onclick="navTo('prospects');setTimeout(()=>openProspectForm(),300)" style="padding:14px;flex-direction:column;gap:6px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 4px 15px rgba(99,102,241,.3)">
-            <span class="material-symbols-outlined filled" style="font-size:24px">person_add</span>
-            <span style="font-size:12px">Nouveau prospect</span>
+          <button onclick="navTo('prospects');setTimeout(()=>openProspectForm(),300)" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(99,102,241,.35)">
+            <span class="material-symbols-outlined filled" style="font-size:26px">person_add</span>
+            <span style="font-size:12px;font-weight:700">Nouveau prospect</span>
+          </button>
+          <button onclick="navTo('credits');setTimeout(()=>openCreditForm(),300)" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;border-radius:16px;background:linear-gradient(135deg,#10b981,#059669);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(16,185,129,.3)">
+            <span class="material-symbols-outlined filled" style="font-size:26px">add_card</span>
+            <span style="font-size:12px;font-weight:700">Nouveau crédit</span>
+          </button>
+          <button onclick="navTo('tasks');setTimeout(()=>openTaskFormMobile(),300)" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;border-radius:16px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(168,85,247,.3)">
+            <span class="material-symbols-outlined filled" style="font-size:26px">task_alt</span>
+            <span style="font-size:12px;font-weight:700">Nouvelle tâche</span>
           </button>
         </div>
       </div>
