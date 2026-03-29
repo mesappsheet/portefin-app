@@ -2748,8 +2748,10 @@ function prosRow(p){
               <span class="material-symbols-outlined filled" style="font-size:13px">label</span>
               ${p.status||'NOUVEAU'}
            </span>
-           ${p.activity?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.3);font-size:11px;font-weight:800;color:var(--primary)"><span class="material-symbols-outlined filled" style="font-size:13px">work</span>${p.activity}</span>`:''}
+           ${p.activity?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.3);font-size:11px;font-weight:800;color:var(--primary)"><span class="material-symbols-outlined filled" style="font-size:13px">storefront</span>${p.activity}</span>`:''}
         </div>
+
+        ${p.activity_detail?`<p style="font-size:12px;font-weight:600;color:var(--text2);margin:0 0 8px;line-height:1.4;padding-left:2px">${p.activity_detail}</p>`:''}
 
         <div style="display:flex;flex-direction:column;gap:6px">
            ${phone?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">call</span><span style="font-size:13px;font-weight:700">${phone}</span></div>`:''}
