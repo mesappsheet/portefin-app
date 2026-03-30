@@ -1325,50 +1325,56 @@ async function viewDashboard(){
         </div>
       </div>
 
-      <!-- KPI SCROLL -->
-      <div style="padding:16px 16px 0">
-        <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Indicateurs clés</p>
-      </div>
-      <div style="display:flex;gap:10px;padding:0 16px 16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-        <div onclick="credFilter='encours';navTo('credits')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(59,130,246,.08));border:1.5px solid rgba(59,130,246,.25);border-radius:18px;padding:16px;cursor:pointer">
-          <div style="width:36px;height:36px;border-radius:11px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-            <span class="material-symbols-outlined filled" style="font-size:20px;color:#60a5fa">account_balance</span>
+      <!-- KPI GRID -->
+      <div style="padding:0 16px 16px">
+        <!-- Encours — pleine largeur -->
+        <!-- Encours — pleine largeur -->
+        <div onclick="credFilter='encours';navTo('credits')" style="background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(59,130,246,.08));border:1.5px solid rgba(59,130,246,.25);border-radius:18px;padding:16px 20px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:42px;height:42px;border-radius:13px;background:rgba(59,130,246,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span class="material-symbols-outlined filled" style="font-size:22px;color:#60a5fa">account_balance</span>
+            </div>
+            <div>
+              <p style="font-size:10px;font-weight:700;color:#60a5fa;margin:0 0 2px;text-transform:uppercase;letter-spacing:.08em">Encours total</p>
+              <p style="font-size:22px;font-weight:900;color:var(--text);margin:0;line-height:1.1">${fmt(encours)}</p>
+            </div>
           </div>
-          <p style="font-size:10px;font-weight:700;color:#60a5fa;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Encours</p>
-          <p style="font-size:18px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${fmt(encours)}</p>
-          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">FCFA actifs</p>
+          <p style="font-size:10px;color:var(--text2);margin:0;font-weight:600;text-align:right">FCFA<br>actifs</p>
         </div>
-        <div onclick="navTo('repayments')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(242,127,13,.15),rgba(249,115,22,.08));border:1.5px solid rgba(242,127,13,.3);border-radius:18px;padding:16px;cursor:pointer">
-          <div style="width:36px;height:36px;border-radius:11px;background:rgba(242,127,13,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-            <span class="material-symbols-outlined filled" style="font-size:20px;color:#f27f0d">payments</span>
+        <!-- Grille 2×2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div onclick="navTo('repayments')" style="background:linear-gradient(135deg,rgba(242,127,13,.15),rgba(249,115,22,.08));border:1.5px solid rgba(242,127,13,.3);border-radius:18px;padding:14px 16px;cursor:pointer">
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(242,127,13,.15);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <span class="material-symbols-outlined filled" style="font-size:18px;color:#f27f0d">payments</span>
+            </div>
+            <p style="font-size:9px;font-weight:700;color:#f27f0d;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Aujourd'hui</p>
+            <p style="font-size:26px;font-weight:900;color:var(--text);margin:0 0 1px;line-height:1">${reps.length}</p>
+            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">remboursements</p>
           </div>
-          <p style="font-size:10px;font-weight:700;color:#f27f0d;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Aujourd'hui</p>
-          <p style="font-size:28px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${reps.length}</p>
-          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">remboursements</p>
-        </div>
-        <div onclick="navTo('repayments')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1.5px solid ${nbOverdue>0?'rgba(239,68,68,.35)':'var(--border)'};border-radius:18px;padding:16px;cursor:pointer">
-          <div style="width:36px;height:36px;border-radius:11px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-            <span class="material-symbols-outlined filled" style="font-size:20px;color:#f87171">event_busy</span>
+          <div onclick="navTo('repayments')" style="background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1.5px solid ${nbOverdue>0?'rgba(239,68,68,.35)':'var(--border)'};border-radius:18px;padding:14px 16px;cursor:pointer">
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <span class="material-symbols-outlined filled" style="font-size:18px;color:#f87171">event_busy</span>
+            </div>
+            <p style="font-size:9px;font-weight:700;color:#f87171;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Impayés</p>
+            <p style="font-size:26px;font-weight:900;color:${nbOverdue>0?'#f87171':'var(--text)'};margin:0 0 1px;line-height:1">${nbOverdue}</p>
+            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">échéances dépassées</p>
           </div>
-          <p style="font-size:10px;font-weight:700;color:#f87171;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Impayés</p>
-          <p style="font-size:28px;font-weight:900;color:${nbOverdue>0?'#f87171':'var(--text)'};margin:0 0 2px;line-height:1">${nbOverdue}</p>
-          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">échéances dépassées</p>
-        </div>
-        <div onclick="credFilter='souffrance';navTo('credits')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(185,28,28,.06));border:1.5px solid ${nbSouff>0?'rgba(185,28,28,.4)':'var(--border)'};border-radius:18px;padding:16px;cursor:pointer">
-          <div style="width:36px;height:36px;border-radius:11px;background:rgba(185,28,28,.12);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-            <span class="material-symbols-outlined filled" style="font-size:20px;color:#ef4444">warning</span>
+          <div onclick="credFilter='souffrance';navTo('credits')" style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(185,28,28,.06));border:1.5px solid ${nbSouff>0?'rgba(185,28,28,.4)':'var(--border)'};border-radius:18px;padding:14px 16px;cursor:pointer">
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(185,28,28,.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <span class="material-symbols-outlined filled" style="font-size:18px;color:#ef4444">warning</span>
+            </div>
+            <p style="font-size:9px;font-weight:700;color:#ef4444;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Souffrance</p>
+            <p style="font-size:26px;font-weight:900;color:${nbSouff>0?'#ef4444':'var(--text)'};margin:0 0 1px;line-height:1">${nbSouff}</p>
+            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">dossiers critiques</p>
           </div>
-          <p style="font-size:10px;font-weight:700;color:#ef4444;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Souffrance</p>
-          <p style="font-size:28px;font-weight:900;color:${nbSouff>0?'#ef4444':'var(--text)'};margin:0 0 2px;line-height:1">${nbSouff}</p>
-          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">dossiers critiques</p>
-        </div>
-        <div onclick="navTo('prospects')" style="flex-shrink:0;scroll-snap-align:start;width:140px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(79,70,229,.08));border:1.5px solid rgba(99,102,241,.25);border-radius:18px;padding:16px;cursor:pointer">
-          <div style="width:36px;height:36px;border-radius:11px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-            <span class="material-symbols-outlined filled" style="font-size:20px;color:#818cf8">person_search</span>
+          <div onclick="navTo('prospects')" style="background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(79,70,229,.08));border:1.5px solid rgba(99,102,241,.25);border-radius:18px;padding:14px 16px;cursor:pointer">
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <span class="material-symbols-outlined filled" style="font-size:18px;color:#818cf8">person_search</span>
+            </div>
+            <p style="font-size:9px;font-weight:700;color:#818cf8;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Prospects</p>
+            <p style="font-size:26px;font-weight:900;color:var(--text);margin:0 0 1px;line-height:1">${nbPros}</p>
+            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">en portefeuille</p>
           </div>
-          <p style="font-size:10px;font-weight:700;color:#818cf8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.06em">Prospects</p>
-          <p style="font-size:28px;font-weight:900;color:var(--text);margin:0 0 2px;line-height:1">${nbPros}</p>
-          <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">en portefeuille</p>
         </div>
       </div>
 
@@ -1383,17 +1389,6 @@ async function viewDashboard(){
         </div>
       </div>
 
-      <!-- PAR CATÉGORIE -->
-      ${Object.keys(cats).length?`
-      <div style="padding:0 0 16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:10px">
-          <p style="font-size:13px;font-weight:800;color:var(--text);margin:0">Par catégorie</p>
-        </div>
-        <div style="display:flex;gap:10px;padding:0 16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-          ${catCards}
-          <div style="flex-shrink:0;width:1px"></div>
-        </div>
-      </div>`:''}
 
       <!-- ACTIONS RAPIDES -->
       <div style="padding:0 16px">
