@@ -710,10 +710,10 @@ let _prosCache={};
   // Session Supabase
   try{
     const{data:{session}}=await sb.auth.getSession();
-    if(!session){window.location.replace('/mobile/login');return;}
+    if(!session){window.location.replace('/login.html');return;}
     currentUser=session.user;
     init();
-  }catch(e){window.location.replace('/mobile/login');}
+  }catch(e){window.location.replace('/login.html');}
 })();
 
 function init(){
@@ -1384,6 +1384,17 @@ async function viewDashboard(){
         </div>
       </div>
 
+
+      <!-- À ENCAISSER -->
+      <div style="padding:0 16px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <p style="font-size:13px;font-weight:800;color:var(--text);margin:0">À encaisser aujourd'hui</p>
+          <button onclick="navTo('repayments')" style="font-size:11px;font-weight:700;color:#f27f0d;background:none;border:none;cursor:pointer;padding:0;font-family:inherit">Tout voir →</button>
+        </div>
+        <div style="background:var(--card);border-radius:16px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06)">
+          ${repsHtml}
+        </div>
+      </div>
 
       <!-- ACTIONS RAPIDES -->
       <div style="padding:0 16px">
