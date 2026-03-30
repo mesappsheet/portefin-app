@@ -9339,7 +9339,8 @@ Suivant
                 const actifs = actifRes.data || [];
                 const unpaid = await unpaidRes.json().catch(() => []);
                 const souf   = await soufRes.json().catch(() => []);
-                const unpaidCount = new Set((unpaid || []).map(r => r.credit_id)).size;
+                const souffIds = new Set((souf || []).map(c => c.id));
+                const unpaidCount = new Set((unpaid || []).filter(r => !souffIds.has(r.credit_id)).map(r => r.credit_id)).size;
                 const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
                 el('hero-credit-actif',      actifs.length);
                 el('hero-credit-impaye',     unpaidCount);
