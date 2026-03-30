@@ -1263,7 +1263,7 @@ async function viewDashboard(){
     const hr=new Date().getHours();
     const sal=hr<12?'Bonjour':'Bonsoir';
     const sess=sessionStorage.getItem('portefin_session');
-    const userName=sess?JSON.parse(sess).name:'':''
+    const userName=sess?JSON.parse(sess).name:'';
     const firstName=userName.split(' ')[0]||'';
 
     // Group by category
