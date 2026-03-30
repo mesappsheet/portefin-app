@@ -761,8 +761,13 @@ function showMenu(btn,items){
   ov.id='ctx-menu';
   ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;background:rgba(0,0,0,.45);animation:fadeIn .2s';
   const sheet=document.createElement('div');
-  sheet.style.cssText='background:var(--card);border-radius:20px 20px 0 0;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 12px);width:100%;max-height:82vh;overflow-y:auto;animation:slideUp .25s cubic-bezier(.4,0,.2,1)';
-  sheet.innerHTML='<div style="width:40px;height:4px;background:rgba(128,128,128,.25);border-radius:4px;margin:14px auto 10px"></div>';
+  sheet.style.cssText='position:relative;background:var(--card);border-radius:20px 20px 0 0;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 12px);width:100%;max-height:82vh;overflow-y:auto;animation:slideUp .25s cubic-bezier(.4,0,.2,1)';
+  sheet.innerHTML=`
+    <div style="width:40px;height:4px;background:rgba(128,128,128,.25);border-radius:4px;margin:14px auto 10px"></div>
+    <button onclick="closeCtxMenu()" style="position:absolute;top:10px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(128,128,128,0.1);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2">
+      <span class="material-symbols-outlined" style="font-size:20px">close</span>
+    </button>
+  `;
   items.forEach(item=>{
     if(item.sep){
       const s=document.createElement('div');
@@ -1352,7 +1357,7 @@ async function viewDashboard(){
             <p style="font-size:22px;font-weight:900;color:var(--text);margin:0 0 1px;line-height:1">${reps.length}</p>
             <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">remboursements</p>
           </div>
-          <div onclick="navTo('repayments')" style="background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1.5px solid ${nbOverdue>0?'rgba(239,68,68,.35)':'var(--border)'};border-radius:18px;padding:12px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div onclick="repFilter='overdue';navTo('repayments')" style="background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1.5px solid ${nbOverdue>0?'rgba(239,68,68,.35)':'var(--border)'};border-radius:18px;padding:12px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center">
             <div style="width:32px;height:32px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin-bottom:8px">
               <span class="material-symbols-outlined filled" style="font-size:16px;color:#f87171">event_busy</span>
             </div>
@@ -1448,7 +1453,7 @@ async function quickToggle(id,isPaid,btn){
 //  ÉCRAN 2 : REMBOURSEMENTS
 // ═══════════════════════════════════════════════
 let repDate=today();
-let repFilter='all'; // all | pending | paid
+let repFilter='all'; // all | pending | paid | overdue
 
 async function viewRepayments(){
   document.getElementById('view').innerHTML=`
@@ -1470,6 +1475,7 @@ async function viewRepayments(){
           <option value="all" ${repFilter==='all'?'selected':''}>Tous</option>
           <option value="pending" ${repFilter==='pending'?'selected':''}>En attente</option>
           <option value="paid" ${repFilter==='paid'?'selected':''}>Payés</option>
+          <option value="overdue" ${repFilter==='overdue'?'selected':''}>Retards</option>
         </select>
         <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${repFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
       </div>
@@ -1501,12 +1507,17 @@ async function loadRepayments(){
   if(!list)return;
   list.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
   try{
+    const t=today();
     let q=sb.from('repayments')
-      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,start_date,end_date,clients(full_name,phone1))')
-      .eq('scheduled_date',repDate)
-      .order('is_paid',{ascending:true});
-    if(repFilter==='pending')q=q.eq('is_paid',false);
-    if(repFilter==='paid')q=q.eq('is_paid',true);
+      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,start_date,end_date,clients(full_name,phone1))');
+
+    if(repFilter==='overdue'){
+      q=q.lt('scheduled_date',t).eq('is_paid',false).order('scheduled_date',{ascending:false});
+    } else {
+      q=q.eq('scheduled_date',repDate).order('is_paid',{ascending:true});
+      if(repFilter==='pending')q=q.eq('is_paid',false);
+      if(repFilter==='paid')q=q.eq('is_paid',true);
+    }
     const{data,error}=await q;
     if(error)throw error;
     // Exclure les crédits en Souffrance de la liste des impayés
@@ -1826,16 +1837,20 @@ function credRow(c){
 function copyClientsOfDayMob() {
   const today = new Date().toISOString().split('T')[0];
   let ov = document.getElementById('copy-clients-ov-mob');
-  if (ov) { document.getElementById('copy-clients-date-mob').value = today; ov.style.display = 'flex'; return; }
+  if (ov) { document.getElementById('copy-clients-date-mob').value = today; _copyFilter='attente'; setCopyFilter('attente'); ov.style.display = 'flex'; return; }
   ov = document.createElement('div');
   ov.id = 'copy-clients-ov-mob';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
   ov.innerHTML = `
     <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;box-sizing:border-box;font-family:inherit">
       <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:4px;margin:0 auto 20px"></div>
-      <p style="font-size:15px;font-weight:800;color:var(--text);margin:0 0 4px">Copier clients en attente</p>
-      <p style="font-size:12px;color:var(--text3);margin:0 0 18px">Sélectionnez la date souhaitée</p>
-      <input type="date" id="copy-clients-date-mob" value="${today}" style="width:100%;padding:12px 14px;border:1.5px solid var(--input-border);border-radius:12px;font-size:14px;font-weight:600;color:var(--text);background:var(--input-bg);outline:none;box-sizing:border-box;margin-bottom:14px;font-family:inherit">
+      <p style="font-size:15px;font-weight:800;color:var(--text);margin:0 0 4px">Copier les clients</p>
+      <p style="font-size:12px;color:var(--text3);margin:0 0 16px">Sélectionnez la date et le critère</p>
+      <input type="date" id="copy-clients-date-mob" value="${today}" style="width:100%;padding:12px 14px;border:1.5px solid var(--input-border);border-radius:12px;font-size:14px;font-weight:600;color:var(--text);background:var(--input-bg);outline:none;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button id="copy-filter-attente" onclick="setCopyFilter('attente')" style="flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid #f27f0d;background:#f27f0d;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">En attente</button>
+        <button id="copy-filter-tous" onclick="setCopyFilter('tous')" style="flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--input-border);background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Tous</button>
+      </div>
       <div style="display:flex;gap:10px">
         <button onclick="document.getElementById('copy-clients-ov-mob').style.display='none'" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--input-border);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
         <button id="copy-clients-btn-mob" onclick="executeCopyClientsMob(this)" style="flex:2;padding:13px;border-radius:12px;background:#f27f0d;border:none;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Copier</button>
@@ -1845,20 +1860,39 @@ function copyClientsOfDayMob() {
   document.body.appendChild(ov);
 }
 
+let _copyFilter = 'attente';
+function setCopyFilter(v) {
+  _copyFilter = v;
+  const btnA = document.getElementById('copy-filter-attente');
+  const btnT = document.getElementById('copy-filter-tous');
+  if (!btnA || !btnT) return;
+  btnA.style.background = v==='attente' ? '#f27f0d' : 'transparent';
+  btnA.style.color      = v==='attente' ? 'white'   : 'var(--text2)';
+  btnA.style.border     = v==='attente' ? '1.5px solid #f27f0d' : '1.5px solid var(--input-border)';
+  btnT.style.background = v==='tous'    ? '#f27f0d' : 'transparent';
+  btnT.style.color      = v==='tous'    ? 'white'   : 'var(--text2)';
+  btnT.style.border     = v==='tous'    ? '1.5px solid #f27f0d' : '1.5px solid var(--input-border)';
+}
+
 async function executeCopyClientsMob(btn) {
   const date = document.getElementById('copy-clients-date-mob').value || new Date().toISOString().split('T')[0];
   const salut = new Date().getHours() >= 18 ? 'Bonsoir' : 'Bonjour';
   btn.textContent = '…'; btn.disabled = true;
   try {
-    const { data, error } = await sb.from('repayments')
+    let q = sb.from('repayments')
       .select('credits(client_name, clients(full_name))')
-      .eq('scheduled_date', date)
-      .eq('is_paid', false);
+      .eq('scheduled_date', date);
+    if (_copyFilter === 'attente') q = q.eq('is_paid', false);
+    const { data, error } = await q;
     if (error) throw error;
-    if (!data || !data.length) { toast('Aucun client en attente pour cette date', 'info'); return; }
-    const names = data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu');
+    const label = _copyFilter === 'attente' ? 'en attente' : '';
+    if (!data || !data.length) { toast(`Aucun client ${label} pour cette date`, 'info'); return; }
+    const names = [...new Set(data.map(r => (r.credits?.clients?.full_name) || r.credits?.client_name || 'Client inconnu'))];
     const liste = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
-    const msg = `${salut},\n\nVeuillez vérifier si ces clients sont déjà venus payer.\n\n${liste}\n\nMerci de répondre.`;
+    const intro = _copyFilter === 'attente'
+      ? 'Veuillez vérifier si ces clients sont déjà venus payer.'
+      : 'Voici la liste des clients prévus pour ce jour.';
+    const msg = `${salut},\n\n${intro}\n\n${liste}\n\nMerci de répondre.`;
     let copied=false;
     if(navigator.clipboard&&window.isSecureContext){
       try{await navigator.clipboard.writeText(msg);copied=true;}catch(e){}
