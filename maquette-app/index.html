@@ -461,13 +461,8 @@ body.light .cred-item { border-color: rgba(0,0,0,0.06); }
 .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); opacity: 0; transition: all .2s; margin-top: 2px; }
 .nav-item.active .nav-dot { opacity: 1; }
 
-/* Context menu */
-.ctx-menu {
-  position: fixed; z-index: 9999; background: var(--card);
-  border: 1px solid var(--border); border-radius: 18px; padding: 8px;
-  min-width: 200px; box-shadow: 0 8px 32px rgba(0,0,0,.2); overflow-y: auto;
-}
-body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
+/* Context menu mobile styles integrated in showMenu() */
+
 .ctx-item {
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 11px 14px; border-radius: 12px; border: none;
@@ -563,6 +558,11 @@ body.light .ctx-menu { box-shadow: 0 8px 32px rgba(0,0,0,.15); }
 
 <!-- App Shell -->
 <div id="app">
+  <!-- Indicateur Pull-to-refresh -->
+  <div id="pull-refresh-indicator" style="position:fixed; top:75px; left:50%; transform:translateX(-50%) translateY(-100px); z-index:90; background:white; color:var(--primary); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s; opacity:0; pointer-events:none">
+    <span id="pull-refresh-icon" class="material-symbols-outlined" style="font-size:22px; transition: transform 0.2s">arrow_downward</span>
+  </div>
+
   <!-- Top Bar -->
   <header id="topbar">
     <div style="display:flex;align-items:center;gap:12px">
@@ -760,28 +760,41 @@ function showMenu(btn,items){
   const ov=document.createElement('div');
   ov.id='ctx-menu';
   ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;background:rgba(0,0,0,.45);animation:fadeIn .2s';
+  
   const sheet=document.createElement('div');
-  sheet.style.cssText='position:relative;background:var(--card);border-radius:20px 20px 0 0;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 12px);width:100%;max-height:82vh;overflow-y:auto;animation:slideUp .25s cubic-bezier(.4,0,.2,1)';
+  sheet.style.cssText='position:relative;background:var(--card);border-radius:24px 24px 0 0;width:100%;max-height:85vh;animation:slideUp .25s cubic-bezier(.4,0,.2,1);overflow:hidden';
+
   sheet.innerHTML=`
-    <div style="width:40px;height:4px;background:rgba(128,128,128,.25);border-radius:4px;margin:14px auto 10px"></div>
-    <button onclick="closeCtxMenu()" style="position:absolute;top:10px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(128,128,128,0.1);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2">
-      <span class="material-symbols-outlined" style="font-size:20px">close</span>
+    <style>
+      #ctx-scroll-container::-webkit-scrollbar{width:4px}
+      #ctx-scroll-container::-webkit-scrollbar-track{background:transparent}
+      #ctx-scroll-container::-webkit-scrollbar-thumb{background:rgba(128,128,128,.35);border-radius:99px}
+      #ctx-scroll-container::-webkit-scrollbar-thumb:active{background:rgba(128,128,128,.6)}
+    </style>
+    <div id="ctx-scroll-container" style="overflow-y:auto;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 16px);scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.35) transparent">
+      <div style="width:40px;height:4px;background:rgba(128,128,128,.25);border-radius:4px;margin:14px auto 10px"></div>
+    </div>
+    <button onclick="closeCtxMenu()" style="position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(128,128,128,0.12);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10">
+      <span class="material-symbols-outlined" style="font-size:18px">close</span>
     </button>
   `;
+  
+  const container = sheet.querySelector('#ctx-scroll-container');
   items.forEach(item=>{
     if(item.sep){
       const s=document.createElement('div');
       s.style.cssText='height:1px;background:var(--border2);margin:4px 16px';
-      sheet.appendChild(s);return;
+      container.appendChild(s); return;
     }
     const el=document.createElement('button');
-    el.style.cssText=`display:flex;align-items:center;gap:16px;width:100%;padding:15px 22px;border:none;background:none;color:${item.danger?'#ef4444':'var(--text)'};font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;min-height:54px;-webkit-tap-highlight-color:transparent`;
+    el.style.cssText=`display:flex;align-items:center;gap:16px;width:100%;padding:16px 22px;border:none;background:none;color:${item.danger?'#ef4444':'var(--text)'};font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;min-height:56px;-webkit-tap-highlight-color:transparent`;
     el.innerHTML=`<span class="material-symbols-outlined filled" style="font-size:22px;color:${item.color||(item.danger?'#ef4444':'var(--text2)')};flex-shrink:0">${item.icon}</span><span>${item.label}</span>`;
     el.ontouchstart=()=>{el.style.background='var(--ghost-hover)';};
     el.ontouchend=(e)=>{e.preventDefault();e.stopPropagation();el.style.background='';closeCtxMenu();setTimeout(()=>item.fn(),80);};
     el.onclick=(e)=>{e.stopPropagation();closeCtxMenu();setTimeout(()=>item.fn(),80);};
-    sheet.appendChild(el);
+    container.appendChild(el);
   });
+  
   ov.appendChild(sheet);
   document.body.appendChild(ov);
   ov.addEventListener('touchend',(e)=>{if(e.target===ov)closeCtxMenu();},{passive:true});
@@ -986,7 +999,10 @@ function showFab(cb){
 function hideFab(){if(_fab){_fab.remove();_fab=null;}}
 
 // ─── HELPERS ──────────────────────────────────
-function fmt(n){if(!n&&n!==0)return'—';return Number(n).toLocaleString('fr-FR');}
+function fmt(n){
+  const val = Number(n || 0);
+  return val.toLocaleString('fr-FR');
+}
 function fmtDate(d){if(!d)return'—';const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
 function fmtDateLong(d){if(!d)return'—';const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function today(){return new Date().toISOString().split('T')[0];}
@@ -1248,7 +1264,7 @@ async function viewDashboard(){
   document.getElementById('view').innerHTML=`<div class="loader"><div class="spin"></div> Chargement…</div>`;
   const t=today();
   try{
-    const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff},{data:prosData}]=await Promise.all([
+    const[{data:todayReps},{data:activeC},{data:overdueR},{data:souff},prosRes]=await Promise.all([
       sb.from('repayments').select('id,amount,is_paid,credits(client_name,clients(full_name,phone1))').eq('scheduled_date',t),
       sb.from('credits').select('amount,type').in('status',['En cours','en cours','EN COURS','ENCOURS']).neq('health','Souffrance'),
       sb.from('repayments').select('id,credit_id').lt('scheduled_date',t).eq('is_paid',false),
@@ -1263,7 +1279,7 @@ async function viewDashboard(){
     const nbSouff=(souff||[]).length;
     const souffIds=new Set((souff||[]).map(c=>c.id));
     const nbOverdue=(overdueR||[]).filter(r=>!souffIds.has(r.credit_id)).length;
-    const nbPros=prosData?.length||0;
+    const nbPros=prosRes?.count||0;
 
     // Salutation
     const hr=new Date().getHours();
@@ -1379,7 +1395,7 @@ async function viewDashboard(){
             </div>
             <p style="font-size:9px;font-weight:700;color:#818cf8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Prospects</p>
             <p style="font-size:22px;font-weight:900;color:var(--text);margin:0 0 1px;line-height:1">${nbPros}</p>
-            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">portefeuille</p>
+            <p style="font-size:9px;color:var(--text2);margin:0;font-weight:600">${nbPros > 1 ? 'prospects' : 'prospect'}</p>
           </div>
         </div>
       </div>
@@ -1465,6 +1481,12 @@ async function quickToggle(id,isPaid,btn){
 // ═══════════════════════════════════════════════
 let repDate=today();
 let repFilter='all'; // all | pending | paid | overdue
+let repSearch='';
+
+function onRepSearch(val){
+  repSearch = val.toLowerCase();
+  loadRepayments();
+}
 
 async function viewRepayments(){
   document.getElementById('view').innerHTML=`
@@ -1495,6 +1517,11 @@ async function viewRepayments(){
         Copier
       </button>
     </div>
+    <!-- Barre de Recherche -->
+    <div class="search-wrap" style="margin-bottom: 12px;">
+      <span class="material-symbols-outlined" style="position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:20px">search</span>
+      <input type="text" id="rep-search-inp" class="search-inp" placeholder="Rechercher un client..." value="${repSearch}" oninput="onRepSearch(this.value)">
+    </div>
     <!-- Liste -->
     <div id="rep-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
@@ -1520,7 +1547,7 @@ async function loadRepayments(){
   try{
     const t=today();
     let q=sb.from('repayments')
-      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,start_date,end_date,clients(full_name,phone1))');
+      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,amount,start_date,end_date,clients(full_name,phone1))');
 
     if(repFilter==='overdue'){
       q=q.lt('scheduled_date',t).eq('is_paid',false).order('scheduled_date',{ascending:false});
@@ -1532,8 +1559,17 @@ async function loadRepayments(){
     const{data,error}=await q;
     if(error)throw error;
     // Exclure les crédits en Souffrance de la liste des impayés
-    const rows=(data||[]).filter(r=>r.credits?.health!=='Souffrance');
-    if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">event_busy</span><p>Aucun remboursement pour cette date</p></div>`;return;}
+    let rows=(data||[]).filter(r=>r.credits?.health!=='Souffrance');
+    
+    // Filtre recherche client-side
+    if(repSearch){
+      rows = rows.filter(r => {
+        const name = getName(r.credits).toLowerCase();
+        return name.includes(repSearch);
+      });
+    }
+
+    if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">event_busy</span><p>${repSearch?'Aucun résultat pour cette recherche':'Aucun remboursement pour cette date'}</p></div>`;return;}
     const paid=rows.filter(r=>r.is_paid).length;
     const pending=rows.length-paid;
     const pct=rows.length?Math.round(paid/rows.length*100):0;
@@ -1591,8 +1627,9 @@ function repRow(r){
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
           <p style="font-size:15px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.25;word-break:break-word;flex:1">${name}</p>
         </div>
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
-          <span class="amt-pwa">${fmt(r.amount)} <small style="font-size:9px;opacity:0.8">FCFA</small></span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span class="amt-pwa" style="font-size:24px;color:#f27f0d;font-weight:1000;letter-spacing:-0.8px">${fmt(r.amount)} <small style="font-size:12px;opacity:1;font-weight:900">FCFA</small></span>
+          ${r.credits?.amount?`<span style="font-size:12px;color:var(--text2);font-weight:700;background:var(--ghost-hover);padding:3px 10px;border-radius:8px;border:1px solid var(--border)">Total: ${fmt(r.credits.amount)}</span>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="badge ${isS?'badge-red':'badge-green'}" style="padding:4px 10px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleCreditHealth('${cid}','${health}')">
@@ -1608,7 +1645,12 @@ function repRow(r){
       </div>
       <!-- Actions Droite -->
       <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
-        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">${repBadge}</div>
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-end">
+          ${repBadge}
+          <button onclick="event.stopPropagation();repMenu(this,'${r.id}','${cid}',${isPaid},'${phone}','${name.replace(/'/g,"\\'")}',${ r.amount||0},'${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${health}','${status}')" style="width:34px;height:34px;border-radius:10px;border:1.5px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Actions">
+            <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1618,11 +1660,7 @@ function repRow(r){
       ${r.credits?.end_date?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);font-size:10px;font-weight:800;color:#f97316"><span class="material-symbols-outlined" style="font-size:12px">flag</span>${fmtDate(r.credits.end_date)}</span>`:''}
     </div>`:''}
 
-    <!-- Zone 1 : Bouton Actions en bas à droite -->
     <div style="display:flex;justify-content:flex-end;margin-top:2px">
-      <button onclick="event.stopPropagation();repMenu(this,'${r.id}','${cid}',${isPaid},'${phone}','${name.replace(/'/g,"\\'")}',${ r.amount||0},'${r.scheduled_date?fmtDate(r.scheduled_date.split('T')[0]):''}','${health}','${status}')" style="width:32px;height:32px;border-radius:10px;border:1.5px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Actions">
-        <span class="material-symbols-outlined" style="font-size:20px">more_horiz</span>
-      </button>
     </div>
   </div>`;
 }
@@ -4699,9 +4737,35 @@ function renderCreditDetail(c) {
 }
 
 
-// ─── LOGOUT ───────────────────────────────────
+// ─── LOGOUT & SÉCURITÉ DE NAVIGATION ───────────────────
+// Empêcher la fermeture accidentelle (système navigateur)
+window.onbeforeunload = function() {
+  return "Voulez-vous vraiment quitter l'application ?";
+};
+
+// Intercepter le bouton "Retour" mobile pour éviter de quitter l'app
+(function secureNav(){
+  history.pushState(null, null, window.location.href);
+  window.onpopstate = function() {
+    openConfirm(
+      'Quitter l\'application ?',
+      'Toutes les modifications non enregistrées seront perdues.',
+      () => {
+        // Si l'utilisateur confirme, on quitte vraiment
+        window.onbeforeunload = null; // Désactiver l'alerte avant
+        window.location.replace('about:blank'); // Ou rediriger vers une page neutre
+      },
+      'Quitter',
+      '#ef4444'
+    );
+    // On remet l'état pour bloquer le prochain "retour"
+    history.pushState(null, null, window.location.href);
+  };
+})();
+
 function confirmLogout(){
   openConfirm('Se déconnecter ?','Vous serez redirigé vers la page de connexion.',async()=>{
+    window.onbeforeunload = null; // Désactiver la protection pour la sortie volontaire
     sessionStorage.removeItem('portefin_session');
     await sb.auth.signOut().catch(()=>{});
     window.location.replace('/mobile/login');
@@ -4709,6 +4773,59 @@ function confirmLogout(){
 }
 
 // Service Worker
+// ─── PULL TO REFRESH ──────────────────────────
+function initPullToRefresh(){
+  const view = document.getElementById('view');
+  const indicator = document.getElementById('pull-refresh-indicator');
+  const icon = document.getElementById('pull-refresh-icon');
+  if(!view || !indicator) return;
+
+  let yStart = 0;
+  let pulling = false;
+  const threshold = 100; // Seuil pour rafraîchir
+
+  view.addEventListener('touchstart', (e)=>{
+    if(view.scrollTop === 0){
+      yStart = e.touches[0].pageY;
+    }
+  }, {passive:true});
+
+  view.addEventListener('touchmove', (e)=>{
+    if(view.scrollTop > 0) return;
+    const yDiff = e.touches[0].pageY - yStart;
+    if(yDiff > 10){
+      pulling = true;
+      const move = Math.min(yDiff * 0.4, 130); // Limite le mouvement
+      indicator.style.transform = `translateX(-50%) translateY(${move}px)`;
+      indicator.style.opacity = Math.min(yDiff / threshold, 1);
+      icon.style.transform = `rotate(${Math.min(yDiff * 1.8, 180)}deg)`;
+      
+      // Feedback si le seuil est atteint
+      if(yDiff > threshold) icon.style.color = '#ef4444';
+      else icon.style.color = 'var(--primary)';
+    }
+  }, {passive:true});
+
+  view.addEventListener('touchend', (e)=>{
+    if(!pulling) return;
+    const yDiff = e.changedTouches[0].pageY - yStart;
+    if(yDiff > threshold){
+      // Refresh current screen
+      if(typeof navTo === 'function'){
+        navTo(currentScreen);
+        toast('Mise à jour en cours...', 'info');
+      }
+    }
+    indicator.style.transform = `translateX(-50%) translateY(-100px)`;
+    indicator.style.opacity = '0';
+    icon.style.transform = `rotate(0deg)`;
+    pulling = false;
+  });
+}
+
+// Initialisation
+if(document.getElementById('view')) initPullToRefresh();
+
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
