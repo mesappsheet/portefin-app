@@ -113,7 +113,11 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 // Détecte si on est servi depuis /maquette-app/ (accès IP) ou depuis la racine (sous-domaine)
-function _mobileHome(){return location.pathname.startsWith('/maquette-app')?'/maquette-app/':'/mobile';}
+function _mobileHome(){
+  if(location.pathname.startsWith('/maquette-app'))return '/maquette-app/';
+  if(location.hostname==='localhost'||location.hostname==='127.0.0.1')return '/index.html';
+  return '/mobile';
+}
 
 (async()=>{
   try{
