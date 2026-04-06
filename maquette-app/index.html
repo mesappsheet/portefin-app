@@ -706,6 +706,8 @@ let currentScreen='dashboard';
 let _fab=null;
 let _credCache={};
 let _prosCache={};
+let _editingCreditId=null;
+let _editingClientId=null;
 
 // ─── AUTH GUARD ───────────────────────────────
 (async()=>{
@@ -1003,6 +1005,8 @@ function closeModal(){
   document.getElementById('modal-overlay').classList.remove('open');
   const bar = document.getElementById('ech-bulk-bar');
   if(bar) bar.style.display = 'none';
+  _editingCreditId = null;
+  _editingClientId = null;
 }
 document.getElementById('modal-overlay').addEventListener('click',function(e){
   if(e.target===this)closeModal();
@@ -2392,65 +2396,35 @@ async function handleEditCreditMobile(cid) {
   const c = _credCache[cid];
   if(!c) return;
   const name = getName(c);
+  const cl = c.clients || {};
 
-  openConfirm(`⚠️ Modification Risquée`, 
-    `Modifier ce dossier supprimera TOUT son historique (échéances, notes, documents). Les données du client seront conservées. Voulez-vous continuer ?`, 
-    async () => {
-      // 1. Préparer le prefill
-      const cl = c.clients || {};
-      const prefill = {
-        name: name,
-        email: cl.email || c.email || '',
-        phone1: cl.phone1 || c.phone || '',
-        phone2: cl.phone2 || '',
-        activity: cl.activity || c.activity || '',
-        address: cl.address || c.address || '',
-        amount: c.amount,
-        type: c.type,
-        start_date: c.start_date,
-        end_date: c.end_date,
-        exclude_automation: c.exclude_automation || cl.exclude_automation || false
-      };
+  // Stocker les IDs pour le mode édition
+  _editingCreditId = cid;
+  _editingClientId = cl.id || c.client_id || null;
 
-      // 2. Ouvrir le formulaire
-      openCreditForm(prefill);
+  const prefill = {
+    name: name,
+    email: cl.email || c.email || '',
+    phone1: cl.phone1 || c.phone || '',
+    phone2: cl.phone2 || '',
+    activity: cl.activity || c.activity || '',
+    address: cl.address || c.address || '',
+    amount: c.amount,
+    type: c.type,
+    start_date: c.start_date,
+    end_date: c.end_date,
+    exclude_automation: c.exclude_automation || cl.exclude_automation || false
+  };
 
-      // 3. Verrouiller et Nettoyer
-      const title = document.getElementById('credit-form-title');
-      const subtitle = document.getElementById('credit-form-subtitle');
-      const body = document.getElementById('credit-form-body');
-      
-      if(title) title.textContent = "NETTOYAGE EN COURS...";
-      if(subtitle) subtitle.textContent = "⌛ PATIENTEZ";
-      if(body) {
-        body.style.opacity = "0.3";
-        body.style.pointerEvents = "none";
-        body.style.filter = "grayscale(100%)";
-      }
+  openCreditForm(prefill);
 
-      try {
-        // Suppression séquentielle (idempotente)
-        await sb.from('repayments').delete().eq('credit_id', cid);
-        await sb.from('credit_notes').delete().eq('credit_id', cid);
-        await sb.from('credit_documents').delete().eq('credit_id', cid);
-        await sb.from('credits').delete().eq('id', cid);
-
-        toast('Anciennes données purgées. Prêt pour modification.','info');
-        
-        // Déverrouiller
-        if(title) title.textContent = "Ouverture de Dossier Client";
-        if(subtitle) subtitle.textContent = "Modification en cours";
-        if(body) {
-          body.style.opacity = "1";
-          body.style.pointerEvents = "auto";
-          body.style.filter = "none";
-        }
-      } catch(e) {
-        toast('Erreur lors du nettoyage : ' + e.message, 'err');
-        closeModal();
-      }
-    }, "Oui, continuer", "#ef4444"
-  );
+  // Indiquer visuellement le mode édition
+  setTimeout(()=>{
+    const title = document.getElementById('credit-form-title');
+    const subtitle = document.getElementById('credit-form-subtitle');
+    if(title) title.textContent = 'Modifier le dossier';
+    if(subtitle) subtitle.textContent = 'Modification';
+  }, 50);
 }
 
 async function saveCredit(){
@@ -2474,6 +2448,66 @@ async function saveCredit(){
   if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite"></div> Enregistrement…';}
 
   try{
+    // MODE ÉDITION : UPDATE au lieu de delete+recreate
+    if(_editingCreditId){
+      const creditId = _editingCreditId;
+      const clientId = _editingClientId;
+
+      // Mettre à jour le client
+      if(clientId){
+        await sb.from('clients').update({
+          full_name:name, email, phone1, phone2, activity, address,
+          total_portefeuille:amount, exclude_automation:excludeAuto
+        }).eq('id', clientId);
+      }
+
+      // Mettre à jour le crédit
+      const {error:crErr} = await sb.from('credits').update({
+        client_name:name, phone:phone1, email, activity, address,
+        amount, type, start_date:startVal, end_date:endVal,
+        exclude_automation:excludeAuto
+      }).eq('id', creditId);
+      if(crErr) throw crErr;
+
+      // Régénérer l'échéancier (supprimer non-payés + recréer)
+      await sb.from('repayments').delete().eq('credit_id', creditId).eq('is_paid', false);
+
+      // Générer nouvelles échéances
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      let repayments = [];
+      let monthCount = 1;
+      const targetDay = start.getDate();
+      const startMonth = start.getMonth();
+      const startYear = start.getFullYear();
+      while(true){
+        let currentDateRef = new Date(startYear, startMonth + monthCount, targetDay);
+        if(currentDateRef.getDate() !== targetDay) currentDateRef.setDate(0);
+        if(currentDateRef > new Date(end.getTime() + 15*24*60*60*1000)) break;
+        let adjustedDate = skipWeekend(currentDateRef);
+        repayments.push({
+          credit_id: creditId,
+          installment_number: monthCount,
+          scheduled_date: toLocalDateStr(adjustedDate),
+          amount: null, status: 'En attente', is_paid: false
+        });
+        if(monthCount >= 120 || currentDateRef >= end) break;
+        monthCount++;
+      }
+      if(repayments.length){
+        const {error:rErr} = await sb.from('repayments').insert(repayments);
+        if(rErr) throw rErr;
+      }
+
+      _editingCreditId = null;
+      _editingClientId = null;
+      toast(`Dossier modifié — ${repayments.length} échéances régénérées ✓`, 'ok');
+      closeModal();
+      loadCredits();
+      return;
+    }
+
+    // MODE CRÉATION : logique existante
     // 1. Créer ou trouver le client
     let q=sb.from('clients').select('id').eq('full_name',name);
     if(phone1) q=q.eq('phone1',phone1);
@@ -2495,7 +2529,7 @@ async function saveCredit(){
       }).eq('id',clientId);
     }
 
-    // 2. Créer le crédit (pas de onConflict qui plante sur les nulls)
+    // 2. Créer le crédit
     const {data: credit, error:crErr} = await sb.from('credits').insert([{
       client_id:clientId,
       client_name:name,phone:phone1,email,activity,address,amount,type,
