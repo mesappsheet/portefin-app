@@ -2085,8 +2085,8 @@ async function viewEcheancier(creditId,clientName){
 
               <div style="display:flex;gap:6px;align-items:center">
                 ${!r.is_paid ? `
-                  <button onclick="reportRep('${r.id}','${creditId}','${clientName.replace(/'/g,"\\'")}','${r.scheduled_date}')" style="background:rgba(255,255,255,.05);border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer">
-                    <span class="material-symbols-outlined" style="font-size:18px;color:rgba(255,255,255,.4)">event_repeat</span>
+                  <button onclick="event.stopPropagation();reportRep('${r.id}','${creditId}','${clientName.replace(/'/g,"\\'")}','${r.scheduled_date}')" style="display:flex;align-items:center;gap:4px;padding:7px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+                    <span class="material-symbols-outlined" style="font-size:14px">calendar_month</span>Reporter
                   </button>
                 ` : ''}
                 
