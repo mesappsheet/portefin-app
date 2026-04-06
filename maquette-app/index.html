@@ -2499,11 +2499,26 @@ async function saveCredit(){
         if(rErr) throw rErr;
       }
 
+      // Vérification : relire le crédit depuis Supabase
+      const {data:verif, error:vErr} = await sb.from('credits').select('id,client_name,amount').eq('id',creditId).single();
+      if(vErr || !verif) throw new Error('Impossible de vérifier l\'enregistrement en base.');
+
       _editingCreditId = null;
       _editingClientId = null;
-      toast(`Dossier modifié — ${repayments.length} échéances régénérées ✓`, 'ok');
+
+      // Vider le formulaire
+      ['credit-name','credit-email','credit-phone1','credit-phone2','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+
+      // Messagebox de confirmation
       closeModal();
       loadCredits();
+      openConfirm(
+        `✅ Modification enregistrée`,
+        `Dossier "${verif.client_name}" mis à jour avec succès.\n${repayments.length} échéances régénérées.`,
+        ()=>{}, 'OK', '#22c55e'
+      );
       return;
     }
 
@@ -2583,9 +2598,23 @@ async function saveCredit(){
       if(rErr)throw rErr;
     }
 
-    toast(`Dossier créé — ${repayments.length} échéances générées ✓`,'ok');
+    // Vérification : relire le crédit depuis Supabase
+    const {data:verif, error:vErr} = await sb.from('credits').select('id,client_name,amount').eq('id',credit.id).single();
+    if(vErr || !verif) throw new Error('Impossible de vérifier l\'enregistrement en base.');
+
+    // Vider le formulaire
+    ['credit-name','credit-email','credit-phone1','credit-phone2','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+
+    // Messagebox de confirmation
     closeModal();
     loadCredits();
+    openConfirm(
+      `✅ Dossier enregistré`,
+      `"${verif.client_name}" ajouté avec succès.\n${repayments.length} échéances générées.`,
+      ()=>{}, 'OK', '#22c55e'
+    );
   }catch(e){
     toast('Erreur : '+(e.message||'inconnue'),'err');
     if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined filled" style="font-size:18px">save</span> Enregistrer le dossier';}
