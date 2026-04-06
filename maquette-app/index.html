@@ -124,14 +124,22 @@ body { scrollbar-width: none; -ms-overflow-style: none; }
 
 #view {
   flex: 1; 
-  min-height: 0; /* Critical for inner scrolling */
-  overflow-y: auto; 
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  overflow-y: scroll; /* Forcer pour garder la scrollbar */
   background: var(--bg);
   position: relative;
   scroll-behavior: smooth;
 }
+/* Scrollbar Ultra-Large Mobile */
+#view::-webkit-scrollbar { width: 18px !important; display: block !important; }
+#view::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); border-left: 1px solid var(--border); }
+#view::-webkit-scrollbar-thumb { 
+  background: #94a3b8; 
+  border-radius: 10px;
+  border: 4px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+#view { scrollbar-width: 18px; scrollbar-color: #94a3b8 rgba(0,0,0,0.02); }
 
 /* Navigation Items */
 .nav-item {
@@ -762,20 +770,24 @@ function showMenu(btn,items){
   ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;background:rgba(0,0,0,.45);animation:fadeIn .2s';
   
   const sheet=document.createElement('div');
-  sheet.style.cssText='position:relative;background:var(--card);border-radius:24px 24px 0 0;width:100%;max-height:85vh;animation:slideUp .25s cubic-bezier(.4,0,.2,1);overflow:hidden';
+  sheet.style.cssText='position:relative;background:var(--card);border-radius:28px 28px 0 0;width:100%;max-height:85vh;animation:slideUp .25s;display:flex;flex-direction:column;overflow:hidden';
 
   sheet.innerHTML=`
-    <style>
-      #ctx-scroll-container::-webkit-scrollbar{width:4px}
-      #ctx-scroll-container::-webkit-scrollbar-track{background:transparent}
-      #ctx-scroll-container::-webkit-scrollbar-thumb{background:rgba(128,128,128,.35);border-radius:99px}
-      #ctx-scroll-container::-webkit-scrollbar-thumb:active{background:rgba(128,128,128,.6)}
-    </style>
-    <div id="ctx-scroll-container" style="overflow-y:auto;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 16px);scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.35) transparent">
-      <div style="width:40px;height:4px;background:rgba(128,128,128,.25);border-radius:4px;margin:14px auto 10px"></div>
+    <div style="width:40px;height:4px;background:rgba(128,128,128,.2);border-radius:2px;margin:12px auto 8px;flex-shrink:0"></div>
+    <div style="display:flex;flex:1;min-height:0;position:relative">
+      <!-- Zone des actions (Scrollable) -->
+      <div id="ctx-scroll-container" style="flex:1; overflow-y:auto; padding:0 0 20px; scroll-behavior: auto; -webkit-overflow-scrolling: touch">
+      </div>
+      
+      <!-- Pilote Tactile (Grip Zone - Interactive) -->
+      <div id="ctx-grip-zone" style="width:32px; background:#cbd5e1; border-left:1px solid rgba(0,0,0,0.1); display:flex; flex-direction:column; align-items:center; position:relative; flex-shrink:0; cursor:pointer; overflow:hidden">
+        <div id="ctx-grip-cursor" style="position:absolute; width:10px; height:60px; background:white; border-radius:10px; border:1px solid rgba(0,0,0,0.1); top:0; transition: transform 0.05s ease-out; box-shadow:0 2px 6px rgba(0,0,0,0.1)"></div>
+        <div style="writing-mode:vertical-rl; font-size:9px; font-weight:900; color:#64748b; margin-top:80px; letter-spacing:3px; opacity:0.5; text-transform:uppercase; pointer-events:none">SCROLL</div>
+      </div>
     </div>
-    <button onclick="closeCtxMenu()" style="position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(128,128,128,0.12);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10">
-      <span class="material-symbols-outlined" style="font-size:18px">close</span>
+
+    <button onclick="closeCtxMenu()" style="position:absolute;top:10px;left:16px;width:34px;height:34px;border-radius:50%;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:none;color:black;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20">
+      <span class="material-symbols-outlined" style="font-size:20px;font-weight:bold">close</span>
     </button>
   `;
   
@@ -795,6 +807,30 @@ function showMenu(btn,items){
     container.appendChild(el);
   });
   
+  const grip = sheet.querySelector('#ctx-grip-zone');
+  const cursor = sheet.querySelector('#ctx-grip-cursor');
+  
+  container.onscroll = () => {
+    const scrollMax = container.scrollHeight - container.clientHeight;
+    if(scrollMax <= 0) return;
+    const ratio = container.scrollTop / scrollMax;
+    const gripHeight = grip.clientHeight - cursor.clientHeight;
+    cursor.style.transform = `translateY(${ratio * gripHeight}px)`;
+  };
+  
+  const handleGrip = (e) => {
+    e.preventDefault();
+    const touch = e.touches ? e.touches[0] : e;
+    const rect = grip.getBoundingClientRect();
+    const y = touch.clientY - rect.top;
+    const ratio = Math.max(0, Math.min(1, (y - cursor.clientHeight/2) / (grip.clientHeight - cursor.clientHeight)));
+    const scrollMax = container.scrollHeight - container.clientHeight;
+    container.scrollTop = ratio * scrollMax;
+  };
+  
+  grip.ontouchstart = handleGrip;
+  grip.ontouchmove = handleGrip;
+
   ov.appendChild(sheet);
   document.body.appendChild(ov);
   ov.addEventListener('touchend',(e)=>{if(e.target===ov)closeCtxMenu();},{passive:true});
@@ -2038,6 +2074,7 @@ async function viewEcheancier(creditId,clientName){
                 <div style="display:flex;align-items:center;gap:6px">
                   <span style="font-size:10px;font-weight:900;color:rgba(255,255,255,.3);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px">N°${String(r.installment_number||'—').padStart(2,'0')}</span>
                   <p style="font-size:13px;font-weight:700;margin:0">${fmtDate(r.scheduled_date)}</p>
+                  ${r.is_reported ? '<span style="font-size:9px;font-weight:800;color:#f27f0d;background:rgba(242,127,13,.12);border:1px solid rgba(242,127,13,.3);padding:1px 5px;border-radius:4px">REPORTÉ</span>' : ''}
                   ${overdue ? '<span style="width:6px;height:6px;background:#ef4444;border-radius:50%;box-shadow:0 0 10px #ef4444"></span>' : ''}
                 </div>
                 <p style="font-size:12px;color:rgba(255,255,255,0.5);margin:4px 0 0;font-weight:500">
@@ -2545,27 +2582,37 @@ let prosDateTo='';
 
 async function viewProspects(){
   document.getElementById('view').innerHTML=`
-  <div style="padding-top:12px;padding-bottom:80px">
-    <div style="display:flex;align-items:center;gap:8px;padding:0 16px;margin-bottom:12px">
-      <div class="search-wrap" style="flex:1;margin:0">
-        <span class="material-symbols-outlined">search</span>
-        <input class="search-inp" type="search" placeholder="Rechercher un prospect…" value="${prosSearch}"
-          oninput="prosSearch=this.value;loadProspects()" style="padding-right:12px"/>
+  <div style="padding-top:16px;padding-bottom:80px">
+    
+    <!-- TOOLBAR ORDONNÉE (Design Premium) -->
+    <div style="display:flex; flex-direction:column; gap:12px; padding:0 16px; margin-bottom:16px">
+      <div style="display:flex; align-items:center; gap:8px; height:44px">
+        <!-- Barre de Recherche -->
+        <div style="flex:1; position:relative; height:100%">
+          <span class="material-symbols-outlined" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:20px; color:var(--text3); pointer-events:none">search</span>
+          <input type="search" placeholder="Rechercher..." value="${prosSearch}" oninput="prosSearch=this.value;loadProspects()" 
+            style="width:100%; height:100%; border:1px solid var(--input-border); background:var(--input-bg); border-radius:12px; padding:0 12px 0 40px; font-size:14px; font-family:inherit; color:var(--text); outline:none; transition:border-color 0.2s">
+        </div>
+        
+        <!-- Sélecteur d'État -->
+        <div style="position:relative; width:110px; height:100%">
+          <select class="m-input" style="width:100%; height:100%; padding:0 30px 0 12px; appearance:none; background:${prosFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1.5px solid ${prosFilter==='all'?'var(--border)':'#f27f0d'}; color:${prosFilter==='all'?'var(--text2)':'#f27f0d'}; border-radius:12px; font-weight:700; font-size:13px; margin:0" onchange="setProsFilter(this.value)">
+            <option value="all" ${prosFilter==='all'?'selected':''}>Tous</option>
+            <option value="Nouveau" ${prosFilter==='Nouveau'?'selected':''}>Nouveaux</option>
+            <option value="À relancer" ${prosFilter==='À relancer'?'selected':''}>Relances</option>
+            <option value="Converti" ${prosFilter==='Converti'?'selected':''}>Assignés</option>
+          </select>
+          <span class="material-symbols-outlined" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:18px; pointer-events:none; color:var(--text3)">expand_more</span>
+        </div>
+
+        <!-- Bouton Filtres Avancés -->
+        <button onclick="openProsFilterSheet()" style="width:44px; height:44px; border-radius:12px; border:1px solid ${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--input-border)'}; background:${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,0.1)':'var(--input-bg)'}; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; padding:0">
+          <span class="material-symbols-outlined" style="font-size:22px; color:${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--text3)'}">tune</span>
+          ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute; top:8px; right:8px; width:8px; height:8px; border-radius:50%; background:#f27f0d; border:2px solid var(--bg)"></span>':''}
+        </button>
       </div>
-      <div style="position:relative;flex-shrink:0">
-        <select class="m-input" style="padding:10px 32px 10px 14px; appearance:none; background:${prosFilter==='all'?'var(--input-bg)':'rgba(242,127,13,0.1)'}; border:1px solid ${prosFilter==='all'?'var(--input-border)':'rgba(242,127,13,0.5)'}; color:${prosFilter==='all'?'var(--text3)':'#f27f0d'}; border-radius:10px; font-weight:600; font-size:13px;" onchange="setProsFilter(this.value)">
-          <option value="all" ${prosFilter==='all'?'selected':''}>Tous</option>
-          <option value="Nouveau" ${prosFilter==='Nouveau'?'selected':''}>Nouveaux</option>
-          <option value="À relancer" ${prosFilter==='À relancer'?'selected':''}>À relancer</option>
-          <option value="Converti" ${prosFilter==='Converti'?'selected':''}>Convertis</option>
-        </select>
-        <span class="material-symbols-outlined" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;color:${prosFilter==='all'?'var(--text3)':'#f27f0d'}">filter_list</span>
-      </div>
-      <button onclick="openProsFilterSheet()" style="width:40px;height:40px;border-radius:10px;border:1.5px solid ${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.5)':'var(--input-border)'};background:${(prosActFilter||prosDateFrom||prosDateTo)?'rgba(242,127,13,.12)':'var(--input-bg)'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative">
-        <span class="material-symbols-outlined" style="font-size:20px;color:${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--text3)'}">tune</span>
-        ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#f27f0d;border:2px solid var(--bg)"></span>':''}
-      </button>
     </div>
+
     <div id="pros-list"><div class="loader"><div class="spin"></div> Chargement…</div></div>
   </div>`;
   showFab(()=>openProspectForm());
@@ -3405,34 +3452,69 @@ async function toggleCreditStatus(id, current){
 function reportRep(repId, creditId, clientName, currentDate){
   openModal(`
     <div style="padding:0 20px 24px">
-      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">Reporter l'échéance</p>
-      <p style="font-size:12px;color:var(--text2);margin:0 0 16px">Date actuelle : <strong>${fmtDate(currentDate)}</strong></p>
+      <p class="sheet-title" style="padding:0 0 8px;margin-bottom:4px">Reporter l'échéance</p>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--ghost-hover);border-radius:10px;padding:10px 14px;margin-bottom:16px">
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--text2)">event</span>
+        <div>
+          <p style="font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:0">Date actuelle</p>
+          <p style="font-size:13px;font-weight:800;color:var(--text);margin:0">${fmtDate(currentDate)}</p>
+        </div>
+      </div>
       <div style="margin-bottom:14px">
         <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:8px">Nouvelle date <span style="color:#f27f0d">*</span></label>
-        <input id="report-new-date" class="m-input" type="date" value="${today()}"/>
+        <input id="report-new-date" class="m-input" type="date" value="${currentDate}" min="${today()}" onchange="checkReportWeekend(this)"/>
+        <p id="report-weekend-warn" style="display:none;font-size:11px;font-weight:700;color:#d97706;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:8px 10px;margin-top:8px"></p>
       </div>
       <div style="margin-bottom:20px">
         <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:8px">Motif du report</label>
-        <input id="report-reason-inp" class="m-input" type="text" placeholder="Ex: Client absent, problème financier…"/>
+        <textarea id="report-reason-inp" class="m-input" rows="3" placeholder="Ex: Client absent, jour férié…" style="resize:none;line-height:1.5"></textarea>
+      </div>
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
+        <span class="material-symbols-outlined" style="font-size:16px;color:#60a5fa;flex-shrink:0;margin-top:1px">info</span>
+        <p style="font-size:11px;color:var(--text2);margin:0;line-height:1.5">Les dates tombant un <strong>samedi ou dimanche</strong> sont automatiquement décalées au lundi suivant.</p>
       </div>
       <div style="display:flex;gap:10px">
         <button class="btn-ghost" onclick="viewEcheancier('${creditId}','${clientName}')" style="flex:1">Annuler</button>
         <button class="btn-primary" onclick="confirmReport('${repId}','${creditId}','${clientName}')" style="flex:2">
-          <span class="material-symbols-outlined filled" style="font-size:18px">event_repeat</span> Confirmer le report
+          <span class="material-symbols-outlined filled" style="font-size:18px">event_available</span> Confirmer
         </button>
       </div>
     </div>`);
 }
 
+function checkReportWeekend(input){
+  const val=input.value;
+  if(!val)return;
+  const d=new Date(val+'T12:00:00');
+  const adj=skipWeekend(new Date(d));
+  const adjStr=toLocalDateStr(adj);
+  const warn=document.getElementById('report-weekend-warn');
+  if(!warn)return;
+  if(adjStr!==val){
+    warn.textContent=`⚠ Weekend détecté — sera automatiquement reporté au ${adj.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'})}`;
+    warn.style.display='block';
+  } else {
+    warn.style.display='none';
+  }
+}
+
 async function confirmReport(repId, creditId, clientName){
-  const newDate=document.getElementById('report-new-date').value;
+  const rawDate=document.getElementById('report-new-date').value;
   const reason=(document.getElementById('report-reason-inp').value||'').trim()||null;
-  if(!newDate){toast('Date requise','err');return;}
+  if(!rawDate){toast('Date requise','err');return;}
+  const adjusted=skipWeekend(new Date(rawDate+'T12:00:00'));
+  const newDate=toLocalDateStr(adjusted);
   const{error}=await sb.from('repayments').update({
     scheduled_date:newDate, is_reported:true, report_reason:reason
   }).eq('id',repId);
   if(error)toast('Erreur lors du report','err');
-  else{toast('Échéance reportée ✓','ok');viewEcheancier(creditId,clientName);}
+  else{
+    const msg=newDate!==rawDate
+      ?`Reporté au ${adjusted.toLocaleDateString('fr-FR')} (lundi suivant)`
+      :`Échéance reportée au ${adjusted.toLocaleDateString('fr-FR')}`;
+    toast(msg,'ok');
+    viewEcheancier(creditId,clientName);
+  }
 }
 
 // ═══════════════════════════════════════════════
