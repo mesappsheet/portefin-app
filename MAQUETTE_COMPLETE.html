@@ -6302,6 +6302,9 @@ Suivant
                 .update({ is_paid: true, actual_payment_date: new Date().toISOString().split('T')[0] })
                 .eq('id', repId);
             if (error) { alert('Erreur : ' + error.message); btn.innerHTML = orig; btn.disabled = false; return; }
+            // Vérifier auto-soldé si toutes les échéances sont payées
+            const { data: rep } = await _supabase.from('repayments').select('credit_id').eq('id', repId).single();
+            if (rep?.credit_id) await checkCreditSettlePC(rep.credit_id);
             loadScreen(currentScreen);
         }
 
@@ -6954,6 +6957,24 @@ Suivant
 
             const _unpaidFC = await getLastUnpaidMap(data);
             const _nextUpFC = await getNextUpcomingMap(data);
+
+            // ── Auto-soldé : détecter les crédits dont toutes les échéances sont payées
+            const nonSolde = data.filter(c => !['Soldé','SOLDÉ','soldé'].includes(c.status));
+            if (nonSolde.length > 0) {
+                const nsIds = nonSolde.map(c => c.id);
+                const { data: allReps } = await _supabase.from('repayments').select('credit_id,is_paid').in('credit_id', nsIds);
+                const repMap = {};
+                (allReps || []).forEach(r => {
+                    if (!repMap[r.credit_id]) repMap[r.credit_id] = { total: 0, unpaid: 0 };
+                    repMap[r.credit_id].total++;
+                    if (!r.is_paid) repMap[r.credit_id].unpaid++;
+                });
+                const toSettle = nonSolde.filter(c => repMap[c.id] && repMap[c.id].total > 0 && repMap[c.id].unpaid === 0);
+                if (toSettle.length > 0) {
+                    await _supabase.from('credits').update({ status: 'Soldé' }).in('id', toSettle.map(c => c.id));
+                    toSettle.forEach(c => { c.status = 'Soldé'; });
+                }
+            }
 
             container.innerHTML = data.map(credit => {
                 const clientName = (credit.clients && credit.clients.full_name) || credit.client_name || 'Prospect Anonyme';
