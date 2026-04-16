@@ -1,6 +1,15 @@
 [build]
   publish = "."
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "zisi"
+
+[[redirects]]
+  from = "/"
+  to = "/login.html"
+  status = 302
+
 [[redirects]]
   from = "/mobile"
   to = "/index.html"
