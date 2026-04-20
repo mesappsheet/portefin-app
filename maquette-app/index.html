@@ -2892,11 +2892,14 @@ async function saveCredit(){
       });
 
       closeModal();
-      loadCredits();
+      await loadCredits();
       const msg = datesChanged
-        ? `Dossier "${verif.client_name}" mis à jour.\n${nbNew} nouvelle(s) échéance(s) générée(s). Paiements existants conservés.`
-        : `Dossier "${verif.client_name}" mis à jour.\nAucune date modifiée — échéancier conservé intégralement.`;
-      openConfirm('✅ Modification enregistrée', msg, ()=>{}, 'OK', '#2563eb');
+        ? `Dossier "${verif.client_name}" mis à jour. ${nbNew} nouvelle(s) échéance(s) générée(s). Paiements existants conservés.`
+        : `Dossier "${verif.client_name}" mis à jour. Échéancier conservé intégralement.`;
+      openConfirm('✅ Modification enregistrée', msg,
+        ()=>{ openCreditDetail(creditId); },
+        'Voir le dossier', '#2563eb'
+      );
       return;
     }
 
