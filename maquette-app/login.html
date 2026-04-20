@@ -118,7 +118,7 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 // Détecte si on est servi depuis /maquette-app/ (accès IP) ou depuis la racine (sous-domaine)
 function _mobileHome(){
   if(location.pathname.startsWith('/maquette-app'))return '/maquette-app/';
-  if(location.hostname==='localhost'||location.hostname==='127.0.0.1')return '/index.html';
+  if(location.hostname==='localhost'||location.hostname==='127.0.0.1')return '/maquette-app/index.html';
   return '/mobile';
 }
 

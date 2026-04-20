@@ -3284,7 +3284,7 @@
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Créer une tâche</span>
         </button>
         <div class="border-t border-slate-100 dark:border-slate-800"></div>
-        <button id="btn-edit-credit" onclick="handleEditCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+        <button id="btn-edit-credit" onclick="handleEditCreditChoice(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
           <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
         </button>
@@ -5494,6 +5494,10 @@ Suivant
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             document.body.style.overflow = '';
+            // Réinitialiser les modes d'édition
+            window.editingCreditId = null;
+            window.editingClientId = null;
+            window._editSnapshot   = null;
         }
 
         // ═══════════════════════════════════════════════════════
@@ -7071,7 +7075,7 @@ Suivant
                         <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Notes / Obs.</span>
                     </button>
                     <div class="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2"></div>
-                    <button onclick="event.stopPropagation(); currentCredit=${JSON.stringify(credit).replace(/"/g, '&quot;')}; handleEditCredit(); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors text-left group">
+                    <button onclick="event.stopPropagation(); currentCredit=${JSON.stringify(credit).replace(/"/g, '&quot;')}; handleEditCreditChoice(); document.getElementById('row-context-menu').remove();" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors text-left group">
                         <span class="material-symbols-outlined text-slate-500 text-lg opacity-60 group-hover:opacity-100">edit</span>
                         <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Modifier</span>
                     </button>
@@ -9668,36 +9672,137 @@ Suivant
             }
         }
         async function handleSaveCredit() {
-            const name = document.getElementById('credit-name').value;
-            const email = document.getElementById('credit-email').value;
-            const phone1 = document.getElementById('credit-phone1').value;
-            const phone2 = document.getElementById('credit-phone2').value;
+            const name = document.getElementById('credit-name').value.trim();
+            const email = document.getElementById('credit-email').value.trim();
+            const phone1 = document.getElementById('credit-phone1').value.trim();
+            const phone2 = document.getElementById('credit-phone2').value.trim();
             const amount = document.getElementById('credit-amount').value;
             const type = document.getElementById('credit-type').value;
             const startDate = document.getElementById('credit-start-date').value;
             const endDate = document.getElementById('credit-end-date').value;
-            const activity = document.getElementById('credit-activity').value;
-            const address = document.getElementById('credit-address').value;
+            const activity = document.getElementById('credit-activity').value.trim();
+            const address = document.getElementById('credit-address').value.trim();
             const excludeAuto = document.getElementById('credit-exclude-automation')?.checked || false;
 
-            // Validation
+            // Validation commune
             let errors = [];
             const fields = [
                 { id: 'credit-name', label: "Nom complet" },
                 { id: 'credit-start-date', label: "Date début" },
                 { id: 'credit-end-date', label: "Date fin" }
             ];
-
             fields.forEach(f => {
                 const el = document.getElementById(f.id);
-                if (!el.value) {
+                if (!el.value.trim()) {
                     errors.push(f.label);
                     el.classList.add('ring-2', 'ring-red-500');
                 } else {
                     el.classList.remove('ring-2', 'ring-red-500');
                 }
             });
+            if (errors.length > 0) {
+                showNotification("Champs requis : " + errors.join(", "), "error");
+                return;
+            }
 
+            // ══════════════════════════════════════════════════
+            // MODE UPDATE (Option 2 — Modifier les informations)
+            // ══════════════════════════════════════════════════
+            if (window.editingCreditId) {
+                const creditId  = window.editingCreditId;
+                const clientId  = window.editingClientId;
+                const oldSnap   = window._editSnapshot || {};
+                const oldStart  = oldSnap.start_date || '';
+                const oldEnd    = oldSnap.end_date   || '';
+                const datesChanged = (startDate !== oldStart || endDate !== oldEnd);
+
+                try {
+                    // 1. Mettre à jour le client si clientId existe
+                    if (clientId) {
+                        const { error: cErr } = await _supabase.from('clients').update({
+                            full_name: name,
+                            email: email || null,
+                            phone1: phone1,
+                            phone2: phone2 || null,
+                            activity: activity || null,
+                            address: address || null,
+                            exclude_automation: excludeAuto
+                        }).eq('id', clientId);
+                        if (cErr) throw new Error('Client : ' + cErr.message);
+                    }
+
+                    // 2. Mettre à jour le crédit
+                    const { data: updatedCredit, error: crErr } = await _supabase.from('credits').update({
+                        client_name: name,
+                        amount: amount || null,
+                        start_date: startDate,
+                        end_date: endDate,
+                        type: type,
+                        phone: phone1,
+                        email: email || null,
+                        activity: activity || null,
+                        address: address || null,
+                        exclude_automation: excludeAuto
+                    }).eq('id', creditId).select('*, clients(*)').single();
+                    if (crErr) throw new Error('Crédit : ' + crErr.message);
+
+                    // 3. Si les dates ont changé → supprimer UNIQUEMENT les échéances non payées
+                    //    et regénérer l'échéancier (les paiements déjà effectués sont conservés)
+                    if (datesChanged) {
+                        // Supprimer UNIQUEMENT les échéances non payées (is_paid = false ou null)
+                        // On filtre explicitement sur is_paid != true pour couvrir les valeurs NULL
+                        const { error: delErr } = await _supabase.from('repayments')
+                            .delete()
+                            .eq('credit_id', creditId)
+                            .neq('is_paid', true);
+                        if (delErr) throw new Error('Suppression échéances : ' + delErr.message);
+
+                        // Regénérer les nouvelles échéances non payées
+                        await _generateRepaymentsUpdateMode(updatedCredit);
+                    }
+
+                    // 4. Vérification : relire depuis Supabase pour confirmer
+                    const { data: verif, error: vErr } = await _supabase
+                        .from('credits').select('*, clients(*)').eq('id', creditId).single();
+                    if (vErr) throw new Error('Vérification : ' + vErr.message);
+
+                    // 5. Réinitialiser et notifier
+                    window.editingCreditId  = null;
+                    window.editingClientId  = null;
+                    window._editSnapshot    = null;
+                    currentCredit = verif;
+
+                    closeModal();
+                    showNotification('Dossier mis à jour avec succès !', 'success');
+                    showCreditDetails(currentCredit);
+                    fetchCredits();
+                    if (currentScreen === 'dashboard_main') fetchDashboardStats();
+
+                    // Bannière verte dans le panneau détail
+                    const detPanel = document.getElementById('credit-detail-panel');
+                    if (detPanel) {
+                        const banner = document.createElement('div');
+                        banner.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:100;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:12px 24px;border-radius:14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(37,99,235,.4);font-weight:800;font-size:13px;white-space:nowrap;transition:opacity .4s ease';
+                        banner.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">check_circle</span> Modification enregistrée — données conservées';
+                        detPanel.style.position = 'relative';
+                        detPanel.prepend(banner);
+                        setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => banner.remove(), 400); }, 3500);
+                    }
+                    return;
+
+                } catch (err) {
+                    showNotification('Erreur lors de la modification : ' + err.message, 'error');
+                    // Réinitialiser le mode edit en cas d'erreur pour éviter un état corrompu
+                    window.editingCreditId = null;
+                    window.editingClientId = null;
+                    window._editSnapshot   = null;
+                    return;
+                }
+            }
+
+            // ══════════════════════════════════════════════════
+            // MODE CRÉATION (comportement original inchangé)
+            // ══════════════════════════════════════════════════
             if (errors.length > 0) {
                 alert("Veuillez remplir les champs obligatoires : " + errors.join(", "));
                 return;
@@ -9744,38 +9849,101 @@ Suivant
                 .select();
 
             if (crError) {
-                alert("Erreur crédit : " + crError.message);
+                await openConfirm({
+                    title: '❌ Erreur enregistrement',
+                    message: crError.message,
+                    icon: 'error',
+                    type: 'danger'
+                });
             } else {
-                showNotification("Dossier de crédit enregistré !", "success");
                 closeModal();
 
                 // 3. AUTO-GENERATE SCHEDULE
                 if (createdCredits && createdCredits.length > 0) {
                     const credit = createdCredits[0];
-
-                    // RE-CLEAN schedule if already exists for this credit (in case of update)
                     await _supabase.from('repayments').delete().eq('credit_id', credit.id);
-
                     generateRepaymentsSilently(credit);
 
-                    // Mettre à jour le panneau détail immédiatement
+                    // Naviguer vers le dossier enregistré
                     currentCredit = { ...credit, clients: client };
+                    switchModule('credits');
                     showCreditDetails(currentCredit);
-                    // Banner de confirmation sur le panneau détail
-                    const detPanel = document.getElementById('credit-detail-panel');
-                    if (detPanel) {
-                        const banner = document.createElement('div');
-                        banner.id = 'pc-save-banner';
-                        banner.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:100;background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;padding:12px 24px;border-radius:14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(34,197,94,.4);font-weight:800;font-size:13px;white-space:nowrap;transition:opacity .4s ease';
-                        banner.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">check_circle</span> Modification enregistrée avec succès';
-                        detPanel.style.position = 'relative';
-                        detPanel.prepend(banner);
-                        setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => banner.remove(), 400); }, 3500);
+                    fetchCredits();
+                }
+                if (currentScreen === 'dashboard_main') fetchDashboardStats();
+
+                // Msgbox de confirmation
+                await openConfirm({
+                    title: '✅ Dossier enregistré',
+                    message: `"${name}" a été ajouté avec succès et l'échéancier a été généré automatiquement.`,
+                    icon: 'check_circle'
+                });
+            }
+        }
+
+        // Regénère les échéances non payées après une modification Option 2
+        // Tient compte des échéances déjà payées pour éviter les doublons
+        async function _generateRepaymentsUpdateMode(credit) {
+            if (!credit || !credit.id) return;
+
+            // Récupérer les échéances déjà payées pour connaître les numéros utilisés
+            const { data: paid } = await _supabase.from('repayments')
+                .select('installment_number, scheduled_date')
+                .eq('credit_id', credit.id)
+                .eq('is_paid', true);
+
+            const paidNumbers = new Set((paid || []).map(r => r.installment_number));
+            const lastPaidDate = paid && paid.length > 0
+                ? paid.reduce((max, r) => r.scheduled_date > max ? r.scheduled_date : max, '')
+                : '';
+
+            const start = new Date(credit.start_date);
+            const end   = new Date(credit.end_date);
+            if (isNaN(start) || isNaN(end)) return;
+
+            const targetDay  = start.getDate();
+            const startMonth = start.getMonth();
+            const startYear  = start.getFullYear();
+
+            const toSkip = (date) => {
+                const d = date.getDay();
+                if (d === 6) date.setDate(date.getDate() + 2);
+                else if (d === 0) date.setDate(date.getDate() + 1);
+                return date;
+            };
+
+            let repayments = [];
+            let monthCount = 1;
+
+            while (true) {
+                let ref = new Date(startYear, startMonth + monthCount, targetDay);
+                if (ref.getDate() !== targetDay) ref.setDate(0);
+                if (ref > new Date(end.getTime() + 15 * 86400000)) break;
+
+                const adj = toSkip(new Date(ref));
+                const adjStr = toLocalDateStr(adj);
+
+                // Ne pas regénérer les numéros déjà payés
+                if (!paidNumbers.has(monthCount)) {
+                    // Ne pas regénérer les dates déjà passées et payées
+                    if (!lastPaidDate || adjStr > lastPaidDate) {
+                        repayments.push({
+                            credit_id: credit.id,
+                            installment_number: monthCount,
+                            scheduled_date: adjStr,
+                            amount: null,
+                            status: 'En attente',
+                            is_paid: false
+                        });
                     }
                 }
 
-                if (currentScreen === 'credits_clients') fetchCredits();
-                if (currentScreen === 'dashboard_main') fetchDashboardStats();
+                if (monthCount >= 120 || ref >= end) break;
+                monthCount++;
+            }
+
+            if (repayments.length > 0) {
+                await _supabase.from('repayments').insert(repayments);
             }
         }
 
@@ -10100,10 +10268,123 @@ Suivant
                 
                 if (error) throw error;
                 currentCredit = data;
-                handleEditCredit();
+                handleEditCreditChoice();
             } catch (err) {
                 alert("Erreur lors de la récupération des données : " + err.message);
             }
+        }
+
+        // ─── CHOIX DU MODE DE MODIFICATION ───────────────────────────────────
+        function handleEditCreditChoice() {
+            if (!currentCredit) {
+                showNotification("Veuillez d'abord sélectionner un dossier.", "error");
+                return;
+            }
+            const name = currentCredit.client_name || currentCredit.clients?.full_name || 'ce dossier';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'edit-choice-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:6000;background:rgba(15,23,42,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
+            overlay.innerHTML = `
+              <div style="background:#fff;border-radius:28px;width:100%;max-width:460px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.2)">
+                <div style="padding:28px 28px 0">
+                  <div style="width:52px;height:52px;border-radius:16px;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+                    <span class="material-symbols-outlined" style="color:#d97706;font-size:26px">edit_note</span>
+                  </div>
+                  <h2 style="margin:0 0 6px;font-size:17px;font-weight:800;color:#0f172a">Modifier le dossier</h2>
+                  <p style="margin:0 0 20px;font-size:13px;color:#64748b">Choisissez comment modifier <strong>${name}</strong> :</p>
+                </div>
+                <div style="padding:0 28px 28px;display:flex;flex-direction:column;gap:12px">
+
+                  <button onclick="_editChoiceOption2()" style="text-align:left;padding:16px;border:2px solid #3b82f6;border-radius:16px;background:#eff6ff;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                      <span class="material-symbols-outlined" style="color:#2563eb;font-size:20px">tune</span>
+                      <span style="font-size:14px;font-weight:800;color:#1e40af">Modifier les informations</span>
+                      <span style="margin-left:auto;background:#2563eb;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px">RECOMMANDÉ</span>
+                    </div>
+                    <p style="margin:0;font-size:12px;color:#3b82f6;line-height:1.5">Met à jour les données sans rien supprimer. Les paiements déjà effectués, notes et documents sont conservés. Seules les échéances non payées sont recalculées si les dates changent.</p>
+                  </button>
+
+                  <button onclick="_editChoiceOption1()" style="text-align:left;padding:16px;border:2px solid #e2e8f0;border-radius:16px;background:#f8fafc;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#ef4444';this.style.background='#fff5f5'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                      <span class="material-symbols-outlined" style="color:#ef4444;font-size:20px">delete_sweep</span>
+                      <span style="font-size:14px;font-weight:800;color:#7f1d1d">Réinitialiser le dossier</span>
+                      <span style="margin-left:auto;background:#fef2f2;color:#ef4444;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;border:1px solid #fca5a5">DESTRUCTIF</span>
+                    </div>
+                    <p style="margin:0;font-size:12px;color:#ef4444;line-height:1.5">Supprime TOUTES les données liées (échéancier complet, notes, documents) et repart de zéro. Irréversible.</p>
+                  </button>
+
+                  <button onclick="document.getElementById('edit-choice-overlay').remove()" style="padding:12px;border:none;border-radius:12px;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:700;cursor:pointer">Annuler</button>
+                </div>
+              </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        function _editChoiceOption1() {
+            const ol = document.getElementById('edit-choice-overlay');
+            if (ol) ol.remove();
+            handleEditCredit();
+        }
+
+        async function _editChoiceOption2() {
+            const ol = document.getElementById('edit-choice-overlay');
+            if (ol) ol.remove();
+            await handleEditCreditOption2();
+        }
+
+        // ─── OPTION 2 : MISE À JOUR SANS DESTRUCTION ─────────────────────────
+        async function handleEditCreditOption2() {
+            if (!currentCredit) return;
+
+            const snapshot = JSON.parse(JSON.stringify(currentCredit));
+            const creditId = snapshot.id;
+            const clientId = snapshot.clients?.id || snapshot.client_id || null;
+
+            // Ouvrir le formulaire EN PREMIER
+            // (openModal réinitialise window.editingCreditId = null, donc on affecte APRÈS)
+            await openModal('credits_new_dossier');
+
+            setTimeout(() => {
+                // ⚠ Affectation ICI, après que openModal ait fini (sinon il les réinitialise)
+                window.editingCreditId = creditId;
+                window.editingClientId = clientId;
+                window._editSnapshot   = snapshot;
+
+                // Changer le titre
+                const modal = document.getElementById('modal-content');
+                if (!modal) return;
+                const h1 = modal.querySelector('h1');
+                if (h1) h1.textContent = 'Modifier les informations';
+                const sub = modal.querySelector('p.text-slate-400, p.text-slate-500');
+                if (sub) sub.textContent = 'Les données existantes seront mises à jour.';
+
+                // Changer le bouton de sauvegarde
+                const saveBtn = modal.querySelector('button[onclick*="handleSaveCredit"]');
+                if (saveBtn) {
+                    saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">save</span> Enregistrer les modifications';
+                    saveBtn.style.background = 'linear-gradient(135deg,#2563eb,#1d4ed8)';
+                }
+
+                // Pré-remplissage
+                const cl = snapshot.clients || {};
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+                set('credit-name',       cl.full_name   || snapshot.client_name || '');
+                set('credit-email',      cl.email       || snapshot.email       || '');
+                set('credit-phone1',     cl.phone1      || snapshot.phone       || '');
+                set('credit-phone2',     cl.phone2      || '');
+                set('credit-activity',   cl.activity    || snapshot.activity    || '');
+                set('credit-address',    cl.address     || snapshot.address     || '');
+                set('credit-amount',     snapshot.amount     || '');
+                set('credit-start-date', snapshot.start_date || '');
+                set('credit-end-date',   snapshot.end_date   || '');
+                if (document.getElementById('credit-type')) {
+                    const sel = document.getElementById('credit-type');
+                    [...sel.options].forEach(o => { o.selected = (o.value === snapshot.type); });
+                }
+                if (document.getElementById('credit-exclude-automation')) {
+                    document.getElementById('credit-exclude-automation').checked = snapshot.exclude_automation || false;
+                }
+            }, 200);
         }
 
         async function handleEditCredit() {
