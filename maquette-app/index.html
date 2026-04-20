@@ -2897,7 +2897,7 @@ async function saveCredit(){
         ? `Dossier "${verif.client_name}" mis à jour. ${nbNew} nouvelle(s) échéance(s) générée(s). Paiements existants conservés.`
         : `Dossier "${verif.client_name}" mis à jour. Échéancier conservé intégralement.`;
       openConfirm('✅ Modification enregistrée', msg,
-        ()=>{ openCreditDetail(creditId); },
+        ()=>{ delete _credCache[creditId]; openCreditDetail(creditId); },
         'Voir le dossier', '#2563eb'
       );
       return;
@@ -2996,7 +2996,7 @@ async function saveCredit(){
     openConfirm(
       `✅ Dossier enregistré`,
       `"${verif.client_name}" ajouté avec succès. ${repayments.length} échéances générées.`,
-      ()=>{ openCreditDetail(verif.id); },
+      ()=>{ delete _credCache[verif.id]; openCreditDetail(verif.id); },
       'Voir le dossier', '#22c55e'
     );
 
