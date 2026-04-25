@@ -1,4 +1,4 @@
-const CACHE = 'portefin-v1';
+const CACHE = 'portefin-v2';
 const STATIC = [
   './index.html',
   './login.html',
