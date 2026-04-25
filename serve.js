@@ -2,12 +2,24 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const port = 8080;
+const port = 9090;
 const root = 'c:\\MES PROJETS\\Maquette Prospects et CREDIT';
 
 const server = http.createServer((req, res) => {
     let decodedUrl = decodeURIComponent(req.url);
-    let filePath = path.join(root, decodedUrl === '/' ? 'MAQUETTE_COMPLETE.html' : decodedUrl);
+    
+    // Logic for redirects (matching netlify.toml)
+    if (decodedUrl === '/' || decodedUrl === '/login') {
+        decodedUrl = '/login.html';
+    } else if (decodedUrl === '/app') {
+        decodedUrl = '/MAQUETTE_COMPLETE.html';
+    } else if (decodedUrl === '/mobile') {
+        decodedUrl = '/maquette-app/index.html';
+    } else if (decodedUrl === '/mobile/login') {
+        decodedUrl = '/maquette-app/login.html';
+    }
+
+    let filePath = path.join(root, decodedUrl);
     
     // Safety check: ensure the file is within the root
     if (!filePath.startsWith(root)) {
@@ -27,6 +39,10 @@ const server = http.createServer((req, res) => {
         let contentType = 'text/html';
         if (ext === '.css') contentType = 'text/css';
         if (ext === '.js') contentType = 'text/javascript';
+        if (ext === '.png') contentType = 'image/png';
+        if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        if (ext === '.svg') contentType = 'image/svg+xml';
+        if (ext === '.json') contentType = 'application/json';
 
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(data);
@@ -35,4 +51,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
+    console.log(`- App PC: http://localhost:${port}/app`);
+    console.log(`- App Mobile: http://localhost:${port}/mobile`);
 });

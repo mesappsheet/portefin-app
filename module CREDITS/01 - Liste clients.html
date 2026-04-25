@@ -98,10 +98,19 @@
 </header>
 <div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-background-light dark:bg-background-dark">
 <section class="w-full lg:w-[500px] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 max-h-[40vh] lg:max-h-none">
-<div class="p-4 border-b border-slate-100 dark:border-slate-800">
-<div class="relative">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+<div class="relative flex-1">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
-<input class="w-full bg-slate-50 dark:bg-slate-800 border-transparent rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Rechercher un client..." type="text"/>
+<input id="pc-search-input" class="w-full bg-slate-50 dark:bg-slate-800 border-transparent rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Rechercher un client..." type="text"/>
+</div>
+<div class="relative min-w-[140px]">
+<select id="pc-filter-select" class="w-full appearance-none bg-slate-50 dark:bg-slate-800 border-transparent rounded-xl py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer transition-all">
+<option value="all">Tous</option>
+<option value="EN COURS">En cours</option>
+<option value="SOUFFRANCE">Souffrance</option>
+<option value="SOLDÉ">Soldés</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">filter_list</span>
 </div>
 </div>
 <div class="grid grid-cols-[1fr_100px_100px] px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
@@ -403,10 +412,13 @@ Enregistrer &amp; Recalculer
     let allClients = [];
     let selectedClientId = null;
     let selectedCredit = null;
+    let currentSearch = '';
+    let currentFilter = 'all';
 
     // --- DOM SELECTORS ---
     const els = {
-        searchInput: document.querySelector('input[placeholder*="Rechercher"]'),
+        searchInput: document.getElementById('pc-search-input'),
+        filterSelect: document.getElementById('pc-filter-select'),
         clientListCont: document.querySelector('div.flex-1.overflow-y-auto'),
         detailSection: document.querySelector('section.flex-1.p-8'),
         // Detail fields
@@ -437,15 +449,24 @@ Enregistrer &amp; Recalculer
     async function loadClients() {
         els.clientListCont.innerHTML = `<div class="p-8 text-center text-slate-500 italic">Chargement...</div>`;
         try {
-            // Fetch credits with client names
+            // Fetch credits with client names AND their repayments
             const { data, error } = await window.supabase
                 .from('credits')
-                .select('*')
+                .select('*, repayments(id, scheduled_date, is_paid, amount)')
                 .order('client_name', { ascending: true });
 
             if (error) throw error;
+            
             allClients = data || [];
-            renderClientList(allClients);
+            allClients.forEach(c => {
+                const unpaid = (c.repayments || []).filter(r => !r.is_paid);
+                if (unpaid.length > 0) {
+                    unpaid.sort((a,b) => new Date(b.scheduled_date) - new Date(a.scheduled_date));
+                    c.nextUnpaid = unpaid[0];
+                }
+            });
+
+            applyFilters();
         } catch (err) {
             console.error("Error loading clients:", err);
             els.clientListCont.innerHTML = `<div class="p-8 text-center text-red-500">Erreur: ${err.message}</div>`;
@@ -463,13 +484,21 @@ Enregistrer &amp; Recalculer
             const amount = new Intl.NumberFormat('fr-FR').format(c.amount);
             const isSelected = c.id === selectedClientId;
             
+            const unpaidBadge = c.nextUnpaid && !['Soldé','SOLDÉ','soldé'].includes(c.status) ? `
+                <span onclick="event.stopPropagation();confirmPayPC('${c.nextUnpaid.id}', '${formatDateFR(new Date(c.nextUnpaid.scheduled_date))}', '${c.nextUnpaid.amount}')" class="px-2 py-0.5 mt-1 inline-flex items-center gap-1 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold cursor-pointer hover:bg-red-200 transition-colors">
+                    <span class="material-symbols-outlined text-[12px]">warning</span>
+                    Impayé le ${new Date(c.nextUnpaid.scheduled_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                </span>
+            ` : '';
+
             return `
-                <div onclick="window.selectClient('${c.id}')" class="grid grid-cols-[1fr_100px_100px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}">
+                <div onclick="window.selectClient('${c.id}')" class="grid grid-cols-[1fr_80px_80px] items-center gap-2 px-6 py-4 border-b border-slate-50 dark:border-slate-800/50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm uppercase">${initials}</div>
                         <div class="truncate">
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">${c.client_name || 'Inconnu'}</h3>
-                            <p class="text-xs text-slate-500 font-medium">${amount} GNF</p>
+                            <p class="text-xs text-slate-500 font-medium">${amount} FCFA</p>
+                            ${unpaidBadge}
                         </div>
                     </div>
                     <div class="flex justify-center">
@@ -483,10 +512,28 @@ Enregistrer &amp; Recalculer
         }).join('');
     }
 
+    window.confirmPayPC = async function(repId, dateStr, amount) {
+        if (!confirm(`Confirmez-vous le paiement de l'échéance du ${dateStr} d'un montant de ${amount} FCFA ?`)) return;
+        try {
+            const { error } = await window.supabase
+                .from('repayments')
+                .update({ is_paid: true, actual_payment_date: new Date().toISOString() })
+                .eq('id', repId);
+            if (error) throw error;
+            alert('Paiement validé avec succès.');
+            // Reload the list
+            await loadClients();
+            // Also refresh selected client data if this was the selected client
+            if (selectedClientId) {
+                await loadRepayments(selectedClientId);
+            }
+        } catch(e) { alert('Erreur lors du paiement : ' + e.message); }
+    };
+
     window.selectClient = async function(id) {
         selectedClientId = id;
         selectedCredit = allClients.find(c => c.id === id);
-        renderClientList(allClients); // Update highlights
+        applyFilters(); // Update highlights and keep filters
         
         if (!selectedCredit) return;
 
@@ -623,13 +670,35 @@ Enregistrer &amp; Recalculer
 
     function setupSearch() {
         els.searchInput?.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            const filtered = allClients.filter(c => 
-                c.client_name.toLowerCase().includes(val) || 
-                c.id.toLowerCase().includes(val)
-            );
-            renderClientList(filtered);
+            currentSearch = e.target.value.toLowerCase();
+            applyFilters();
         });
+
+        els.filterSelect?.addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            applyFilters();
+        });
+    }
+
+    function applyFilters() {
+        const filtered = allClients.filter(c => {
+            const searchLower = currentSearch.toLowerCase();
+            const matchesSearch = (c.client_name || '').toLowerCase().includes(searchLower) || 
+                                (c.id || '').toLowerCase().includes(searchLower) ||
+                                (c.phone || '').toLowerCase().includes(searchLower);
+            
+            let matchesFilter = true;
+            if (currentFilter === 'EN COURS') {
+                matchesFilter = (c.status || '').toUpperCase() === 'EN COURS';
+            } else if (currentFilter === 'SOLDÉ' || currentFilter === 'Soldé') {
+                matchesFilter = (c.status || '').toUpperCase() === 'SOLDÉ';
+            } else if (currentFilter === 'SOUFFRANCE') {
+                matchesFilter = (c.health || '').toUpperCase() === 'SOUFFRANCE';
+            }
+
+            return matchesSearch && matchesFilter;
+        });
+        renderClientList(filtered);
     }
 
     // Export functions for Modal logic (existing)

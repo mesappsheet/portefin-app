@@ -710,6 +710,13 @@ let _editingCreditId=null;
 let _editingClientId=null;
 let _editSnapshot=null;
 
+// ─── LOGIN URL HELPER ─────────────────────────────
+function _loginUrl(){
+  if(location.pathname.startsWith('/maquette-app'))return '/maquette-app/login.html';
+  if(location.hostname==='localhost'||location.hostname==='127.0.0.1')return '/maquette-app/login.html';
+  return '/mobile/login'; // in netlify this maps to /maquette-app/login.html
+}
+
 // ─── AUTH GUARD ───────────────────────────────
 (async()=>{
   // Session admin locale (bypass Supabase)
@@ -721,10 +728,10 @@ let _editSnapshot=null;
   // Session Supabase
   try{
     const{data:{session}}=await sb.auth.getSession();
-    if(!session){window.location.replace('/login.html');return;}
+    if(!session){window.location.replace(_loginUrl());return;}
     currentUser=session.user;
     init();
-  }catch(e){window.location.replace('/login.html');}
+  }catch(e){window.location.replace(_loginUrl());}
 })();
 
 function init(){
@@ -5303,7 +5310,7 @@ function confirmLogout(){
     window.onbeforeunload = null; // Désactiver la protection pour la sortie volontaire
     sessionStorage.removeItem('portefin_session');
     await sb.auth.signOut().catch(()=>{});
-    window.location.replace('/mobile/login');
+    window.location.replace(_loginUrl());
   });
 }
 
