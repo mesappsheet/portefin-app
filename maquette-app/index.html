@@ -712,9 +712,7 @@ let _editSnapshot=null;
 
 // ─── LOGIN URL HELPER ─────────────────────────────
 function _loginUrl(){
-  if(location.pathname.startsWith('/maquette-app'))return '/maquette-app/login.html';
-  if(location.hostname==='localhost'||location.hostname==='127.0.0.1')return '/maquette-app/login.html';
-  return '/mobile/login'; // in netlify this maps to /maquette-app/login.html
+  return 'login.html';
 }
 
 // ─── AUTH GUARD ───────────────────────────────
