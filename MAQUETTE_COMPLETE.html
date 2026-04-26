@@ -1979,20 +1979,17 @@
                     <span class="material-symbols-outlined text-blue-600 text-lg">sms</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">SMS</span>
                 </button>
-                <button onclick="copyToClipboard(currentProspect?.full_name || currentProspect?.name || ''); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-                    <span class="material-symbols-outlined text-slate-500 text-lg">content_copy</span>
-                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Copier nom</span>
-                </button>
-                <button onclick="downloadVCard(currentProspect?.full_name || currentProspect?.name || '', currentProspect?.phone, currentProspect?.phone2); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-                    <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
-                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
-                </button>
                 <div class="border-t border-slate-100 dark:border-slate-800"></div>
                 <button id="btn-edit-prospect" onclick="handleEditProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
                     <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
                 </button>
-                <button id="btn-note-prospect" onclick="openModal('prospection_note_add'); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors text-left">
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                <button onclick="copyToClipboard(currentProspect?.full_name || currentProspect?.name || ''); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-slate-500 text-lg">content_copy</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Copier nom</span>
+                </button>
+                <button id="btn-note-prospect" onclick="openModal('prospection_note_add'); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
                     <span class="material-symbols-outlined text-amber-500 text-lg">event_note</span>
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Ajouter une note</span>
                 </button>
@@ -2009,6 +2006,11 @@
                 <button id="btn-delete-prospect" onclick="handleDeleteProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
                     <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
                     <span class="text-sm font-semibold text-red-600">Supprimer</span>
+                </button>
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+                <button onclick="downloadVCard(currentProspect?.full_name || currentProspect?.name || '', currentProspect?.phone, currentProspect?.phone2); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+                    <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
                 </button>
             </div>
         </div>
@@ -3258,14 +3260,17 @@
           <span class="material-symbols-outlined text-blue-600 text-lg">sms</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">SMS</span>
         </button>
-        <button onclick="copyToClipboard(currentCredit?.clients?.full_name || currentCredit?.client_name || ''); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
+        <div class="border-t border-slate-100 dark:border-slate-800"></div>
+        <button id="btn-edit-credit" onclick="handleEditCreditChoice(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+          <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
+        </button>
+        <div class="border-t border-slate-100 dark:border-slate-800"></div>
+        <button onclick="copyToClipboard(currentCredit?.clients?.full_name || currentCredit?.client_name || ''); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
           <span class="material-symbols-outlined text-slate-500 text-lg">content_copy</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Copier nom</span>
         </button>
-        <button onclick="downloadVCard(currentCredit?.clients?.full_name || currentCredit?.client_name || '', currentCredit?.clients?.phone1, currentCredit?.clients?.phone2); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-t border-slate-100 dark:border-slate-800">
-          <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
-          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
-        </button>
+        <div class="border-t border-slate-100 dark:border-slate-800"></div>
         <button onclick="if(currentCredit){populateScheduleView(currentCredit);loadScreen('credits_schedule');}closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors text-left">
           <span class="material-symbols-outlined text-primary text-lg">calendar_month</span>
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Échéancier</span>
@@ -3284,14 +3289,14 @@
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Créer une tâche</span>
         </button>
         <div class="border-t border-slate-100 dark:border-slate-800"></div>
-        <button id="btn-edit-credit" onclick="handleEditCreditChoice(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
-          <span class="material-symbols-outlined text-slate-600 text-lg">edit</span>
-          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Modifier</span>
-        </button>
-        <div class="border-t border-slate-100 dark:border-slate-800"></div>
         <button onclick="handleDeleteCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
           <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
           <span class="text-sm font-semibold text-red-600">Supprimer</span>
+        </button>
+        <div class="border-t border-slate-100 dark:border-slate-800"></div>
+        <button onclick="downloadVCard(currentCredit?.clients?.full_name || currentCredit?.client_name || '', currentCredit?.clients?.phone1, currentCredit?.clients?.phone2); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left">
+          <span class="material-symbols-outlined text-indigo-500 text-lg">contact_page</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Exporter vCard (VCF)</span>
         </button>
       </div>
     </div>
@@ -6858,6 +6863,23 @@ Suivant
 
         async function applyCreditStatusPC(creditId, newStatus, overlay) {
             overlay?.remove();
+            
+            if (newStatus === 'Soldé') {
+                const { data: unpaid, error: checkError } = await _supabase.from('repayments').select('id').eq('credit_id', creditId).eq('is_paid', false);
+                if (checkError) { showNotification("Erreur de vérification: " + checkError.message, "error"); return; }
+                
+                if (unpaid && unpaid.length > 0) {
+                    const confirmSettle = await openConfirm({
+                        title: "Échéances impayées",
+                        message: `Il reste ${unpaid.length} échéance(s) impayée(s). Voulez-vous solder le crédit ET marquer toutes les échéances restantes comme payées ?`,
+                        icon: "warning",
+                        confirmText: "Oui, tout solder",
+                        confirmColor: "emerald"
+                    });
+                    if (!confirmSettle) return;
+                }
+            }
+
             const now = new Date().toISOString().split('T')[0];
             const update = { status: newStatus };
             if (newStatus === 'Soldé') update.end_date = now;
@@ -7182,6 +7204,11 @@ Suivant
                 overlay.remove();
                 const name = currentCredit?.client_name || currentCredit?.clients?.full_name || '';
                 await openSouffranceModalPC(currentCredit.id, name);
+                return;
+            }
+
+            if (newStatus === 'Soldé') {
+                await applyCreditStatusPC(currentCredit.id, newStatus, overlay);
                 return;
             }
 
@@ -7853,9 +7880,10 @@ Suivant
                 const allPaid = data.every(r => r.is_paid);
                 const { data: credit } = await _supabase.from('credits').select('status').eq('id', creditId).single();
                 
-                if (allPaid && credit.status !== 'Soldé') {
-                    await _supabase.from('credits').update({ status: 'Soldé' }).eq('id', creditId);
-                } else if (!allPaid && credit.status === 'Soldé') {
+                if (!allPaid && credit.status === 'Soldé') {
+                    // Sécurité : si on décoche une échéance (remise en attente) d'un crédit soldé, il repasse en cours.
+                    // Par contre, on NE passe plus automatiquement en 'Soldé' si tout est payé.
+                    // L'utilisateur doit le faire manuellement via Changer le Statut.
                     await _supabase.from('credits').update({ status: 'En cours' }).eq('id', creditId);
                 }
             } catch (err) { console.error("Settle check PC error:", err); }

@@ -3,35 +3,31 @@ const fs = require('fs');
 const path = require('path');
 
 const port = 9090;
-const root = 'c:\\MES PROJETS\\Maquette Prospects et CREDIT';
+const root = __dirname; 
 
 const server = http.createServer((req, res) => {
     let decodedUrl = decodeURIComponent(req.url);
     
-    // Logic for redirects (matching netlify.toml)
+    // 1. Raccourcis pratiques
     if (decodedUrl === '/' || decodedUrl === '/login') {
         decodedUrl = '/login.html';
     } else if (decodedUrl === '/app') {
         decodedUrl = '/MAQUETTE_COMPLETE.html';
     } else if (decodedUrl === '/mobile') {
         decodedUrl = '/maquette-app/index.html';
-    } else if (decodedUrl === '/mobile/login') {
-        decodedUrl = '/maquette-app/login.html';
+    }
+    
+    // 2. Gestion automatique des dossiers (si on oublie index.html)
+    if (decodedUrl === '/maquette-app' || decodedUrl === '/maquette-app/') {
+        decodedUrl = '/maquette-app/index.html';
     }
 
     let filePath = path.join(root, decodedUrl);
-    
-    // Safety check: ensure the file is within the root
-    if (!filePath.startsWith(root)) {
-        res.writeHead(403);
-        res.end('Forbidden');
-        return;
-    }
 
     fs.readFile(filePath, (err, data) => {
         if (err) {
             res.writeHead(404);
-            res.end('Not Found');
+            res.end('Fichier Introuvable : ' + decodedUrl);
             return;
         }
         
@@ -50,7 +46,8 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-    console.log(`- App PC: http://localhost:${port}/app`);
-    console.log(`- App Mobile: http://localhost:${port}/mobile`);
+    console.log(`\x1b[32m%s\x1b[0m`, `--- SERVEUR PORTEFIN ACTIF ---`);
+    console.log(`PC :     http://localhost:${port}/app`);
+    console.log(`MOBILE : http://localhost:${port}/mobile`);
+    console.log(`------------------------------`);
 });

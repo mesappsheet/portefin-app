@@ -401,6 +401,25 @@
                 actual_payment_date: new Date().toISOString().split('T')[0]
             });
             showToast(`✅ Échéance N°${num} encaissée dans Supabase !`, 'success');
+
+            // Vérification de clôture : Si toutes les échéances sont payées, on propose de solder le crédit
+            const local = getLocal();
+            if (local.creditId) {
+                const reps = await sbGet('repayments', `credit_id=eq.${local.creditId}`);
+                if (reps && reps.length > 0) {
+                    const allPaid = reps.every(r => r.is_paid === true);
+                    if (allPaid) {
+                        if (confirm(`🎉 Toutes les échéances de ce crédit ont été réglées !\nVoulez-vous passer le statut du crédit à "Soldé" ?`)) {
+                            await sbPatch('credits', `id=eq.${local.creditId}`, { 
+                                status: 'Soldé', 
+                                end_date: new Date().toISOString().split('T')[0] 
+                            });
+                            showToast('Crédit entièrement soldé !', 'success');
+                        }
+                    }
+                }
+            }
+
             charger();
         } catch(e) { showToast('Erreur Supabase : ' + e.message, 'warning'); }
     };

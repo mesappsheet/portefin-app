@@ -859,21 +859,23 @@ function credMenu(btn,cid){
     {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Crédit',c.amount,c.end_date||'','',cid),color:'#22c55e'},
     {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Crédit',c.amount,c.end_date||'','',cid),color:'#3b82f6'},
     {sep:true},
+    {icon:'edit',label:'Modifier le dossier',fn:()=>handleEditCreditChoiceMobile(cid)},
+    {sep:true},
     {icon:'calendar_month',label:'Échéancier',fn:()=>viewEcheancier(cid,name)},
     {icon:'sticky_note_2',label:'Notes',fn:()=>openCreditNotes(cid,name)},
     {icon:'swap_horiz',label:'Changer statut',fn:()=>changeCreditStatus(cid,name,c.status||'')},
     {icon:'health_and_safety',label:'Changer santé',fn:()=>toggleCreditHealth(cid,c.health||'Sain'),color:c.health==='Souffrance'?'#22c55e':'#ef4444'},
     {sep:true},
     {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
-    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
     {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
     {sep:true},
     {icon:'groups',label:'Régulariser solde',fn:()=>openRegularizationModal(cid,name),color:'#f27f0d'},
     {sep:true},
-    {icon:'edit',label:'Modifier le dossier',fn:()=>handleEditCreditChoiceMobile(cid)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
+    {sep:true},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
   ];
   showMenu(btn,items);
 }
@@ -888,27 +890,28 @@ function repMenu(btn, rid, cid, isPaid, phone, name, amount, dateStr, health, st
           if(tb)toggleRepPaid(rid,true,tb);
         },color:'#f97316'},
     {sep:true},
+    {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
+    {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Suivi',amount,dateStr,'',cid),color:'#22c55e'},
+    {icon:'edit',label:'Modifier dossier',fn:()=>openClientEditForm(cid)},
+    {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Suivi',amount,dateStr,'',cid),color:'#3b82f6'},
+    {sep:true},
     {icon:'account_balance',label:'Voir le dossier client',fn:()=>openCreditDetail(cid),color:'#f27f0d'},
     {icon:'calendar_month',label:'Échéancier complet',fn:()=>viewEcheancier(cid,name)},
     {icon:'sticky_note_2',label:'Gérer les notes',fn:()=>openCreditNotes(cid,name)},
-    {sep:true},
-    {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
-    {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Suivi',amount,dateStr,'',cid),color:'#22c55e'},
-    {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Suivi',amount,dateStr,'',cid),color:'#3b82f6'},
     {sep:true},
     {icon:'swap_horiz',label:'Changer statut',fn:()=>changeCreditStatus(cid,name,status||'')},
     {icon:'health_and_safety',label:'Changer santé',fn:()=>toggleCreditHealth(cid,health||'Sain'),color:health==='Souffrance'?'#22c55e':'#ef4444'},
     {sep:true},
     {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
-    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, phone, '')},
     {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(cid,name,'client'),color:'#a855f7'},
     {sep:true},
     {icon:'groups',label:'Régulariser solde',fn:()=>openRegularizationModal(cid,name),color:'#f27f0d'},
     {sep:true},
-    {icon:'edit',label:'Modifier dossier',fn:()=>openClientEditForm(cid)},
     {icon:'delete',label:'Supprimer dossier',fn:()=>deleteCredit(cid,name),danger:true},
+    {sep:true},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, phone, '')},
   ];
   showMenu(btn,items);
 }
@@ -989,17 +992,19 @@ function prosMenu(btn,pid){
     {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#22c55e'},
     {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#3b82f6'},
     {sep:true},
+    {icon:'edit',label:'Modifier',fn:()=>openProspectForm(p)},
+    {sep:true},
     {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
     {icon:'person_add',label:'Convertir en crédit',fn:()=>convertProspect(pid,name,phone)},
     {sep:true},
     {icon:'content_copy',label:'Copier nom',fn:()=>copyToClipboard(name)},
-    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
     {icon:'group_copy',label:'Copier tout (clients du jour)',fn:()=>copyClientsOfDayMob(),color:'#f27f0d'},
     {sep:true},
     {icon:'task_alt',label:'Créer une tâche',fn:()=>openTaskForEntityMobile(pid,name,'prospect'),color:'#a855f7'},
     {sep:true},
-    {icon:'edit',label:'Modifier',fn:()=>openProspectForm(p)},
     {icon:'delete',label:'Supprimer',fn:()=>deleteProspect(pid,name),danger:true},
+    {sep:true},
+    {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
   ];
   showMenu(btn,items);
 }
@@ -3857,6 +3862,19 @@ async function confirmSouffranceFlow(cid){
 
 async function setCreditStatus(creditId, status, health){
   const now=today();
+  
+  // Validation stricte et Automatisation
+  if(status === 'Soldé') {
+    const { data: unpaid, error: checkErr } = await sb.from('repayments').select('id').eq('credit_id', creditId).eq('is_paid', false);
+    if(checkErr) { toast('Erreur vérification échéances', 'err'); return; }
+    
+    if(unpaid && unpaid.length > 0) {
+      if(!confirm(`⚠️ Action requise : Ce crédit possède encore ${unpaid.length} échéance(s) impayée(s). Voulez-vous solder le crédit ET marquer toutes les échéances restantes comme payées ?`)) {
+        return; // Bloquer la tentative si l'utilisateur annule
+      }
+    }
+  }
+
   const creditUpdate={status, health};
   if(status==='Soldé') creditUpdate.end_date=now;
 
