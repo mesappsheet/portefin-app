@@ -892,7 +892,7 @@ function repMenu(btn, rid, cid, isPaid, phone, name, amount, dateStr, health, st
     {sep:true},
     {icon:'call',label:'Appeler',fn:()=>call(phone),color:'#3b82f6'},
     {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Suivi',amount,dateStr,'',cid),color:'#22c55e'},
-    {icon:'edit',label:'Modifier dossier',fn:()=>openClientEditForm(cid)},
+    {icon:'edit',label:'Modifier dossier',fn:()=>handleEditCreditChoiceMobile(cid)},
     {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Suivi',amount,dateStr,'',cid),color:'#3b82f6'},
     {sep:true},
     {icon:'account_balance',label:'Voir le dossier client',fn:()=>openCreditDetail(cid),color:'#f27f0d'},
@@ -3073,6 +3073,11 @@ async function viewProspects(){
           <span class="material-symbols-outlined" style="font-size:22px; color:${(prosActFilter||prosDateFrom||prosDateTo)?'#f27f0d':'var(--text3)'}">tune</span>
           ${(prosActFilter||prosDateFrom||prosDateTo)?'<span style="position:absolute; top:8px; right:8px; width:8px; height:8px; border-radius:50%; background:#f27f0d; border:2px solid var(--bg)"></span>':''}
         </button>
+
+        <!-- Bouton Synchro Google Contacts -->
+        <button onclick="openGoogleContactsConfigPWA()" style="width:44px; height:44px; border-radius:12px; border:1px solid var(--input-border); background:var(--input-bg); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; padding:0" title="Synchroniser Google Contacts">
+          <span class="material-symbols-outlined" style="font-size:22px; color:var(--text3)">contacts</span>
+        </button>
       </div>
     </div>
 
@@ -3640,13 +3645,22 @@ async function saveProspect(id=null){
   };
   try{
     let error;
+    let savedData;
     if(id){
       ({error}=await sb.from('prospects').update(payload).eq('id',id));
     }else{
-      ({error}=await sb.from('prospects').upsert([payload],{onConflict:'full_name,phone'}));
+      const res = await sb.from('prospects').upsert([payload],{onConflict:'full_name,phone'}).select().single();
+      error = res.error;
+      savedData = res.data;
     }
     if(error)throw error;
     toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
+    
+    // Synchro Google Contacts
+    if(!id && savedData){
+      syncProspectToGoogleContactsPWA(savedData);
+    }
+    
     closeModal();
     loadProspects();
   }catch(e){toast('Erreur : '+e.message,'err');}
@@ -3662,6 +3676,61 @@ async function deleteProspect(id,name,fromForm=false){
       loadProspects();
     }catch(e){toast('Erreur suppression','err');}
   });
+}
+
+// ─── GOOGLE CONTACTS SYNC (MOBILE) ──────────────────────
+function openGoogleContactsConfigPWA() {
+  const currentUrl = localStorage.getItem('google_contacts_sync_url') || '';
+  openModal(`
+    <div style="padding:16px 20px 24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <span class="material-symbols-outlined" style="font-size:24px;color:#f27f0d">sync</span>
+        <h3 style="font-size:18px;font-weight:900;margin:0;color:var(--text)">Google Contacts</h3>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin:0 0 16px;line-height:1.4">
+        Collez l'URL de votre Web App Google Apps Script pour synchroniser automatiquement vos prospects avec vos contacts Google.
+      </p>
+      <div style="margin-bottom:20px">
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:6px">URL de la Web App</label>
+        <input type="text" id="pwa-google-url" class="m-input" placeholder="https://script.google.com/macros/s/.../exec" value="${currentUrl}" style="width:100%"/>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button onclick="closeModal()" class="m-btn secondary" style="flex:1">Fermer</button>
+        <button onclick="saveGoogleContactsUrlPWA()" class="m-btn primary" style="flex:1">Enregistrer</button>
+      </div>
+    </div>
+  `);
+}
+
+function saveGoogleContactsUrlPWA() {
+  const url = document.getElementById('pwa-google-url').value.trim();
+  localStorage.setItem('google_contacts_sync_url', url);
+  toast('Configuration enregistrée ✓', 'ok');
+  closeModal();
+}
+
+async function syncProspectToGoogleContactsPWA(prospect) {
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if(!url) return;
+  try{
+    const payload = {
+      fullName: prospect.full_name,
+      phone: prospect.phone || '',
+      phone2: prospect.phone2 || '',
+      email: prospect.email || '',
+      address: prospect.address || '',
+      notes: prospect.notes || ''
+    };
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    console.log("Prospect synchronisé (mobile)");
+  }catch(e){
+    console.error("Erreur sync Google Contacts:", e);
+  }
 }
 
 // ═══════════════════════════════════════════════

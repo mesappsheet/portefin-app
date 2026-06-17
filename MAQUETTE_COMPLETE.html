@@ -2398,6 +2398,16 @@
                     <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
             </div>
+            <div class="h-px bg-primary/5"></div>
+            <!-- Google Contacts Sync -->
+            <div class="flex flex-col space-y-2">
+                <label class="text-sm font-semibold text-slate-900 dark:text-slate-100">Synchronisation Google Contacts</label>
+                <div class="flex gap-2">
+                    <input id="google-contacts-url" type="text" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-primary/10 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100 text-sm" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGoogleContactsUrl(this.value)"/>
+                    <button class="px-5 py-2.5 rounded-lg font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors border border-primary/5" onclick="testGoogleContactsSync()">Tester</button>
+                </div>
+                <span class="text-xs text-slate-500">Collez l'URL de votre Web App Google Apps Script pour synchroniser automatiquement vos prospects avec vos contacts Google.</span>
+            </div>
         </div>
     </section>
     <!-- Bottom Actions -->
@@ -5267,6 +5277,9 @@ Suivant
                     if (screenId === 'credits_unpaid') fetchUnpaidClients();
                     if (screenId === 'credits_souffrance') fetchSouffranceClients();
                     if (screenId === 'prospection_comm' || screenId === 'credits_comm') fetchCommTemplates();
+                    if (screenId === 'prospection_params') {
+                        initProspectionParams();
+                    }
                     if (screenId === 'import_manager') {
                         // Ensure module is identified
                         const moduleLabel = document.getElementById('import-module-label');
@@ -5307,6 +5320,67 @@ Suivant
         // Expose globalement pour CreditModule.js
         window.skipWeekend = skipWeekend;
         window.toLocalDateStr = toLocalDateStr;
+
+        // ── Google Contacts Sync Helpers ─────────────────────────────────────
+        function initProspectionParams() {
+            const urlInput = document.getElementById('google-contacts-url');
+            if (urlInput) {
+                urlInput.value = localStorage.getItem('google_contacts_sync_url') || '';
+            }
+        }
+        function saveGoogleContactsUrl(url) {
+            localStorage.setItem('google_contacts_sync_url', url.trim());
+            showNotification("Configuration Google Contacts enregistrée !", "success");
+        }
+        async function testGoogleContactsSync() {
+            const url = localStorage.getItem('google_contacts_sync_url');
+            if (!url) {
+                alert("Veuillez d'abord saisir et enregistrer l'URL de votre Web App.");
+                return;
+            }
+            try {
+                showNotification("Test de connexion en cours...", "info");
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.status === 'active') {
+                    showNotification("Connexion réussie : " + data.message, "success");
+                } else {
+                    showNotification("Erreur retournée par le script : " + (data.message || 'inconnu'), "warning");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erreur de connexion. Assurez-vous que l'URL est correcte, que le script est bien déployé en mode 'Tout le monde' (Anyone) et que vous avez accordé les permissions nécessaires.");
+            }
+        }
+        async function syncProspectToGoogleContacts(prospect, notes = '') {
+            const url = localStorage.getItem('google_contacts_sync_url');
+            if (!url) {
+                console.log("Synchronisation Google Contacts désactivée (pas d'URL configurée).");
+                return;
+            }
+            try {
+                const payload = {
+                    fullName: prospect.full_name,
+                    phone: prospect.phone || '',
+                    phone2: prospect.phone2 || '',
+                    email: prospect.email || '',
+                    address: prospect.address || '',
+                    notes: notes || prospect.notes || ''
+                };
+                
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload),
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    }
+                });
+                console.log("Prospect synchronisé avec Google Contacts (PC).");
+            } catch (e) {
+                console.error("Erreur de synchronisation Google Contacts :", e);
+            }
+        }
 
         async function openModal(screenId, id = null) {
             targetId = id;
@@ -9694,6 +9768,8 @@ Suivant
                         }]);
                     }
                     showNotification("Prospect enregistré !", "success");
+                    // Déclenchement de la synchronisation Google Contacts
+                    syncProspectToGoogleContacts(prospectData, observations);
                     closeModal();
                     fetchProspects();
                 }
