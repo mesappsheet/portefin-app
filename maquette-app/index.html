@@ -876,6 +876,8 @@ function credMenu(btn,cid){
     {icon:'delete',label:'Supprimer',fn:()=>deleteCredit(cid,name),danger:true},
     {sep:true},
     {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
+    {sep:true},
+    {icon:'sync',label:'Sync Google',fn:()=>syncClientToGoogleContactsPWA(c)},
   ];
   showMenu(btn,items);
 }
@@ -1911,7 +1913,7 @@ async function loadEndTermCredits(){
     }
 
     let q=sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .not('status','in','("Soldé","SOLDÉ","soldé")')
       .order('end_date',{ascending:true});
 
@@ -1993,7 +1995,7 @@ async function loadCredits(){
   if(!list)return;
   try{
     let q=sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .order('status',{ascending:true})
       .order('health',{ascending:false})
       .order('created_at',{ascending:false});
@@ -2519,21 +2521,49 @@ function openCreditForm(prefill=null){
         </div>
 
         <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom complet <span style="color:#f27f0d">*</span></label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+            <label style="font-size:13px;font-weight:600;color:var(--text);margin:0">Nom complet <span style="color:#f27f0d">*</span></label>
+            <button type="button" onclick="openGoogleContactsPickerPWA('credit')" style="background:none; border:none; color:var(--p); font-size:11px; font-weight:700; text-transform:uppercase; padding:0; cursor:pointer">Importer Google</button>
+          </div>
           <input id="credit-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${(prefill?.name||'').replace(/"/g,'&quot;')}"/>
         </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse Email</label>
           <input id="credit-email" class="m-input" type="email" placeholder="nom@exemple.com" inputmode="email" value="${(prefill?.email||'').replace(/"/g,'&quot;')}"/>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:flex; flex-direction:column; gap:12px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
             <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone1||'').replace(/"/g,'&quot;')}"/>
           </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone2||'').replace(/"/g,'&quot;')}"/>
+          <!-- Extra Client Phone Fields Wrapper (Mobile PWA) -->
+          <div id="credit-extra-phones" style="display:flex; flex-direction:column; gap:12px">
+            <div id="credit-phone-wrapper-2" class="hidden">
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
+              <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone2||'').replace(/"/g,'&quot;')}"/>
+            </div>
+            <div id="credit-phone-wrapper-3" class="hidden">
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 3</label>
+              <input id="credit-phone3" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone3||'').replace(/"/g,'&quot;')}"/>
+            </div>
+            <div id="credit-phone-wrapper-4" class="hidden">
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 4</label>
+              <input id="credit-phone4" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone4||'').replace(/"/g,'&quot;')}"/>
+            </div>
+            <div id="credit-phone-wrapper-5" class="hidden">
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 5</label>
+              <input id="credit-phone5" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone5||'').replace(/"/g,'&quot;')}"/>
+            </div>
+            <div id="credit-phone-wrapper-6" class="hidden">
+              <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 6</label>
+              <input id="credit-phone6" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone6||'').replace(/"/g,'&quot;')}"/>
+            </div>
+          </div>
+          <!-- Bouton Ajouter un numéro -->
+          <div style="margin-top: 6px">
+            <button type="button" id="btn-add-credit-phone" onclick="addCreditPhoneFieldPWA()" class="m-btn btn-sec" style="padding:8px 12px; font-size:11px; display:inline-flex; align-items:center; gap:4px">
+              <span class="material-symbols-outlined" style="font-size:14px">add</span> Ajouter un numéro
+            </button>
           </div>
         </div>
         <div>
@@ -2599,6 +2629,9 @@ function openCreditForm(prefill=null){
         </div>
       </div>
     </div>`);
+  setTimeout(() => {
+    resetCreditPhoneFieldsPWA(prefill);
+  }, 50);
 }
 
 function skipWeekend(date) {
@@ -2800,12 +2833,27 @@ async function saveCredit(){
 
   const email=(document.getElementById('credit-email').value||'').trim()||null;
   const phone1=(document.getElementById('credit-phone1').value||'').trim()||null;
-  const phone2=(document.getElementById('credit-phone2').value||'').trim()||null;
+  const phone2=(document.getElementById('credit-phone2')?.value||'').trim()||null;
+  const phone3=(document.getElementById('credit-phone3')?.value||'').trim()||null;
+  const phone4=(document.getElementById('credit-phone4')?.value||'').trim()||null;
+  const phone5=(document.getElementById('credit-phone5')?.value||'').trim()||null;
+  const phone6=(document.getElementById('credit-phone6')?.value||'').trim()||null;
   const amount=parseFloat(document.getElementById('credit-amount').value)||null;
   const type=document.getElementById('credit-type').value||null;
   const activity=(document.getElementById('credit-activity').value||'').trim()||null;
   const address=(document.getElementById('credit-address').value||'').trim()||null;
   const excludeAuto=document.getElementById('credit-exclude-automation')?.checked||false;
+
+  // ── ANTI-DOUBLONS CLIENT ─────────────────────────────────
+  const editClientId = _editingClientId || null;
+  if (!editClientId) { // seulement en mode création
+    const phones = [phone1,phone2,phone3,phone4,phone5,phone6].filter(Boolean);
+    const { isDuplicate, matches } = await checkDuplicatesPWA('clients', { full_name: name, phones });
+    if (isDuplicate) {
+      const proceed = await confirmDuplicatePWA(matches, 'client');
+      if (!proceed) return;
+    }
+  }
 
   const btn=document.getElementById('cf-btn-save');
   if(btn){btn.disabled=true;btn.innerHTML='<div class="spin" style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite"></div> Enregistrement…';}
@@ -2824,7 +2872,7 @@ async function saveCredit(){
       // 1. Mettre à jour le client
       if(clientId){
         const {error:cErr} = await sb.from('clients').update({
-          full_name:name, email, phone1, phone2, activity, address,
+          full_name:name, email, phone1, phone2, phone3, phone4, phone5, phone6, activity, address,
           total_portefeuille:amount, exclude_automation:excludeAuto
         }).eq('id', clientId);
         if(cErr) throw new Error('Client : ' + cErr.message);
@@ -2895,11 +2943,17 @@ async function saveCredit(){
       _editingClientId = null;
       _editSnapshot    = null;
 
-      ['credit-name','credit-email','credit-phone1','credit-phone2',
+      ['credit-name','credit-email','credit-phone1','credit-phone2','credit-phone3','credit-phone4','credit-phone5','credit-phone6',
        'credit-activity','credit-address','credit-amount',
        'credit-start-date','credit-end-date'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.value='';
       });
+
+      // Sync Google Contacts après modification
+      if (clientId) {
+        const { data: updClient } = await sb.from('clients').select('*').eq('id', clientId).single();
+        if (updClient) syncClientToGoogleContactsPWA(updClient);
+      }
 
       closeModal();
       await loadCredits();
@@ -2923,7 +2977,7 @@ async function saveCredit(){
     let clientId = existingClient?.id;
     if(!clientId){
       const {data: newClient, error:cErr} = await sb.from('clients').insert([{
-        full_name:name,email,phone1,phone2,activity,address,
+        full_name:name,email,phone1,phone2,phone3,phone4,phone5,phone6,activity,address,
         total_portefeuille:amount,health:'Sain',is_active:true,
         exclude_automation:excludeAuto
       }]).select('id').single();
@@ -2931,7 +2985,7 @@ async function saveCredit(){
       clientId = newClient.id;
     }else{
       await sb.from('clients').update({
-        email,phone2,activity,address,total_portefeuille:amount,exclude_automation:excludeAuto
+        email,phone2,phone3,phone4,phone5,phone6,activity,address,total_portefeuille:amount,exclude_automation:excludeAuto
       }).eq('id',clientId);
     }
 
@@ -2997,6 +3051,10 @@ async function saveCredit(){
     ['credit-name','credit-email','credit-phone1','credit-phone2','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.value='';
     });
+
+    // Sync Google Contacts après création
+    const { data: newClient } = await sb.from('clients').select('*').eq('id', clientId).single();
+    if (newClient) syncClientToGoogleContactsPWA(newClient);
 
     // Fermer le formulaire et rafraîchir la liste
     closeModal();
@@ -3537,7 +3595,10 @@ async function openProspectForm(p=null){
         </div>
 
         <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom et Prénoms <span style="color:#ef4444">*</span></label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+            <label style="font-size:13px;font-weight:600;color:var(--text);margin:0">Nom et Prénoms <span style="color:#ef4444">*</span></label>
+            <button type="button" onclick="openGoogleContactsPickerPWA('prospect')" style="background:none; border:none; color:var(--p); font-size:11px; font-weight:700; text-transform:uppercase; padding:0; cursor:pointer">Importer Google</button>
+          </div>
           <input id="prospect-name" class="m-input" type="text" placeholder="Ex: Jean Dupont" value="${p?.full_name||''}"/>
         </div>
 
@@ -3557,9 +3618,34 @@ async function openProspectForm(p=null){
           </div>
         </div>
 
-        <div>
-          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-          <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel"/>
+        <!-- Extra Phone Fields for Prospect (Mobile PWA) -->
+        <div id="prospect-extra-phones" style="display:flex; flex-direction:column; gap:12px">
+          <div id="prospect-phone-wrapper-2" class="hidden">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
+            <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel"/>
+          </div>
+          <div id="prospect-phone-wrapper-3" class="hidden">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 3</label>
+            <input id="prospect-phone3" class="m-input" type="tel" placeholder="Troisième numéro (optionnel)" value="${p?.phone3||''}" inputmode="tel"/>
+          </div>
+          <div id="prospect-phone-wrapper-4" class="hidden">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 4</label>
+            <input id="prospect-phone4" class="m-input" type="tel" placeholder="Quatrième numéro (optionnel)" value="${p?.phone4||''}" inputmode="tel"/>
+          </div>
+          <div id="prospect-phone-wrapper-5" class="hidden">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 5</label>
+            <input id="prospect-phone5" class="m-input" type="tel" placeholder="Cinquième numéro (optionnel)" value="${p?.phone5||''}" inputmode="tel"/>
+          </div>
+          <div id="prospect-phone-wrapper-6" class="hidden">
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 6</label>
+            <input id="prospect-phone6" class="m-input" type="tel" placeholder="Sixième numéro (optionnel)" value="${p?.phone6||''}" inputmode="tel"/>
+          </div>
+        </div>
+        <!-- Bouton Ajouter un numéro -->
+        <div style="margin-top: 6px">
+          <button type="button" id="btn-add-prospect-phone" onclick="addProspectPhoneFieldPWA()" class="m-btn btn-sec" style="padding:8px 12px; font-size:11px; display:inline-flex; align-items:center; gap:4px">
+            <span class="material-symbols-outlined" style="font-size:14px">add</span> Ajouter un numéro
+          </button>
         </div>
 
         <div>
@@ -3625,16 +3711,39 @@ async function openProspectForm(p=null){
         </button>`:''}
       </div>
     </div>`);
+  setTimeout(() => {
+    resetProspectPhoneFieldsPWA(p);
+  }, 50);
 }
 
 async function saveProspect(id=null){
   const name=(document.getElementById('prospect-name').value||'').trim();
   if(!name){toast('Nom et Prénoms requis','err');document.getElementById('prospect-name').focus();return;}
+  const phones = [
+    document.getElementById('prospect-phone')?.value.trim(),
+    document.getElementById('prospect-phone2')?.value.trim(),
+    document.getElementById('prospect-phone3')?.value.trim(),
+    document.getElementById('prospect-phone4')?.value.trim(),
+    document.getElementById('prospect-phone5')?.value.trim(),
+    document.getElementById('prospect-phone6')?.value.trim(),
+  ].filter(Boolean);
+
+  // ── ANTI-DOUBLONS ───────────────────────────────────────
+  const { isDuplicate, matches } = await checkDuplicatesPWA('prospects', { full_name: name, phones, id });
+  if (isDuplicate) {
+    const proceed = await confirmDuplicatePWA(matches, 'prospect');
+    if (!proceed) return;
+  }
+
   const payload={
     full_name:name,
     email:document.getElementById('prospect-email').value.trim()||null,
-    phone:document.getElementById('prospect-phone').value.trim()||null,
-    phone2:document.getElementById('prospect-phone2').value.trim()||null,
+    phone:phones[0]||null,
+    phone2:phones[1]||null,
+    phone3:phones[2]||null,
+    phone4:phones[3]||null,
+    phone5:phones[4]||null,
+    phone6:phones[5]||null,
     address:document.getElementById('prospect-address').value.trim()||null,
     neighborhood:document.getElementById('prospect-address').value.trim()||null,
     activity:document.getElementById('prospect-activity').value.trim()||null,
@@ -3648,6 +3757,7 @@ async function saveProspect(id=null){
     let savedData;
     if(id){
       ({error}=await sb.from('prospects').update(payload).eq('id',id));
+      if(!error) savedData = { ...payload, id };
     }else{
       const res = await sb.from('prospects').upsert([payload],{onConflict:'full_name,phone'}).select().single();
       error = res.error;
@@ -3656,8 +3766,8 @@ async function saveProspect(id=null){
     if(error)throw error;
     toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
     
-    // Synchro Google Contacts
-    if(!id && savedData){
+    // Synchro Google Contacts (création ET modification)
+    if(savedData){
       syncProspectToGoogleContactsPWA(savedData);
     }
     
@@ -3665,6 +3775,7 @@ async function saveProspect(id=null){
     loadProspects();
   }catch(e){toast('Erreur : '+e.message,'err');}
 }
+
 
 async function deleteProspect(id,name,fromForm=false){
   openConfirm(`Supprimer ${name} ?`,'Cette action est irréversible.',async()=>{
@@ -3717,20 +3828,147 @@ async function syncProspectToGoogleContactsPWA(prospect) {
       fullName: prospect.full_name,
       phone: prospect.phone || '',
       phone2: prospect.phone2 || '',
+      phone3: prospect.phone3 || '',
+      phone4: prospect.phone4 || '',
+      phone5: prospect.phone5 || '',
+      phone6: prospect.phone6 || '',
       email: prospect.email || '',
       address: prospect.address || '',
       notes: prospect.notes || ''
     };
-    await fetch(url, {
+    const resp = await fetch(url, {
       method: 'POST',
-      mode: 'no-cors',
       body: JSON.stringify(payload),
       headers: { 'Content-Type': 'text/plain' }
     });
-    console.log("Prospect synchronisé (mobile)");
+    const result = await resp.json();
+    if (result.status === 'success') {
+      if (result.isUpdate) {
+        toast(`📇 Contact "${prospect.full_name}" mis à jour dans Google Contacts`, 'ok');
+      } else {
+        toast(`✅ Contact "${prospect.full_name}" créé dans Google Contacts`, 'ok');
+      }
+    } else {
+      toast('⚠️ Google Contacts : ' + (result.message || 'Erreur'), 'err');
+    }
   }catch(e){
     console.error("Erreur sync Google Contacts:", e);
+    toast('❌ Impossible de joindre Google Contacts', 'err');
   }
+}
+
+async function syncClientToGoogleContactsPWA(client) {
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if(!url) return;
+  try{
+    const payload = {
+      fullName: client.full_name,
+      phone:  client.phone1 || '',
+      phone2: client.phone2 || '',
+      phone3: client.phone3 || '',
+      phone4: client.phone4 || '',
+      phone5: client.phone5 || '',
+      phone6: client.phone6 || '',
+      email:   client.email   || '',
+      address: client.address || '',
+      notes:   'Client ' + (client.full_name || '')
+    };
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    const result = await resp.json();
+    if (result.status === 'success') {
+      if (result.isUpdate) {
+        toast(`📇 Contact "${client.full_name}" mis à jour dans Google Contacts`, 'ok');
+      } else {
+        toast(`✅ Contact "${client.full_name}" créé dans Google Contacts`, 'ok');
+      }
+    } else {
+      toast('⚠️ Google Contacts : ' + (result.message || 'Erreur'), 'err');
+    }
+  }catch(e){
+    console.error('Erreur sync client Google Contacts:', e);
+    toast('❌ Impossible de joindre Google Contacts', 'err');
+  }
+}
+
+// ─── ANTI-DOUBLONS (MOBILE) ──────────────────────────────
+function normalizePhoneForComparePWA(phone) {
+  if (!phone) return '';
+  let p = String(phone).replace(/[\s\-\.]/g, '');
+  // Retirer préfixes pays courants : +229, +225, +226, +228, +221 etc.
+  p = p.replace(/^\+\d{1,3}/, '');
+  // Retirer le 0 de début si 9+ chiffres restants
+  if (p.startsWith('0') && p.length >= 9) p = p.slice(1);
+  return p;
+}
+
+/**
+ * Vérifie les doublons dans prospects ou clients avant enregistrement.
+ * @param {string} table   - 'prospects' | 'clients'
+ * @param {object} data    - { full_name, phones:[], id? }
+ * @returns {Promise<{isDuplicate:boolean, matches:Array}>}
+ */
+async function checkDuplicatesPWA(table, { full_name, phones = [], id = null }) {
+  try {
+    // Colonnes de téléphone selon la table
+    const phoneCols = table === 'prospects'
+      ? ['phone','phone2','phone3','phone4','phone5','phone6']
+      : ['phone1','phone2','phone3','phone4','phone5','phone6'];
+
+    const selectCols = (table === 'prospects')
+      ? 'id,full_name,phone,phone2,phone3,phone4,phone5,phone6,status'
+      : 'id,full_name,phone1,phone2,phone3,phone4,phone5,phone6';
+
+    // 1. Chercher par nom exact
+    let { data: byName } = await sb.from(table).select(selectCols).ilike('full_name', full_name.trim());
+    byName = (byName || []).filter(r => !id || r.id !== id);
+
+    // 2. Chercher par numéro normalisé
+    const normalizedInput = phones.map(normalizePhoneForComparePWA).filter(Boolean);
+    let { data: allRows } = await sb.from(table).select(selectCols).limit(500);
+    allRows = (allRows || []).filter(r => !id || r.id !== id);
+
+    const byPhone = allRows.filter(row => {
+      const rowPhones = phoneCols.map(c => normalizePhoneForComparePWA(row[c])).filter(Boolean);
+      return normalizedInput.some(np => rowPhones.includes(np));
+    });
+
+    // Fusionner sans doublons
+    const seen = new Set();
+    const matches = [...byName, ...byPhone].filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+
+    return { isDuplicate: matches.length > 0, matches };
+  } catch(e) {
+    console.error('Erreur vérification doublons:', e);
+    return { isDuplicate: false, matches: [] };
+  }
+}
+
+/**
+ * Affiche une alerte de doublon et demande confirmation.
+ * Retourne true si l'utilisateur veut quand même continuer.
+ */
+function confirmDuplicatePWA(matches, type = 'prospect') {
+  return new Promise(resolve => {
+    const names = matches.slice(0,3).map(m => `• ${m.full_name}`).join('\n');
+    const more = matches.length > 3 ? `\n+ ${matches.length - 3} autre(s)` : '';
+    openConfirm(
+      `⚠️ Doublon détecté`,
+      `Un ou plusieurs ${type}s similaires existent déjà :\n${names}${more}\n\nVoulez-vous quand même enregistrer ?`,
+      () => resolve(true),
+      'Enregistrer quand même',
+      '#f59e0b',
+      () => resolve(false),
+      'Annuler'
+    );
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -4129,7 +4367,7 @@ async function viewRecouvrement(){
   </div>`;
 
   const {data:credits}=await sb.from('credits')
-    .select('id,client_name,phone,amount,status,health,activity,clients(full_name,phone1,phone2)')
+    .select('id,client_name,phone,amount,status,health,activity,clients(full_name,phone1,phone2,phone3,phone4,phone5,phone6)')
     .eq('health','Souffrance').order('amount',{ascending:false});
 
   const ids=(credits||[]).map(c=>c.id);
@@ -4429,7 +4667,7 @@ async function openGrandLivreMob(creditId){
   const content=document.getElementById('grand-livre-mob-content');
   content.innerHTML=`<div style="text-align:center;padding:60px 0;color:var(--text2)">Chargement…</div>`;
 
-  const{data:credit}=await sb.from('credits').select('*,clients(full_name,phone1,phone2,email,address)').eq('id',creditId).single();
+  const{data:credit}=await sb.from('credits').select('*,clients(full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,address)').eq('id',creditId).single();
   const{data:entries}=await sb.from('recovery_ledger').select('*').eq('credit_id',creditId).order('op_date',{ascending:true});
 
   if(!credit){content.innerHTML=`<p style="text-align:center;padding:40px;color:var(--text2)">Erreur chargement</p>`;return;}
@@ -5234,7 +5472,7 @@ async function openCreditDetail(id) {
   if(!c){
     // Pas dans le cache (ex: ouvert depuis Remboursements) → fetch Supabase
     const{data,error}=await sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,email,activity,address)')
+      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .eq('id',id).single();
     if(error||!data){ toast('Crédit introuvable', 'err'); return; }
     // Compter les remboursements
@@ -5448,6 +5686,270 @@ function initPullToRefresh(){
     icon.style.transform = `rotate(0deg)`;
     pulling = false;
   });
+}
+
+// --- FUNCTIONS DE GESTION DYNAMIQUE DES TÉLÉPHONES PWA ---
+function addProspectPhoneFieldPWA() {
+  const container = document.getElementById('prospect-extra-phones');
+  if (!container) return;
+  const wrappers = Array.from(container.children);
+  const nextWrapper = wrappers.find(w => w.classList.contains('hidden'));
+  if (nextWrapper) {
+    nextWrapper.classList.remove('hidden');
+    if (nextWrapper.id === 'prospect-phone-wrapper-6') {
+      const btn = document.getElementById('btn-add-prospect-phone');
+      if (btn) btn.style.display = 'none';
+    }
+  }
+}
+
+function resetProspectPhoneFieldsPWA(prospect = null) {
+  const container = document.getElementById('prospect-extra-phones');
+  const btn = document.getElementById('btn-add-prospect-phone');
+  if (btn) btn.style.display = 'inline-flex';
+  if (!container) return;
+  
+  const wrappers = Array.from(container.children);
+  wrappers.forEach(w => w.classList.add('hidden'));
+
+  if (prospect) {
+    let hasVisibleExtra = false;
+    for (let i = 2; i <= 6; i++) {
+      const fieldVal = prospect['phone' + i];
+      const inp = document.getElementById('prospect-phone' + i);
+      const wrapper = document.getElementById('prospect-phone-wrapper-' + i);
+      if (inp) inp.value = fieldVal || '';
+      if (wrapper && fieldVal) {
+        wrapper.classList.remove('hidden');
+        hasVisibleExtra = true;
+        if (i === 6 && btn) btn.style.display = 'none';
+      }
+    }
+    if (!hasVisibleExtra && wrappers[0]) {
+      wrappers[0].classList.remove('hidden');
+    }
+  } else {
+    for (let i = 2; i <= 6; i++) {
+      const inp = document.getElementById('prospect-phone' + i);
+      if (inp) inp.value = '';
+    }
+    if (wrappers[0]) wrappers[0].classList.remove('hidden');
+  }
+}
+
+function addCreditPhoneFieldPWA() {
+  const container = document.getElementById('credit-extra-phones');
+  if (!container) return;
+  const wrappers = Array.from(container.children);
+  const nextWrapper = wrappers.find(w => w.classList.contains('hidden'));
+  if (nextWrapper) {
+    nextWrapper.classList.remove('hidden');
+    if (nextWrapper.id === 'credit-phone-wrapper-6') {
+      const btn = document.getElementById('btn-add-credit-phone');
+      if (btn) btn.style.display = 'none';
+    }
+  }
+}
+
+function resetCreditPhoneFieldsPWA(prefill = null) {
+  const container = document.getElementById('credit-extra-phones');
+  const btn = document.getElementById('btn-add-credit-phone');
+  if (btn) btn.style.display = 'inline-flex';
+  if (!container) return;
+
+  const wrappers = Array.from(container.children);
+  wrappers.forEach(w => w.classList.add('hidden'));
+
+  if (prefill) {
+    let hasVisibleExtra = false;
+    for (let i = 2; i <= 6; i++) {
+      const fieldVal = prefill['phone' + i];
+      const inp = document.getElementById('credit-phone' + i);
+      const wrapper = document.getElementById('credit-phone-wrapper-' + i);
+      if (inp) inp.value = fieldVal || '';
+      if (wrapper && fieldVal) {
+        wrapper.classList.remove('hidden');
+        hasVisibleExtra = true;
+        if (i === 6 && btn) btn.style.display = 'none';
+      }
+    }
+    if (!hasVisibleExtra && wrappers[0]) {
+      wrappers[0].classList.remove('hidden');
+    }
+  } else {
+    for (let i = 2; i <= 6; i++) {
+      const inp = document.getElementById('credit-phone' + i);
+      if (inp) inp.value = '';
+    }
+    if (wrappers[0]) wrappers[0].classList.remove('hidden');
+  }
+}
+
+// --- GOOGLE CONTACTS PICKER PWA ---
+let googleContactsPWACache = [];
+let currentPickerPWATarget = 'prospect';
+
+function openGoogleContactsPickerPWA(targetType) {
+  currentPickerPWATarget = targetType;
+  
+  let modal = document.getElementById('google-contacts-picker-pwa');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'google-contacts-picker-pwa';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(15, 23, 42, 0.7)';
+    modal.style.backdropFilter = 'blur(4px)';
+    modal.style.zIndex = '99999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '16px';
+    modal.style.boxSizing = 'border-box';
+    
+    modal.innerHTML = `
+      <div style="background:var(--bg); border:1px solid var(--sep); border-radius:20px; width:100%; max-width:400px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.5)">
+        <!-- Header -->
+        <div style="padding:16px; border-bottom:1px solid var(--sep); display:flex; justify-content:space-between; align-items:center">
+          <div>
+            <h4 style="margin:0; font-size:14px; font-weight:700; color:var(--text)">Contacts Google</h4>
+            <p style="margin:2px 0 0 0; font-size:10px; color:var(--text2)">Rechercher et importer</p>
+          </div>
+          <button onclick="closeGoogleContactsPickerPWA()" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer; padding:4px" class="material-symbols-outlined">close</button>
+        </div>
+        <!-- Body -->
+        <div style="padding:16px; display:flex; flex-direction:column; gap:12px; flex:1; overflow:hidden">
+          <!-- Search input -->
+          <div style="position:relative">
+            <input id="google-contacts-pwa-search" onkeyup="searchGoogleContactsPickerPWA()" type="text" placeholder="Rechercher..." style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px; border:1px solid var(--sep); background:rgba(255,255,255,0.05); color:var(--text); font-size:13px; outline:none"/>
+          </div>
+          <!-- List -->
+          <div id="google-contacts-pwa-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; max-height:45vh; min-height:200px">
+            <div style="text-align:center; padding:30px 0; color:var(--text2); font-size:12px">Chargement…</div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
+  }
+  
+  const searchInp = document.getElementById('google-contacts-pwa-search');
+  if (searchInp) searchInp.value = '';
+  loadGoogleContactsListPWA();
+}
+
+function closeGoogleContactsPickerPWA() {
+  const modal = document.getElementById('google-contacts-picker-pwa');
+  if (modal) modal.style.display = 'none';
+}
+
+async function loadGoogleContactsListPWA() {
+  const listContainer = document.getElementById('google-contacts-pwa-list');
+  if (!listContainer) return;
+  
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if (!url) {
+    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444; font-size:12px">Configurez l'URL Google Contacts dans les paramètres de synchronisation.</div>`;
+    return;
+  }
+  
+  listContainer.innerHTML = `<div style="text-align:center; padding:30px 0; color:var(--text2); font-size:12px">Chargement des contacts Google…</div>`;
+  
+  try {
+    const response = await fetch(url + '?action=search');
+    const res = await response.json();
+    if (res.status === 'success') {
+      googleContactsPWACache = res.contacts || [];
+      renderContactsListPWA(googleContactsPWACache);
+    } else {
+      listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444; font-size:12px">Erreur: ${res.message}</div>`;
+    }
+  } catch (err) {
+    console.error("Erreur contacts Google PWA:", err);
+    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444; font-size:12px">Erreur de connexion</div>`;
+  }
+}
+
+function renderContactsListPWA(contacts) {
+  const listContainer = document.getElementById('google-contacts-pwa-list');
+  if (!listContainer) return;
+  
+  if (contacts.length === 0) {
+    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text2); font-size:12px">Aucun contact trouvé</div>`;
+    return;
+  }
+  
+  listContainer.innerHTML = contacts.map((c, idx) => {
+    const phoneStr = c.phones.filter(Boolean).join(', ');
+    return `
+      <div onclick="selectGoogleContactPWA(${idx})" style="padding:10px 12px; border:1px solid var(--sep); border-radius:12px; cursor:pointer; display:flex; flex-direction:column; gap:2px; background:rgba(255,255,255,0.02)">
+        <span style="font-size:13px; font-weight:700; color:var(--text)">${c.fullName}</span>
+        ${phoneStr ? `<span style="font-size:10px; color:var(--text2); display:flex; align-items:center; gap:4px"><span class="material-symbols-outlined" style="font-size:12px">phone</span> ${phoneStr}</span>` : ''}
+        ${c.email ? `<span style="font-size:10px; color:var(--text2); display:flex; align-items:center; gap:4px"><span class="material-symbols-outlined" style="font-size:12px">mail</span> ${c.email}</span>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function searchGoogleContactsPickerPWA() {
+  const input = document.getElementById('google-contacts-pwa-search');
+  if (!input) return;
+  const query = input.value.toLowerCase().trim();
+  const filtered = googleContactsPWACache.filter(c => 
+    c.fullName.toLowerCase().indexOf(query) !== -1 || 
+    c.phones.some(p => p.indexOf(query) !== -1)
+  );
+  renderContactsListPWA(filtered);
+}
+
+function selectGoogleContactPWA(index) {
+  const contact = googleContactsPWACache[index];
+  if (!contact) return;
+  
+  if (currentPickerPWATarget === 'prospect') {
+    const nameInp = document.getElementById('prospect-name');
+    const emailInp = document.getElementById('prospect-email');
+    const addressInp = document.getElementById('prospect-address');
+    
+    if (nameInp) nameInp.value = contact.fullName;
+    if (emailInp) emailInp.value = contact.email;
+    if (addressInp) addressInp.value = contact.address;
+
+    const phone1Inp = document.getElementById('prospect-phone');
+    if (phone1Inp) phone1Inp.value = contact.phones[0] || '';
+
+    const extraData = {};
+    for (let i = 2; i <= 6; i++) {
+      extraData['phone' + i] = contact.phones[i - 1] || '';
+    }
+    resetProspectPhoneFieldsPWA(extraData);
+    
+  } else if (currentPickerPWATarget === 'credit') {
+    const nameInp = document.getElementById('credit-name');
+    const emailInp = document.getElementById('credit-email');
+    const addressInp = document.getElementById('credit-address');
+    
+    if (nameInp) nameInp.value = contact.fullName;
+    if (emailInp) emailInp.value = contact.email;
+    if (addressInp) addressInp.value = contact.address;
+
+    const phone1Inp = document.getElementById('credit-phone1');
+    if (phone1Inp) phone1Inp.value = contact.phones[0] || '';
+
+    const extraData = {};
+    for (let i = 2; i <= 6; i++) {
+      extraData['phone' + i] = contact.phones[i - 1] || '';
+    }
+    resetCreditPhoneFieldsPWA(extraData);
+  }
+  
+  closeGoogleContactsPickerPWA();
+  toast('Contact importé !', 'ok');
 }
 
 // Initialisation
