@@ -3875,17 +3875,18 @@ async function syncClientToGoogleContactsPWA(client) {
   }
   if(!client) { toast('❌ Client introuvable', 'err'); return; }
   try{
+    const cl = client.clients || client; // supporte _credCache (credits) et objet clients direct
     const payload = {
-      fullName: client.full_name,
-      phone:  client.phone1 || '',
-      phone2: client.phone2 || '',
-      phone3: client.phone3 || '',
-      phone4: client.phone4 || '',
-      phone5: client.phone5 || '',
-      phone6: client.phone6 || '',
-      email:   client.email   || '',
-      address: client.address || '',
-      notes:   'Client ' + (client.full_name || '')
+      fullName: cl.full_name || client.client_name || '',
+      phone:  cl.phone1 || client.phone || '',
+      phone2: cl.phone2 || '',
+      phone3: cl.phone3 || '',
+      phone4: cl.phone4 || '',
+      phone5: cl.phone5 || '',
+      phone6: cl.phone6 || '',
+      email:   cl.email || client.email || '',
+      address: cl.address || client.address || '',
+      notes:   'Client ' + (cl.full_name || client.client_name || '')
     };
     const resp = await fetch(url, {
       method: 'POST',
@@ -5581,6 +5582,10 @@ function renderCreditDetail(c) {
           <span class="material-symbols-outlined" style="font-size:20px;color:#3b82f6">sms</span>
           <span style="font-size:10px;font-weight:700;color:#3b82f6">SMS</span>
         </button>` : ''}
+        <button onclick="syncClientToGoogleContactsPWA(_credCache[currentCreditId])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#4285f4">sync</span>
+          <span style="font-size:10px;font-weight:700;color:#4285f4">Google</span>
+        </button>
       </div>
     </div>
 
