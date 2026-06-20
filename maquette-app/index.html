@@ -1698,7 +1698,7 @@ async function loadRepayments(){
   try{
     const t=today();
     let q=sb.from('repayments')
-      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_name,phone,health,status,amount,start_date,end_date,clients(full_name,phone1))');
+      .select('id,scheduled_date,amount,is_paid,is_reported,credits(id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address))');
 
     if(repFilter==='overdue'){
       q=q.lt('scheduled_date',t).eq('is_paid',false).order('scheduled_date',{ascending:false});
@@ -1709,6 +1709,14 @@ async function loadRepayments(){
     }
     const{data,error}=await q;
     if(error)throw error;
+
+    // Cacher les crédits pour les actions (Appel, WhatsApp, Modifier...) depuis REMB
+    (data||[]).forEach(r => {
+      if (r.credits) {
+        _credCache[r.credits.id] = r.credits;
+      }
+    });
+
     // Exclure les crédits en Souffrance de la liste des impayés
     let rows=(data||[]).filter(r=>r.credits?.health!=='Souffrance');
     
@@ -3911,6 +3919,7 @@ function prosRow(p){
         <div style="display:flex;flex-direction:column;gap:6px">
            ${phone?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">call</span><span style="font-size:13px;font-weight:700">${phone}</span></div>`:''}
            ${address?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">location_on</span><span style="font-size:12px;font-weight:600;word-break:break-word">${address}</span></div>`:''}
+           ${(p.notes||p.observations)?`<div style="display:flex;align-items:flex-start;gap:6px;color:var(--text2);margin-top:2px"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7;margin-top:1px">sticky_note_2</span><span style="font-size:12px;font-weight:600;line-height:1.4;word-break:break-word">${p.notes||p.observations}</span></div>`:''}
         </div>
       </div>
     </div>
