@@ -41,7 +41,7 @@ function doPost(e) {
         if (!taskExists) {
           let task = { title: title, notes: notes };
           if (dueDateStr) {
-            task.due = dueTimeStr ? (dueDateStr + "T" + dueTimeStr + ":00.000Z") : (dueDateStr + "T00:00:00.000Z");
+            task.due = dueDateStr + "T00:00:00.000Z";
           }
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
@@ -52,7 +52,7 @@ function doPost(e) {
             notes: notes
           };
           if (dueDateStr) {
-            updatedTask.due = dueTimeStr ? (dueDateStr + "T" + dueTimeStr + ":00.000Z") : (dueDateStr + "T00:00:00.000Z");
+            updatedTask.due = dueDateStr + "T00:00:00.000Z";
           }
           Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
           results.tasks = 'Mise à jour avec succès';
