@@ -19,7 +19,7 @@ function doPost(e) {
 
       let results = { calendar: 'Non créé', tasks: 'Non créée' };
 
-      // Helper to format due date for Tasks API (RFC 3339 YYYY-MM-DDT00:00:00.000Z)
+      // Helper to format due date for Tasks API (RFC 3339 YYYY-MM-DDT00:00:00Z)
       const formattedTasksDue = (function(dStr) {
         if (!dStr) return null;
         var cleaned = dStr.trim();
@@ -34,7 +34,7 @@ function doPost(e) {
             var year = parts[2];
             if (day.length === 1) day = '0' + day;
             if (month.length === 1) month = '0' + month;
-            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+            return year + '-' + month + '-' + day + 'T00:00:00Z';
           }
         }
 
@@ -47,7 +47,7 @@ function doPost(e) {
             var day = parts[2].split('T')[0];
             if (day.length === 1) day = '0' + day;
             if (month.length === 1) month = '0' + month;
-            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+            return year + '-' + month + '-' + day + 'T00:00:00Z';
           }
         }
 
@@ -59,7 +59,7 @@ function doPost(e) {
             var day = d.getUTCDate();
             if (month < 10) month = '0' + month;
             if (day < 10) day = '0' + day;
-            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+            return year + '-' + month + '-' + day + 'T00:00:00Z';
           }
         } catch(e) {}
         return null;
@@ -117,6 +117,7 @@ function doPost(e) {
       })(dueDateStr, dueTimeStr);
 
       // 1. Google Tasks
+      var debugTaskPayload = {};
       try {
         let taskListId = '@default';
         let taskExists = false;
@@ -136,26 +137,25 @@ function doPost(e) {
         }
 
         if (!taskExists) {
-          let task = { title: title, notes: notes };
-          if (formattedTasksDue) {
-            task.due = formattedTasksDue;
-          }
+          let task = { title: title };
+          if (notes && notes.trim()) task.notes = notes;
+          if (formattedTasksDue) task.due = formattedTasksDue;
+          debugTaskPayload = task;
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
         } else {
           let updatedTask = {
             id: existingTask.id,
-            title: title,
-            notes: notes
+            title: title
           };
-          if (formattedTasksDue) {
-            updatedTask.due = formattedTasksDue;
-          }
+          if (notes && notes.trim()) updatedTask.notes = notes;
+          if (formattedTasksDue) updatedTask.due = formattedTasksDue;
+          debugTaskPayload = updatedTask;
           Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
           results.tasks = 'Mise à jour avec succès';
         }
       } catch (errTasks) {
-        results.tasks = 'Erreur: ' + errTasks.toString();
+        results.tasks = 'Erreur: ' + errTasks.toString() + ' (Payload: ' + JSON.stringify(debugTaskPayload) + ')';
         console.warn("Erreur Google Tasks : " + errTasks.toString());
       }
 
@@ -187,7 +187,8 @@ function doPost(e) {
         } else {
           calendar.createEvent(title, targetDate, endDate, { description: notes });
         }
-        results.calendar = eventExists ? 'Mise à jour avec succès' : 'Créé avec succès';
+        var dateInfoStr = targetDate ? (' (Le ' + targetDate.toLocaleDateString('fr-FR') + ')') : '';
+        results.calendar = (eventExists ? 'Mise à jour avec succès' : 'Créé avec succès') + dateInfoStr;
       } catch (errCal) {
         results.calendar = 'Erreur: ' + errCal.toString();
         console.warn("Erreur Google Agenda : " + errCal.toString());
