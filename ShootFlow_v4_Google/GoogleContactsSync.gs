@@ -197,6 +197,64 @@ function doPost(e) {
       return jsonResponse({ status: 'success', results: results });
     }
 
+    // ─── ACTION : TOGGLE STATUS DE TACHE (GOOGLE TASKS) ───────
+    if (data.action === 'toggle_task_status') {
+      const title = data.title;
+      const status = data.status || 'needsAction'; // 'completed' ou 'needsAction'
+      const taskListId = '@default';
+      
+      try {
+        const tasksResponse = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
+        let found = false;
+        let taskId = null;
+        if (tasksResponse.items) {
+          for (let i = 0; i < tasksResponse.items.length; i++) {
+            const t = tasksResponse.items[i];
+            if (t.title === title) {
+              found = true;
+              taskId = t.id;
+              t.status = status;
+              if (status === 'needsAction') {
+                t.completed = null; // efface la date de fin pour la réactiver
+              }
+              Tasks.Tasks.update(t, taskListId, taskId);
+              break;
+            }
+          }
+        }
+        if (found) {
+          return jsonResponse({ status: 'success', message: 'Statut de la tâche mis à jour.', taskId: taskId });
+        } else {
+          if (status === 'completed') {
+            let task = { title: title, status: 'completed' };
+            Tasks.Tasks.insert(task, taskListId);
+            return jsonResponse({ status: 'success', message: 'Tâche créée et complétée.' });
+          }
+          return jsonResponse({ status: 'error', message: 'Tâche introuvable dans Google Tasks.' });
+        }
+      } catch (err) {
+        return jsonResponse({ status: 'error', message: err.toString() });
+      }
+    }
+
+    // ─── ACTION : LISTER LES TACHES (GOOGLE TASKS) ────────────
+    if (data.action === 'list_tasks') {
+      const taskListId = '@default';
+      try {
+        const tasksResponse = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
+        const items = (tasksResponse.items || []).map(t => {
+          return {
+            title: t.title,
+            status: t.status, // 'completed' ou 'needsAction'
+            updated: t.updated
+          };
+        });
+        return jsonResponse({ status: 'success', tasks: items });
+      } catch (err) {
+        return jsonResponse({ status: 'error', message: err.toString() });
+      }
+    }
+
     // ─── ACTION PAR DEFAUT : CONTACTS ─────────────────────────
     const fullName = data.fullName || '';
     const phone  = data.phone  || '';

@@ -5544,9 +5544,14 @@ function renderTasksMobile(){
   let doneRows=applyFilters(_taskFilterMob==='todo'||_taskFilterMob==='in_progress'?[]:allDone);
   view.innerHTML=`
     <div style="padding:16px 16px 0">
-      <div style="position:relative;margin-bottom:12px">
-        <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text2);pointer-events:none">search</span>
-        <input value="${_taskSearchMob}" oninput="_taskSearchMob=this.value;renderTasksMobile()" placeholder="Rechercher une tâche…" style="width:100%;padding:11px 12px 11px 38px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="flex:1;position:relative">
+          <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text2);pointer-events:none">search</span>
+          <input value="${_taskSearchMob}" oninput="_taskSearchMob=this.value;renderTasksMobile()" placeholder="Rechercher une tâche…" style="width:100%;padding:11px 12px 11px 38px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;font-family:inherit"/>
+        </div>
+        <button onclick="syncAllTasksMobile()" style="width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Synchroniser avec Google Tasks">
+          <span class="material-symbols-outlined" style="font-size:22px">cloud_sync</span>
+        </button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         ${[['radio_button_unchecked','À faire',todo,'#64748b'],['sync','En cours',inP,'#3b82f6'],['check_circle','Terminées',done,'#22c55e'],['warning','En retard',overdue,'#ef4444']].map(([ic,lb,v,c])=>`
@@ -5669,6 +5674,137 @@ async function syncTaskToGoogleMobile(task) {
     }
   } catch (err) {
     console.error("Erreur de communication avec Google:", err);
+  }
+}
+
+async function syncTaskStatusToGoogleMobile(task) {
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if (!url) return;
+
+  const titleStr = task.entity_name ? task.entity_name + ' - ' + task.title : task.title;
+  const statusStr = task.status === 'done' ? 'completed' : 'needsAction';
+  const payload = {
+    action: 'toggle_task_status',
+    title: titleStr,
+    status: statusStr
+  };
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    const res = await resp.json();
+    if (res.status === 'success') {
+      console.log('Google Tasks statut synchronisé ✓', res.message);
+    } else {
+      console.warn('Google Tasks statut sync warning:', res.message);
+    }
+  } catch (err) {
+    console.error("Erreur sync statut Google Tasks:", err);
+  }
+}
+
+async function syncAllTasksMobile() {
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if (!url) {
+    toast('⚙️ Configurez l\'URL dans Paramètres > Synchronisation', 'err');
+    return;
+  }
+
+  toast('⏳ Synchronisation globale des tâches...', 'info');
+
+  try {
+    const { data: localTasks, error: errLocal } = await sb.from('tasks').select('*');
+    if (errLocal) throw errLocal;
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'list_tasks' }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    const res = await resp.json();
+    if (res.status !== 'success') {
+      throw new Error(res.message || 'Erreur Google');
+    }
+
+    const googleTasks = res.tasks || [];
+    let updatedLocalCount = 0;
+    let uploadedCount = 0;
+    
+    const gTasksMap = {};
+    googleTasks.forEach(gt => {
+      gTasksMap[gt.title] = gt;
+    });
+
+    const localUpdates = [];
+    const googleUploads = [];
+
+    for (const lt of (localTasks || [])) {
+      const fullTitle = lt.entity_name ? lt.entity_name + ' - ' + lt.title : lt.title;
+      const gt = gTasksMap[fullTitle];
+
+      if (gt) {
+        const isGoogleDone = gt.status === 'completed';
+        const isLocalDone = lt.status === 'done';
+
+        if (isGoogleDone && !isLocalDone) {
+          localUpdates.push(
+            sb.from('tasks').update({ status: 'done', updated_at: new Date().toISOString() }).eq('id', lt.id)
+          );
+          updatedLocalCount++;
+        } else if (!isGoogleDone && isLocalDone) {
+          localUpdates.push(
+            sb.from('tasks').update({ status: 'todo', updated_at: new Date().toISOString() }).eq('id', lt.id)
+          );
+          updatedLocalCount++;
+        }
+      } else {
+        googleUploads.push((async () => {
+          const payload = {
+            action: 'create_task',
+            title: fullTitle,
+            notes: lt.notes || '',
+            dueDate: lt.due_date || '',
+            dueTime: lt.due_time || ''
+          };
+          const r = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain' }
+          });
+          const resJson = await r.json();
+          if (resJson.status === 'success' && lt.status === 'done') {
+            await fetch(url, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'toggle_task_status',
+                title: fullTitle,
+                status: 'completed'
+              }),
+              headers: { 'Content-Type': 'text/plain' }
+            });
+          }
+        })());
+        uploadedCount++;
+      }
+    }
+
+    if (localUpdates.length > 0) {
+      await Promise.all(localUpdates);
+    }
+    if (googleUploads.length > 0) {
+      await Promise.all(googleUploads);
+    }
+
+    toast(`✓ Synchronisation réussie : ${updatedLocalCount} locales mises à jour, ${uploadedCount} envoyées à Google`, 'ok');
+    
+    // Recharger la vue des tâches
+    viewTasksMobile();
+  } catch (e) {
+    console.error("Erreur de synchronisation globale des tâches:", e);
+    toast('⚠️ Erreur synchro : ' + e.message, 'err');
   }
 }
 
@@ -5937,7 +6073,11 @@ async function quickToggleTaskMobile(taskId){
   const cycle={todo:'in_progress',in_progress:'done',done:'todo'};
   const ns=cycle[t.status]||'in_progress';
   const{error}=await sb.from('tasks').update({status:ns,updated_at:new Date().toISOString()}).eq('id',taskId);
-  if(!error){t.status=ns;renderTasksMobile();}
+  if(!error){
+    t.status=ns;
+    renderTasksMobile();
+    syncTaskStatusToGoogleMobile(t);
+  }
 }
 
 function exportTaskToGCalMobile(taskId){
