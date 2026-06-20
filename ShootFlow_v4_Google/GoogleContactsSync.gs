@@ -14,10 +14,107 @@ function doPost(e) {
     if (data.action === 'create_task') {
       const title = data.title || 'Nouvelle tâche';
       const notes = data.notes || '';
-      const dueDateStr = data.dueDate; // format YYYY-MM-DD
+      const dueDateStr = data.dueDate; // format YYYY-MM-DD ou autre
       const dueTimeStr = data.dueTime; // format HH:MM
 
       let results = { calendar: 'Non créé', tasks: 'Non créée' };
+
+      // Helper to format due date for Tasks API (RFC 3339 YYYY-MM-DDT00:00:00.000Z)
+      const formattedTasksDue = (function(dStr) {
+        if (!dStr) return null;
+        var cleaned = dStr.trim();
+        if (!cleaned) return null;
+
+        // format DD/MM/YYYY
+        if (cleaned.indexOf('/') !== -1) {
+          var parts = cleaned.split('/');
+          if (parts.length === 3) {
+            var day = parts[0];
+            var month = parts[1];
+            var year = parts[2];
+            if (day.length === 1) day = '0' + day;
+            if (month.length === 1) month = '0' + month;
+            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+          }
+        }
+
+        // format YYYY-MM-DD
+        if (cleaned.indexOf('-') !== -1) {
+          var parts = cleaned.split('-');
+          if (parts.length === 3) {
+            var year = parts[0];
+            var month = parts[1];
+            var day = parts[2].split('T')[0];
+            if (day.length === 1) day = '0' + day;
+            if (month.length === 1) month = '0' + month;
+            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+          }
+        }
+
+        try {
+          var d = new Date(cleaned);
+          if (!isNaN(d.getTime())) {
+            var year = d.getUTCFullYear();
+            var month = d.getUTCMonth() + 1;
+            var day = d.getUTCDate();
+            if (month < 10) month = '0' + month;
+            if (day < 10) day = '0' + day;
+            return year + '-' + month + '-' + day + 'T00:00:00.000Z';
+          }
+        } catch(e) {}
+        return null;
+      })(dueDateStr);
+
+      // Helper to parse target date details for Calendar
+      const calDetails = (function(dStr, tStr) {
+        var res = { date: new Date(), isAllDay: true, endDate: null, isValid: false };
+        if (!dStr) return res;
+        var cleaned = dStr.trim();
+        if (!cleaned) return res;
+
+        var year, month, day;
+        if (cleaned.indexOf('/') !== -1) {
+          var parts = cleaned.split('/');
+          if (parts.length === 3) {
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
+          }
+        } else if (cleaned.indexOf('-') !== -1) {
+          var parts = cleaned.split('-');
+          if (parts.length === 3) {
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            day = parseInt(parts[2].split('T')[0], 10);
+          }
+        }
+
+        if (year && !isNaN(month) && day) {
+          res.isValid = true;
+          if (tStr && tStr.trim()) {
+            var timeParts = tStr.trim().split(':');
+            if (timeParts.length >= 2) {
+              var hour = parseInt(timeParts[0], 10);
+              var min = parseInt(timeParts[1], 10);
+              res.date = new Date(year, month, day, hour, min, 0);
+              res.endDate = new Date(res.date.getTime() + 60 * 60 * 1000); // 1h
+              res.isAllDay = false;
+            }
+          }
+          if (res.isAllDay) {
+            res.date = new Date(year, month, day);
+          }
+        } else {
+          try {
+            var d = new Date(cleaned);
+            if (!isNaN(d.getTime())) {
+              res.date = d;
+              res.isValid = true;
+            }
+          } catch(e) {}
+        }
+        return res;
+      })(dueDateStr, dueTimeStr);
 
       // 1. Google Tasks
       try {
@@ -40,8 +137,8 @@ function doPost(e) {
 
         if (!taskExists) {
           let task = { title: title, notes: notes };
-          if (dueDateStr) {
-            task.due = dueDateStr + "T00:00:00.000Z";
+          if (formattedTasksDue) {
+            task.due = formattedTasksDue;
           }
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
@@ -51,8 +148,8 @@ function doPost(e) {
             title: title,
             notes: notes
           };
-          if (dueDateStr) {
-            updatedTask.due = dueDateStr + "T00:00:00.000Z";
+          if (formattedTasksDue) {
+            updatedTask.due = formattedTasksDue;
           }
           Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
           results.tasks = 'Mise à jour avec succès';
@@ -65,20 +162,9 @@ function doPost(e) {
       // 2. Google Agenda (Calendar)
       try {
         const calendar = CalendarApp.getDefaultCalendar();
-        let targetDate = new Date();
-        let isAllDay = true;
-        let endDate = null;
-
-        if (dueDateStr) {
-          if (dueTimeStr) {
-            targetDate = new Date(dueDateStr + 'T' + dueTimeStr + ':00');
-            endDate = new Date(targetDate.getTime() + 60 * 60 * 1000); // 1h
-            isAllDay = false;
-          } else {
-            const parts = dueDateStr.split('-');
-            targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
-          }
-        }
+        let targetDate = calDetails.date;
+        let isAllDay = calDetails.isAllDay;
+        let endDate = calDetails.endDate;
 
         // Vérification des doublons dans Calendar (le jour même)
         const events = calendar.getEventsForDay(targetDate);
