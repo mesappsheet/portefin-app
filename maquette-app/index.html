@@ -4258,9 +4258,11 @@ async function syncProspectToGoogleContactsPWA(prospect) {
     return;
   }
   if(!prospect) { toast('❌ Prospect introuvable', 'err'); return; }
+  toast('⏳ Synchronisation Google Contacts...', 'info');
+  const name = prospect.full_name || 'Prospect Inconnu';
   try{
     const payload = {
-      fullName: prospect.full_name,
+      fullName: name,
       phone: prospect.phone || '',
       phone2: prospect.phone2 || '',
       phone3: prospect.phone3 || '',
@@ -4278,17 +4280,13 @@ async function syncProspectToGoogleContactsPWA(prospect) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      if (result.isUpdate) {
-        toast(`📇 Contact "${prospect.full_name}" mis à jour dans Google Contacts`, 'ok');
-      } else {
-        toast(`✅ Contact "${prospect.full_name}" créé dans Google Contacts`, 'ok');
-      }
+      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
     } else {
-      toast('⚠️ Google Contacts : ' + (result.message || 'Erreur'), 'err');
+      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
     }
   }catch(e){
     console.error("Erreur sync Google Contacts:", e);
-    toast('❌ Impossible de joindre Google Contacts', 'err');
+    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
   }
 }
 
@@ -4299,10 +4297,12 @@ async function syncClientToGoogleContactsPWA(client) {
     return;
   }
   if(!client) { toast('❌ Client introuvable', 'err'); return; }
+  toast('⏳ Synchronisation Google Contacts...', 'info');
+  const cl = client.clients || client; // supporte _credCache (credits) et objet clients direct
+  const name = cl.full_name || client.client_name || 'Client Inconnu';
   try{
-    const cl = client.clients || client; // supporte _credCache (credits) et objet clients direct
     const payload = {
-      fullName: cl.full_name || client.client_name || '',
+      fullName: name,
       phone:  cl.phone1 || client.phone || '',
       phone2: cl.phone2 || '',
       phone3: cl.phone3 || '',
@@ -4311,7 +4311,7 @@ async function syncClientToGoogleContactsPWA(client) {
       phone6: cl.phone6 || '',
       email:   cl.email || client.email || '',
       address: cl.address || client.address || '',
-      notes:   'Client ' + (cl.full_name || client.client_name || '')
+      notes:   'Client ' + name
     };
     const resp = await fetch(url, {
       method: 'POST',
@@ -4320,18 +4320,81 @@ async function syncClientToGoogleContactsPWA(client) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      if (result.isUpdate) {
-        toast(`📇 Contact "${client.full_name}" mis à jour dans Google Contacts`, 'ok');
-      } else {
-        toast(`✅ Contact "${client.full_name}" créé dans Google Contacts`, 'ok');
-      }
+      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
     } else {
-      toast('⚠️ Google Contacts : ' + (result.message || 'Erreur'), 'err');
+      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
     }
   }catch(e){
     console.error('Erreur sync client Google Contacts:', e);
-    toast('❌ Impossible de joindre Google Contacts', 'err');
+    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
   }
+}
+
+function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl) {
+  let modal = document.getElementById('google-contact-sync-report-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'google-contact-sync-report-modal';
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:350000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;";
+    document.body.appendChild(modal);
+  }
+
+  const getBadgeStyle = (stat) => {
+    if (stat === 'success') {
+      return "background:#dcfce7; color:#166534; border:1px solid #bbf7d0;";
+    }
+    return "background:#fee2e2; color:#991b1b; border:1px solid #fecaca;";
+  };
+
+  const statusText = status === 'success' 
+    ? (isUpdate ? 'Mis à jour avec succès' : 'Créé avec succès')
+    : ('Erreur : ' + status);
+
+  const statusBadge = `<span style="padding:4px 10px; border-radius:80px; font-size:11px; font-weight:800; ${getBadgeStyle(status)}">${statusText}</span>`;
+
+  let actionButtonsHtml = '';
+  if (status === 'success' && contactUrl) {
+    actionButtonsHtml = `
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+        <a href="${contactUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#4285f4; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+          <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Consulter Google Contacts
+        </a>
+      </div>
+    `;
+  }
+
+  modal.innerHTML = `
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+        <span class="material-symbols-outlined" style="font-size:44px; color:#4285f4; margin-bottom:8px;">cloud_done</span>
+        <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation</h3>
+        <button onclick="closeGoogleContactSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+        <p style="margin:0 0 4px 0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
+          Le contact <strong style="color:var(--text)">"${fullName}"</strong> a été traité :
+        </p>
+        
+        <div style="display:flex; flex-direction:column; gap:10px; background:rgba(0,0,0,0.02); padding:14px; border-radius:14px; border:1px solid var(--sep)">
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+            <span style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text)"><span class="material-symbols-outlined" style="color:#4285f4; font-size:18px">contact_page</span> Google Contacts</span>
+            ${statusBadge}
+          </div>
+        </div>
+
+        ${actionButtonsHtml}
+      </div>
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+        <button onclick="closeGoogleContactSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
+      </div>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+function closeGoogleContactSyncReportModal() {
+  const modal = document.getElementById('google-contact-sync-report-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 // ─── ANTI-DOUBLONS (MOBILE) ──────────────────────────────
