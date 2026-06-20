@@ -6304,8 +6304,8 @@ function openCreditDetailMenu(btn) {
 async function openCreditDetail(id) {
   if(!id){ toast('Crédit introuvable', 'err'); return; }
   let c = _credCache[id];
-  if(!c){
-    // Pas dans le cache (ex: ouvert depuis Remboursements) → fetch Supabase
+  if(!c || !c.reps){
+    // Pas dans le cache (ou cache incomplet, ex: ouvert depuis Remboursements) → fetch Supabase
     const{data,error}=await sb.from('credits')
       .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .eq('id',id).single();
