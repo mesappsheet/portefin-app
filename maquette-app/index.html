@@ -2516,10 +2516,11 @@ function openCreditForm(prefill=null){
         <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#fb923c);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(var(--primary-rgb),.2)">
           <span class="material-symbols-outlined" style="color:white;font-size:24px">account_balance_wallet</span>
         </div>
-        <div>
+        <div style="flex:1">
           <p id="credit-form-subtitle" style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin:0">Nouveau Dossier</p>
           <p id="credit-form-title" style="font-size:16px;font-weight:700;color:var(--text);margin:0">Ouverture de Dossier Client</p>
         </div>
+        <div id="credit-form-sync-container"></div>
       </div>
       <div id="credit-form-body" style="display:flex;flex-direction:column;gap:14px">
 
@@ -2869,6 +2870,15 @@ async function _mobEditOption2(cid) {
     const subtitle = document.getElementById('credit-form-subtitle');
     if(title) title.textContent = 'Modifier le dossier';
     if(subtitle) subtitle.textContent = 'Modification — données conservées';
+    const syncContainer = document.getElementById('credit-form-sync-container');
+    if(syncContainer) {
+      syncContainer.innerHTML = `
+        <button type="button" onclick="manualSyncClientFromForm()" style="background:none;border:none;color:#2563eb;display:flex;align-items:center;gap:4px;cursor:pointer;padding:0" title="Synchroniser maintenant avec Google Contacts">
+          <span class="material-symbols-outlined" style="font-size:20px">sync</span>
+          <span style="font-size:11px;font-weight:700">Sync Google</span>
+        </button>
+      `;
+    }
     const saveBtn = document.getElementById('cf-btn-save');
     if(saveBtn){
       saveBtn.textContent = 'Enregistrer les modifications';
@@ -3968,7 +3978,15 @@ async function openProspectForm(p=null){
   const statOptions=stats.map(s=>{const l=typeof s==='string'?s:s.label;return`<option value="${l}" ${(p?.status||'Nouveau')===l?'selected':''}>${l}</option>`;}).join('');
   openModal(`
     <div style="padding:0 20px 24px">
-      <p class="sheet-title" style="padding:0 0 16px;margin-bottom:20px">${isEdit?'Modifier le prospect':'Nouveau Prospect'}</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;margin-bottom:20px;border-bottom:1px solid var(--sep)">
+        <p class="sheet-title" style="margin:0;padding:0">${isEdit?'Modifier le prospect':'Nouveau Prospect'}</p>
+        ${isEdit ? `
+        <button type="button" onclick="manualSyncProspectFromForm()" style="background:none;border:none;color:#2563eb;display:flex;align-items:center;gap:4px;cursor:pointer;padding:0" title="Synchroniser maintenant avec Google Contacts">
+          <span class="material-symbols-outlined" style="font-size:20px">sync</span>
+          <span style="font-size:11px;font-weight:700">Sync Google</span>
+        </button>
+        ` : ''}
+      </div>
       <div style="display:flex;flex-direction:column;gap:14px">
 
         <!-- Étape 1 -->
@@ -4395,6 +4413,49 @@ function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl
 function closeGoogleContactSyncReportModal() {
   const modal = document.getElementById('google-contact-sync-report-modal');
   if (modal) modal.style.display = 'none';
+}
+
+async function manualSyncProspectFromForm() {
+  const name = (document.getElementById('prospect-name')?.value || '').trim();
+  if (!name) {
+    toast('Nom et Prénoms requis pour synchroniser', 'err');
+    document.getElementById('prospect-name')?.focus();
+    return;
+  }
+  const tempProspect = {
+    full_name: name,
+    email: document.getElementById('prospect-email')?.value.trim() || null,
+    phone: getPhoneValPWA('prospect-phone') || null,
+    phone2: getPhoneValPWA('prospect-phone2') || null,
+    phone3: getPhoneValPWA('prospect-phone3') || null,
+    phone4: getPhoneValPWA('prospect-phone4') || null,
+    phone5: getPhoneValPWA('prospect-phone5') || null,
+    phone6: getPhoneValPWA('prospect-phone6') || null,
+    address: document.getElementById('prospect-address')?.value.trim() || null,
+    notes: document.getElementById('prospect-observations')?.value.trim() || null
+  };
+  await syncProspectToGoogleContactsPWA(tempProspect);
+}
+
+async function manualSyncClientFromForm() {
+  const name = (document.getElementById('credit-name')?.value || '').trim();
+  if (!name) {
+    toast('Nom complet requis pour synchroniser', 'err');
+    document.getElementById('credit-name')?.focus();
+    return;
+  }
+  const tempClient = {
+    full_name: name,
+    email: document.getElementById('credit-email')?.value.trim() || null,
+    phone1: getPhoneValPWA('credit-phone1') || null,
+    phone2: getPhoneValPWA('credit-phone2') || null,
+    phone3: getPhoneValPWA('credit-phone3') || null,
+    phone4: getPhoneValPWA('credit-phone4') || null,
+    phone5: getPhoneValPWA('credit-phone5') || null,
+    phone6: getPhoneValPWA('credit-phone6') || null,
+    address: document.getElementById('credit-address')?.value.trim() || null
+  };
+  await syncClientToGoogleContactsPWA(tempClient);
 }
 
 // ─── ANTI-DOUBLONS (MOBILE) ──────────────────────────────
