@@ -1001,7 +1001,7 @@ function prosMenu(btn,pid){
     {icon:'chat',label:'WhatsApp',fn:()=>wa(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#22c55e'},
     {icon:'sms',label:'SMS',fn:()=>sms(phone,name,'Prospection',0,'',p.activity||'',pid),color:'#3b82f6'},
     {sep:true},
-    {icon:'edit',label:'Modifier',fn:()=>openProspectForm(p)},
+    {icon:'edit',label:'Modifier',fn:()=>handleEditProspectChoiceMobile(pid)},
     {sep:true},
     {icon:'sticky_note_2',label:'Notes',fn:()=>openProspectNotes(pid,name)},
     {icon:'person_add',label:'Convertir en crédit',fn:()=>convertProspect(pid,name,phone)},
