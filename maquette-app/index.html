@@ -2536,29 +2536,71 @@ function openCreditForm(prefill=null){
         <div style="display:flex; flex-direction:column; gap:12px">
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1</label>
-            <input id="credit-phone1" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone1||'').replace(/"/g,'&quot;')}"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-credit-phone1" data-code="+229" onclick="openCountryPicker('credit-phone1')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-credit-phone1">🇧🇯</span>
+                <span id="code-credit-phone1" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="credit-phone1" type="tel" inputmode="numeric" placeholder="Numéro principal" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
           <!-- Extra Client Phone Fields Wrapper (Mobile PWA) -->
           <div id="credit-extra-phones" style="display:flex; flex-direction:column; gap:12px">
             <div id="credit-phone-wrapper-2" class="hidden">
               <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-              <input id="credit-phone2" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone2||'').replace(/"/g,'&quot;')}"/>
+              <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+                <button type="button" id="btn-credit-phone2" data-code="+229" onclick="openCountryPicker('credit-phone2')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                  <span id="flag-credit-phone2">🇧🇯</span>
+                  <span id="code-credit-phone2" style="font-size:13px">+229</span>
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+                </button>
+                <input id="credit-phone2" type="tel" inputmode="numeric" placeholder="Second numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+              </div>
             </div>
             <div id="credit-phone-wrapper-3" class="hidden">
               <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 3</label>
-              <input id="credit-phone3" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone3||'').replace(/"/g,'&quot;')}"/>
+              <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+                <button type="button" id="btn-credit-phone3" data-code="+229" onclick="openCountryPicker('credit-phone3')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                  <span id="flag-credit-phone3">🇧🇯</span>
+                  <span id="code-credit-phone3" style="font-size:13px">+229</span>
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+                </button>
+                <input id="credit-phone3" type="tel" inputmode="numeric" placeholder="Troisième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+              </div>
             </div>
             <div id="credit-phone-wrapper-4" class="hidden">
               <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 4</label>
-              <input id="credit-phone4" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone4||'').replace(/"/g,'&quot;')}"/>
+              <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+                <button type="button" id="btn-credit-phone4" data-code="+229" onclick="openCountryPicker('credit-phone4')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                  <span id="flag-credit-phone4">🇧🇯</span>
+                  <span id="code-credit-phone4" style="font-size:13px">+229</span>
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+                </button>
+                <input id="credit-phone4" type="tel" inputmode="numeric" placeholder="Quatrième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+              </div>
             </div>
             <div id="credit-phone-wrapper-5" class="hidden">
               <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 5</label>
-              <input id="credit-phone5" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone5||'').replace(/"/g,'&quot;')}"/>
+              <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+                <button type="button" id="btn-credit-phone5" data-code="+229" onclick="openCountryPicker('credit-phone5')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                  <span id="flag-credit-phone5">🇧🇯</span>
+                  <span id="code-credit-phone5" style="font-size:13px">+229</span>
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+                </button>
+                <input id="credit-phone5" type="tel" inputmode="numeric" placeholder="Cinquième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+              </div>
             </div>
             <div id="credit-phone-wrapper-6" class="hidden">
               <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 6</label>
-              <input id="credit-phone6" class="m-input" type="tel" placeholder="+224 ..." inputmode="tel" value="${(prefill?.phone6||'').replace(/"/g,'&quot;')}"/>
+              <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+                <button type="button" id="btn-credit-phone6" data-code="+229" onclick="openCountryPicker('credit-phone6')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                  <span id="flag-credit-phone6">🇧🇯</span>
+                  <span id="code-credit-phone6" style="font-size:13px">+229</span>
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+                </button>
+                <input id="credit-phone6" type="tel" inputmode="numeric" placeholder="Sixième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+              </div>
             </div>
           </div>
           <!-- Bouton Ajouter un numéro -->
@@ -2633,6 +2675,12 @@ function openCreditForm(prefill=null){
     </div>`);
   setTimeout(() => {
     resetCreditPhoneFieldsPWA(prefill);
+    setPhoneValPWA('credit-phone1', prefill?.phone1);
+    setPhoneValPWA('credit-phone2', prefill?.phone2);
+    setPhoneValPWA('credit-phone3', prefill?.phone3);
+    setPhoneValPWA('credit-phone4', prefill?.phone4);
+    setPhoneValPWA('credit-phone5', prefill?.phone5);
+    setPhoneValPWA('credit-phone6', prefill?.phone6);
   }, 50);
 }
 
@@ -2825,6 +2873,328 @@ async function _mobEditOption2(cid) {
 // Alias conservé pour compatibilité
 async function handleEditCreditMobile(cid) { handleEditCreditChoiceMobile(cid); }
 
+// ─── CHOIX DU MODE DE MODIFICATION PROSPECT (MOBILE) ─────────────────────────
+function handleEditProspectChoiceMobile(pid) {
+  const p = _prosCache[pid];
+  if(!p) return;
+  const name = p.full_name || 'ce prospect';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-choice-mob';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.65);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom)';
+  overlay.innerHTML = `
+    <div style="background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:0 0 8px;box-shadow:0 -8px 40px rgba(0,0,0,.2)">
+      <div style="width:36px;height:4px;background:var(--sep);border-radius:2px;margin:12px auto 0"></div>
+      <div style="padding:20px 20px 4px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+          <div style="width:40px;height:40px;border-radius:12px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span class="material-symbols-outlined" style="color:#d97706;font-size:22px">edit_note</span>
+          </div>
+          <div>
+            <p style="margin:0;font-size:15px;font-weight:800;color:var(--text)">Modifier le prospect</p>
+            <p style="margin:0;font-size:12px;color:var(--text3)">Choisissez comment modifier <strong>${name}</strong></p>
+          </div>
+        </div>
+      </div>
+      <div style="padding:8px 16px 12px;display:flex;flex-direction:column;gap:10px">
+
+        <button onclick="_mobProspectEditOption2('${pid}')" style="text-align:left;padding:14px 16px;border:2px solid #3b82f6;border-radius:16px;background:#eff6ff;cursor:pointer;width:100%;font-family:inherit">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+            <span class="material-symbols-outlined" style="color:#2563eb;font-size:18px">tune</span>
+            <span style="font-size:13px;font-weight:800;color:#1e40af">Modifier les informations</span>
+            <span style="margin-left:auto;background:#2563eb;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px">RECOMMANDÉ</span>
+          </div>
+          <p style="margin:0;font-size:11px;color:#3b82f6;line-height:1.5">Met à jour les données. Les notes d'observations, l'historique et les tâches sont conservés.</p>
+        </button>
+
+        <button onclick="_mobProspectEditOption1('${pid}')" style="text-align:left;padding:14px 16px;border:2px solid var(--sep);border-radius:16px;background:var(--bg);cursor:pointer;width:100%;font-family:inherit">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+            <span class="material-symbols-outlined" style="color:#ef4444;font-size:18px">delete_sweep</span>
+            <span style="font-size:13px;font-weight:800;color:#7f1d1d">Réinitialiser le prospect</span>
+            <span style="margin-left:auto;background:#fef2f2;color:#ef4444;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;border:1px solid #fca5a5">DESTRUCTIF</span>
+          </div>
+          <p style="margin:0;font-size:11px;color:#ef4444;line-height:1.5">Supprime le prospect de la base de données et repart de zéro en conservant ses informations pré-remplies dans le formulaire.</p>
+        </button>
+
+        <button onclick="document.getElementById('edit-choice-mob').remove()" style="padding:13px;border:none;border-radius:14px;background:var(--glass-sm);color:var(--text2);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%">Annuler</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ─── OPTION 1 : RÉINITIALISATION DU PROSPECT (MOBILE) ────────────────────────
+function _mobProspectEditOption1(pid) {
+  const ol = document.getElementById('edit-choice-mob');
+  if(ol) ol.remove();
+  const p = _prosCache[pid];
+  if(!p) return;
+  const name = p.full_name || 'ce prospect';
+
+  // Snapshot des données avant suppression pour pré-remplir le formulaire
+  const snapshot = {
+    full_name: p.full_name || '',
+    email: p.email || '',
+    created_at: p.created_at || '',
+    phone: p.phone || '',
+    phone2: p.phone2 || '',
+    phone3: p.phone3 || '',
+    phone4: p.phone4 || '',
+    phone5: p.phone5 || '',
+    phone6: p.phone6 || '',
+    address: p.address || '',
+    activity: p.activity || '',
+    activity_detail: p.activity_detail || '',
+    status: p.status || '',
+    notes: p.notes || p.observations || '', // On conserve le texte des notes/observations
+    exclude_automation: p.exclude_automation || false
+  };
+
+  openConfirm(
+    '⚠️ Réinitialisation du prospect',
+    `Supprimer TOUTES les données de "${name}" (notes de suivi, tâches) et repartir de zéro ? Cette action est irréversible.`,
+    async () => {
+      try {
+        // Verrouillage visuel pendant la suppression
+        const loadingOv = document.createElement('div');
+        loadingOv.id = 'mob-reset-loading';
+        loadingOv.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+        loadingOv.innerHTML = `
+          <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite"></div>
+          <p style="color:white;font-size:14px;font-weight:700;margin:0">Nettoyage des données…</p>`;
+        document.body.appendChild(loadingOv);
+
+        await sb.from('prospect_notes').delete().eq('prospect_id', pid);
+        await sb.from('tasks').delete().eq('entity_type', 'prospect').eq('entity_id', pid);
+        await sb.from('prospects').delete().eq('id', pid);
+
+        loadingOv.remove();
+        loadProspects();
+
+        // Notification de réussite puis ouverture du formulaire
+        openConfirm(
+          '✅ Ancien prospect supprimé !',
+          'Le formulaire est maintenant disponible pour la nouvelle saisie. Les informations et les notes ont été pré-remplies pour vous faciliter la tâche.',
+          () => {
+            openProspectForm(snapshot);
+            setTimeout(()=>{
+              const title = document.querySelector('.sheet-title');
+              if(title) title.textContent = 'Nouveau Prospect (Réinitialisé)';
+              setPhoneValPWA('prospect-phone', snapshot.phone);
+              setPhoneValPWA('prospect-phone2', snapshot.phone2);
+              setPhoneValPWA('prospect-phone3', snapshot.phone3);
+              setPhoneValPWA('prospect-phone4', snapshot.phone4);
+              setPhoneValPWA('prospect-phone5', snapshot.phone5);
+              setPhoneValPWA('prospect-phone6', snapshot.phone6);
+            }, 80);
+          },
+          'Ouvrir le formulaire', '#22c55e'
+        );
+
+      } catch(err) {
+        document.getElementById('mob-reset-loading')?.remove();
+        openConfirm('❌ Erreur', err.message || 'Impossible de réinitialiser le prospect.', ()=>{}, 'OK', '#ef4444');
+      }
+    },
+    'Oui, réinitialiser', '#ef4444'
+  );
+}
+
+// ─── OPTION 2 : MODIFICATION DU PROSPECT SANS DESTRUCTION (MOBILE) ───────────
+function _mobProspectEditOption2(pid) {
+  const ol = document.getElementById('edit-choice-mob');
+  if(ol) ol.remove();
+  const p = _prosCache[pid];
+  if(!p) return;
+
+  openProspectForm(p);
+
+  setTimeout(()=>{
+    const title = document.querySelector('.sheet-title');
+    if(title) title.textContent = 'Modifier le prospect (Données conservées)';
+    const saveBtn = document.getElementById('pf-btn-save');
+    if(saveBtn){
+      saveBtn.textContent = 'Enregistrer les modifications';
+      saveBtn.style.background = 'linear-gradient(135deg,#2563eb,#1d4ed8)';
+    }
+  }, 80);
+}
+
+// ─── CUSTOM COUNTRY PICKER SYSTEM (MOBILE PWA) ───────────────────────────────
+const COUNTRIES = [
+  { name: "Bénin", code: "+229", flag: "🇧🇯" },
+  { name: "Togo", code: "+228", flag: "🇹🇬" },
+  { name: "Côte d'Ivoire", code: "+225", flag: "🇨🇮" },
+  { name: "Burkina Faso", code: "+226", flag: "🇧🇫" },
+  { name: "Niger", code: "+227", flag: "🇳🇪" },
+  { name: "Mali", code: "+223", flag: "🇲🇱" },
+  { name: "Sénégal", code: "+221", flag: "🇸🇳" },
+  { name: "Guinée", code: "+224", flag: "🇬🇳" },
+  { name: "France", code: "+33", flag: "🇫🇷" },
+  { name: "Cameroun", code: "+237", flag: "🇨🇲" },
+  { name: "Gabon", code: "+241", flag: "🇬🇦" }
+];
+
+let currentCountryPickerTarget = null;
+
+function openCountryPicker(targetId) {
+  currentCountryPickerTarget = targetId;
+  let modal = document.getElementById('country-picker-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'country-picker-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:300000;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,23,42,0.65);backdrop-filter:blur(6px);padding:0 0 env(safe-area-inset-bottom)';
+    
+    modal.innerHTML = `
+      <div style="background:var(--card); width:100%; max-width:480px; max-height:80vh; border-radius:24px 24px 0 0; display:flex; flex-direction:column; box-shadow:0 -8px 40px rgba(0,0,0,.2); overflow:hidden">
+        <div style="width:36px;height:4px;background:var(--sep);border-radius:2px;margin:12px auto 0;flex-shrink:0"></div>
+        <div style="padding:16px 20px; border-bottom:1px solid var(--sep); display:flex; justify-content:space-between; align-items:center; flex-shrink:0">
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text)">Choisir l'indicatif pays</h3>
+          <button type="button" onclick="closeCountryPicker()" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
+        </div>
+        <div style="padding:12px 20px; border-bottom:1px solid var(--sep); flex-shrink:0">
+          <div style="position:relative; display:flex; align-items:center">
+            <span class="material-symbols-outlined" style="position:absolute; left:12px; color:var(--text3); font-size:18px">search</span>
+            <input id="country-picker-search" type="text" placeholder="Rechercher un pays ou un code..." oninput="filterCountriesPWA()" style="width:100%; padding:10px 12px 10px 38px; border-radius:12px; border:1px solid var(--sep); background:rgba(255,255,255,0.05); color:var(--text); font-size:14px; outline:none; box-sizing:border-box" />
+          </div>
+        </div>
+        <div id="country-picker-list" style="overflow-y:auto; flex:1; padding:8px 20px 20px">
+          ${COUNTRIES.map(c => `
+            <div class="country-item" data-name="${c.name.toLowerCase()}" data-code="${c.code}" data-flag="${c.flag}" onclick="selectCountryPWA('${c.code}', '${c.flag}')" style="display:flex; align-items:center; justify-content:space-between; padding:14px 12px; border-bottom:1px solid var(--sep); cursor:pointer">
+              <div style="display:flex; align-items:center; gap:12px">
+                <span style="font-size:22px">${c.flag}</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text)">${c.name}</span>
+              </div>
+              <span style="font-size:14px; font-weight:800; color:#f27f0d">${c.code}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    document.getElementById('country-picker-search').value = '';
+    filterCountriesPWA();
+    modal.style.display = 'flex';
+  }
+  setTimeout(() => document.getElementById('country-picker-search').focus(), 80);
+}
+
+function closeCountryPicker() {
+  const modal = document.getElementById('country-picker-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function filterCountriesPWA() {
+  const query = document.getElementById('country-picker-search').value.toLowerCase().trim();
+  const items = document.querySelectorAll('#country-picker-list .country-item');
+  items.forEach(item => {
+    const name = item.dataset.name;
+    const code = item.dataset.code;
+    if (name.includes(query) || code.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+function selectCountryPWA(code, flag) {
+  if (currentCountryPickerTarget) {
+    const flagEl = document.getElementById('flag-' + currentCountryPickerTarget);
+    const codeEl = document.getElementById('code-' + currentCountryPickerTarget);
+    if (flagEl && codeEl) {
+      flagEl.textContent = flag;
+      codeEl.textContent = code;
+      
+      const btnEl = document.getElementById('btn-' + currentCountryPickerTarget);
+      if(btnEl) btnEl.dataset.code = code;
+    }
+    
+    // Pre-fill with "01" if Benin (+229) is selected
+    const inputEl = document.getElementById(currentCountryPickerTarget);
+    if (inputEl) {
+      const currentVal = inputEl.value.trim();
+      if (code === '+229') {
+        if (!currentVal || currentVal === '01') {
+          inputEl.value = '01';
+        } else if (!currentVal.startsWith('01')) {
+          inputEl.value = '01' + currentVal;
+        }
+      } else {
+        if (currentVal === '01') {
+          inputEl.value = '';
+        }
+      }
+      setTimeout(() => inputEl.focus(), 50);
+    }
+  }
+  closeCountryPicker();
+}
+
+function getPhoneValPWA(id) {
+  const input = document.getElementById(id);
+  if (!input || !input.value.trim()) return null;
+  
+  const codeEl = document.getElementById('code-' + id);
+  let val = input.value.trim().replace(/\s+/g, '');
+  
+  if (val.startsWith('+')) return val;
+  if (codeEl) {
+    const code = codeEl.textContent.trim();
+    if (code === '+229' && val.startsWith('01')) {
+      return code + val;
+    }
+    return code + val.replace(/^0/, '');
+  }
+  return val;
+}
+
+function setPhoneValPWA(id, val) {
+  const el = document.getElementById(id);
+  const flagEl = document.getElementById('flag-' + id);
+  const codeEl = document.getElementById('code-' + id);
+  const btnEl = document.getElementById('btn-' + id);
+  if (!el) return;
+  
+  if (!val) {
+    if (id === 'prospect-phone' || id === 'credit-phone1') {
+      if (flagEl) flagEl.textContent = '🇧🇯';
+      if (codeEl) codeEl.textContent = '+229';
+      if (btnEl) btnEl.dataset.code = '+229';
+      el.value = '01';
+    } else {
+      if (flagEl) flagEl.textContent = '🇧🇯';
+      if (codeEl) codeEl.textContent = '+229';
+      if (btnEl) btnEl.dataset.code = '+229';
+      el.value = '';
+    }
+    return;
+  }
+
+  let foundCountry = null;
+  let numberPart = val;
+  
+  if (val.startsWith('+')) {
+    const sorted = [...COUNTRIES].sort((a,b) => b.code.length - a.code.length);
+    foundCountry = sorted.find(c => val.startsWith(c.code));
+    if (foundCountry) {
+      numberPart = val.substring(foundCountry.code.length).trim();
+    }
+  }
+
+  if (foundCountry) {
+    if (flagEl) flagEl.textContent = foundCountry.flag;
+    if (codeEl) codeEl.textContent = foundCountry.code;
+    if (btnEl) btnEl.dataset.code = foundCountry.code;
+  } else {
+    if (flagEl) flagEl.textContent = '🇧🇯';
+    if (codeEl) codeEl.textContent = '+229';
+    if (btnEl) btnEl.dataset.code = '+229';
+  }
+  
+  el.value = numberPart;
+}
+
 async function saveCredit(){
   const name=(document.getElementById('credit-name').value||'').trim();
   const startVal=document.getElementById('credit-start-date').value;
@@ -2834,12 +3204,12 @@ async function saveCredit(){
   if(!endVal){toast('Date de fin requise','err');return;}
 
   const email=(document.getElementById('credit-email').value||'').trim()||null;
-  const phone1=(document.getElementById('credit-phone1').value||'').trim()||null;
-  const phone2=(document.getElementById('credit-phone2')?.value||'').trim()||null;
-  const phone3=(document.getElementById('credit-phone3')?.value||'').trim()||null;
-  const phone4=(document.getElementById('credit-phone4')?.value||'').trim()||null;
-  const phone5=(document.getElementById('credit-phone5')?.value||'').trim()||null;
-  const phone6=(document.getElementById('credit-phone6')?.value||'').trim()||null;
+  const phone1=getPhoneValPWA('credit-phone1');
+  const phone2=getPhoneValPWA('credit-phone2');
+  const phone3=getPhoneValPWA('credit-phone3');
+  const phone4=getPhoneValPWA('credit-phone4');
+  const phone5=getPhoneValPWA('credit-phone5');
+  const phone6=getPhoneValPWA('credit-phone6');
   const amount=parseFloat(document.getElementById('credit-amount').value)||null;
   const type=document.getElementById('credit-type').value||null;
   const activity=(document.getElementById('credit-activity').value||'').trim()||null;
@@ -3620,7 +3990,14 @@ async function openProspectForm(p=null){
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 1 <span style="color:#ef4444">*</span></label>
-            <input id="prospect-phone" class="m-input" type="tel" placeholder="Numéro principal" value="${p?.phone||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone" data-code="+229" onclick="openCountryPicker('prospect-phone')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone">🇧🇯</span>
+                <span id="code-prospect-phone" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone" type="tel" inputmode="numeric" placeholder="Numéro principal" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
         </div>
 
@@ -3628,23 +4005,58 @@ async function openProspectForm(p=null){
         <div id="prospect-extra-phones" style="display:flex; flex-direction:column; gap:12px">
           <div id="prospect-phone-wrapper-2" class="hidden">
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 2</label>
-            <input id="prospect-phone2" class="m-input" type="tel" placeholder="Second numéro (optionnel)" value="${p?.phone2||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone2" data-code="+229" onclick="openCountryPicker('prospect-phone2')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone2">🇧🇯</span>
+                <span id="code-prospect-phone2" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone2" type="tel" inputmode="numeric" placeholder="Second numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
           <div id="prospect-phone-wrapper-3" class="hidden">
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 3</label>
-            <input id="prospect-phone3" class="m-input" type="tel" placeholder="Troisième numéro (optionnel)" value="${p?.phone3||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone3" data-code="+229" onclick="openCountryPicker('prospect-phone3')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone3">🇧🇯</span>
+                <span id="code-prospect-phone3" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone3" type="tel" inputmode="numeric" placeholder="Troisième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
           <div id="prospect-phone-wrapper-4" class="hidden">
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 4</label>
-            <input id="prospect-phone4" class="m-input" type="tel" placeholder="Quatrième numéro (optionnel)" value="${p?.phone4||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone4" data-code="+229" onclick="openCountryPicker('prospect-phone4')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone4">🇧🇯</span>
+                <span id="code-prospect-phone4" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone4" type="tel" inputmode="numeric" placeholder="Quatrième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
           <div id="prospect-phone-wrapper-5" class="hidden">
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 5</label>
-            <input id="prospect-phone5" class="m-input" type="tel" placeholder="Cinquième numéro (optionnel)" value="${p?.phone5||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone5" data-code="+229" onclick="openCountryPicker('prospect-phone5')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone5">🇧🇯</span>
+                <span id="code-prospect-phone5" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone5" type="tel" inputmode="numeric" placeholder="Cinquième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
           <div id="prospect-phone-wrapper-6" class="hidden">
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone 6</label>
-            <input id="prospect-phone6" class="m-input" type="tel" placeholder="Sixième numéro (optionnel)" value="${p?.phone6||''}" inputmode="tel"/>
+            <div class="m-input" style="display:flex; align-items:stretch; padding:0; overflow:hidden">
+              <button type="button" id="btn-prospect-phone6" data-code="+229" onclick="openCountryPicker('prospect-phone6')" style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.03); border:none; padding:0 12px; border-right:1px solid var(--sep); cursor:pointer; color:var(--text); font-weight:700; font-family:inherit; transition:background 0.2s">
+                <span id="flag-prospect-phone6">🇧🇯</span>
+                <span id="code-prospect-phone6" style="font-size:13px">+229</span>
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text2)">arrow_drop_down</span>
+              </button>
+              <input id="prospect-phone6" type="tel" inputmode="numeric" placeholder="Sixième numéro (optionnel)" style="flex:1; border:none; background:transparent; padding:13px 12px; outline:none; color:var(--text); font-size:14px; font-weight:500; font-family:inherit; min-width:0" />
+            </div>
           </div>
         </div>
         <!-- Bouton Ajouter un numéro -->
@@ -3719,6 +4131,12 @@ async function openProspectForm(p=null){
     </div>`);
   setTimeout(() => {
     resetProspectPhoneFieldsPWA(p);
+    setPhoneValPWA('prospect-phone', p?.phone);
+    setPhoneValPWA('prospect-phone2', p?.phone2);
+    setPhoneValPWA('prospect-phone3', p?.phone3);
+    setPhoneValPWA('prospect-phone4', p?.phone4);
+    setPhoneValPWA('prospect-phone5', p?.phone5);
+    setPhoneValPWA('prospect-phone6', p?.phone6);
   }, 50);
 }
 
@@ -3726,12 +4144,12 @@ async function saveProspect(id=null){
   const name=(document.getElementById('prospect-name').value||'').trim();
   if(!name){toast('Nom et Prénoms requis','err');document.getElementById('prospect-name').focus();return;}
   const phones = [
-    document.getElementById('prospect-phone')?.value.trim(),
-    document.getElementById('prospect-phone2')?.value.trim(),
-    document.getElementById('prospect-phone3')?.value.trim(),
-    document.getElementById('prospect-phone4')?.value.trim(),
-    document.getElementById('prospect-phone5')?.value.trim(),
-    document.getElementById('prospect-phone6')?.value.trim(),
+    getPhoneValPWA('prospect-phone'),
+    getPhoneValPWA('prospect-phone2'),
+    getPhoneValPWA('prospect-phone3'),
+    getPhoneValPWA('prospect-phone4'),
+    getPhoneValPWA('prospect-phone5'),
+    getPhoneValPWA('prospect-phone6'),
   ].filter(Boolean);
 
   // ── ANTI-DOUBLONS ───────────────────────────────────────

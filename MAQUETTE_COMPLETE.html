@@ -492,9 +492,14 @@
       <div id="task-drawer" class="absolute top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-slate-900 shadow-2xl flex flex-col" style="transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
           <h3 id="task-drawer-title" style="font-size:18px;font-weight:900;color:#0f172a;margin:0">Nouvelle tâche</h3>
-          <button onclick="closeTaskDrawer()" style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748b;transition:all .15s" class="hover:bg-slate-200">
-            <span class="material-symbols-outlined" style="font-size:20px">close</span>
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button id="task-drawer-sync-btn" onclick="manualSyncTaskPC()" style="display:none;width:36px;height:36px;border-radius:50%;background:#eff6ff;border:none;align-items:center;justify-content:center;cursor:pointer;color:#3b82f6;transition:all .15s" title="Synchroniser manuellement vers Google">
+              <span class="material-symbols-outlined" style="font-size:20px">cloud_sync</span>
+            </button>
+            <button onclick="closeTaskDrawer()" style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748b;transition:all .15s">
+              <span class="material-symbols-outlined" style="font-size:20px">close</span>
+            </button>
+          </div>
         </div>
         <div style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px">
           <!-- Titre -->
@@ -2003,7 +2008,12 @@
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Créer une tâche</span>
                 </button>
                 <div class="border-t border-slate-100 dark:border-slate-800"></div>
-                <button id="btn-delete-prospect" onclick="handleDeleteProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
+                                <button onclick="if(currentProspect){syncProspectToGoogleContacts(currentProspect);} closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors text-left">
+                    <span class="material-symbols-outlined text-orange-500 text-lg">sync</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Synchroniser Google</span>
+                </button>
+                <div class="border-t border-slate-100 dark:border-slate-800"></div>
+<button id="btn-delete-prospect" onclick="handleDeleteProspect(); closeActionMenu('prospect-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
                     <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
                     <span class="text-sm font-semibold text-red-600">Supprimer</span>
                 </button>
@@ -2154,16 +2164,30 @@
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Téléphone 1 <span class="text-red-500">*</span></label>
                     <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">call</span>
-                        <input id="prospect-phone" class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium" placeholder="Numéro principal" type="tel"/>
+                        <div class="relative w-full">
+        <button type="button" id="prospect-phone-btn" onclick="openCountryCodeModal('prospect-phone')" data-code="+225" class="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors z-10">
+            <span class="flag text-base">🇨🇮</span>
+            <span class="code text-xs font-bold text-slate-700 dark:text-slate-300">+225</span>
+            <span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+        </button>
+        <input id="prospect-phone" class="w-full pl-[100px] pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium" placeholder="Numéro principal" type="tel" inputmode="numeric"/>
+    </div>
+    
                     </div>
                 </div>
                 <!-- Téléphone 2 -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Téléphone 2</label>
                     <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">call</span>
-                        <input id="prospect-phone2" class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium" placeholder="Second numéro (optionnel)" type="tel"/>
+                        <div class="relative w-full">
+        <button type="button" id="prospect-phone2-btn" onclick="openCountryCodeModal('prospect-phone2')" data-code="+225" class="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors z-10">
+            <span class="flag text-base">🇨🇮</span>
+            <span class="code text-xs font-bold text-slate-700 dark:text-slate-300">+225</span>
+            <span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+        </button>
+        <input id="prospect-phone2" class="w-full pl-[100px] pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium" placeholder="Second numéro (optionnel)" type="tel" inputmode="numeric"/>
+    </div>
+    
                     </div>
                 </div>
             </div>
@@ -3299,7 +3323,12 @@
           <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Créer une tâche</span>
         </button>
         <div class="border-t border-slate-100 dark:border-slate-800"></div>
-        <button onclick="handleDeleteCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
+                <button onclick="if(currentCredit){syncClientToGoogleContacts(currentCredit);} closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors text-left">
+          <span class="material-symbols-outlined text-orange-500 text-lg">sync</span>
+          <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Synchroniser Google</span>
+        </button>
+        <div class="border-t border-slate-100 dark:border-slate-800"></div>
+<button onclick="handleDeleteCredit(); closeActionMenu('credit-action-menu')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
           <span class="material-symbols-outlined text-red-500 text-lg">delete</span>
           <span class="text-sm font-semibold text-red-600">Supprimer</span>
         </button>
@@ -4392,31 +4421,49 @@ Suivant
                 <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Section 1: Informations Générales</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nom complet <span class="text-orange-500">*</span></span>
                     <input id="credit-name" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="Ex: Jean Dupont" required type="text"/>
                 </label>
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Adresse Email</span>
                     <input id="credit-email" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="nom@exemple.com" type="email"/>
                 </label>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Téléphone 1</span>
-                    <input id="credit-phone1" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="+224 ..." type="text"/>
+                    
+    <div class="relative w-full">
+        <button type="button" id="credit-phone1-btn" onclick="openCountryCodeModal('credit-phone1')" data-code="+225" class="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors z-10">
+            <span class="flag text-base">🇨🇮</span>
+            <span class="code text-xs font-bold text-slate-700 dark:text-slate-300">+225</span>
+            <span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+        </button>
+        <input id="credit-phone1" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 pl-[100px]" placeholder="+224 ..." type="tel" inputmode="numeric"/>
+    </div>
+    
                 </label>
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Téléphone 2</span>
-                    <input id="credit-phone2" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="+224 ..." type="text"/>
+                    
+    <div class="relative w-full">
+        <button type="button" id="credit-phone2-btn" onclick="openCountryCodeModal('credit-phone2')" data-code="+225" class="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors z-10">
+            <span class="flag text-base">🇨🇮</span>
+            <span class="code text-xs font-bold text-slate-700 dark:text-slate-300">+225</span>
+            <span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+        </button>
+        <input id="credit-phone2" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 pl-[100px]" placeholder="+224 ..." type="tel" inputmode="numeric"/>
+    </div>
+    
                 </label>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Secteur d'activité</span>
                     <input id="credit-activity" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="Ex: Commerce, Transport..." type="text"/>
                 </label>
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Adresse domicile</span>
                     <input id="credit-address" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="Ex: Dixinn, Conakry..." type="text"/>
                 </label>
@@ -4429,11 +4476,11 @@ Suivant
                 <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Section 2: Analyse Financière</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Montant souhaité</span>
                     <input id="credit-amount" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" placeholder="Ex: 5 000 000" type="number"/>
                 </label>
-                <label class="flex flex-col gap-2 relative">
+                <label class="flex flex-col gap-2 relative relative">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Type de dossier</span>
                         <button type="button" onclick="openModal('credit_manage_types')" class="text-primary text-[10px] font-bold hover:underline">Gérer les types</button>
@@ -4442,11 +4489,11 @@ Suivant
                         <!-- Options chargées dynamiquement -->
                     </select>
                 </label>
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Date Début <span class="text-orange-500">*</span></span>
                     <input id="credit-start-date" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" required type="date"/>
                 </label>
-                <label class="flex flex-col gap-2">
+                <label class="flex flex-col gap-2 relative">
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Fin Échéance <span class="text-orange-500">*</span></span>
                     <input id="credit-end-date" class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20" required type="date"/>
                 </label>
@@ -4544,11 +4591,11 @@ Suivant
         <h2 class="text-xl font-bold">Ajouter un Document</h2>
     </div>
     <div class="space-y-4">
-        <label class="flex flex-col gap-2">
+        <label class="flex flex-col gap-2 relative">
             <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nom du document</span>
             <input id="new-doc-name" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="Ex: Contrat de prêt, CNI..." type="text"/>
         </label>
-        <label class="flex flex-col gap-2">
+        <label class="flex flex-col gap-2 relative">
             <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Type de fichier</span>
             <select id="new-doc-type" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all">
                 <option>PDF</option>
@@ -4556,7 +4603,7 @@ Suivant
                 <option>Autre</option>
             </select>
         </label>
-        <label class="flex flex-col gap-2">
+        <label class="flex flex-col gap-2 relative">
             <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">URL ou Chemin du fichier</span>
             <input id="new-doc-url" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="https://..." type="text"/>
         </label>
@@ -5352,33 +5399,174 @@ Suivant
                 alert("Erreur de connexion. Assurez-vous que l'URL est correcte, que le script est bien déployé en mode 'Tout le monde' (Anyone) et que vous avez accordé les permissions nécessaires.");
             }
         }
+        
+        async function syncTaskToGooglePC(task) {
+            const url = document.getElementById('google-contacts-url')?.value || localStorage.getItem('google_contacts_sync_url');
+            if(!url) return;
+            try {
+                const payload = {
+                    action: 'create_task',
+                    title: task.title,
+                    dueDate: task.due_date || '',
+                    dueTime: task.due_time || '',
+                    notes: task.notes || ''
+                };
+                fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'text/plain' }
+                }).then(r => r.json()).then(res => {
+                    if(res.status === 'success') {
+                        let report = '<b>Agenda :</b> ' + (res.results.calendar || 'Non configuré') + '<br><br><b>Google Tasks :</b> ' + (res.results.tasks || 'Non configuré');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Rapport de Synchronisation',
+                                html: report,
+                                icon: 'info'
+                            });
+                        } else {
+                            alert('Rapport de Synchronisation:\n\nAgenda: ' + res.results.calendar + '\nTasks: ' + res.results.tasks);
+                        }
+                    }
+                }).catch(e => console.error('Erreur sync task PC:', e));
+            } catch(e) {
+                console.error('Erreur sync task PC:', e);
+            }
+        }
+        function showGoogleSuccessModal(contactUrl, fullName) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            if (overlay && content) {
+                content.innerHTML = `
+                    <div class="p-8 text-center flex flex-col items-center gap-6 max-w-sm mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[32px] text-emerald-500">check_circle</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white mb-2">Synchronisé avec succès !</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Le contact de <b>${fullName}</b> a bien été synchronisé avec Google Contacts.</p>
+                        </div>
+                        <div class="flex flex-col gap-3 w-full">
+                            <button onclick="window.open('${contactUrl}', '_blank'); closeModal();" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition-all shadow-md shadow-primary/20">
+                                <span class="material-symbols-outlined text-base">open_in_new</span>
+                                Ouvrir dans Google Contacts
+                            </button>
+                            <button onclick="closeModal()" class="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all">
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                `;
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+                if (typeof hookInternalButtons === 'function') hookInternalButtons(content);
+            }
+        }
+
         async function syncProspectToGoogleContacts(prospect, notes = '') {
             const url = localStorage.getItem('google_contacts_sync_url');
             if (!url) {
-                console.log("Synchronisation Google Contacts désactivée (pas d'URL configurée).");
+                showNotification("⚙️ Configurez l'URL Google Contacts dans Paramètres > Synchronisation", "error");
                 return;
             }
+            if (!prospect) {
+                showNotification("❌ Prospect introuvable", "error");
+                return;
+            }
+            showNotification("⏳ Synchronisation Google en cours...", "info");
             try {
                 const payload = {
                     fullName: prospect.full_name,
                     phone: prospect.phone || '',
                     phone2: prospect.phone2 || '',
+                    phone3: prospect.phone3 || '',
+                    phone4: prospect.phone4 || '',
+                    phone5: prospect.phone5 || '',
+                    phone6: prospect.phone6 || '',
                     email: prospect.email || '',
                     address: prospect.address || '',
                     notes: notes || prospect.notes || ''
                 };
                 
-                await fetch(url, {
+                const resp = await fetch(url, {
                     method: 'POST',
-                    mode: 'no-cors',
                     body: JSON.stringify(payload),
                     headers: {
                         'Content-Type': 'text/plain'
                     }
                 });
-                console.log("Prospect synchronisé avec Google Contacts (PC).");
+                
+                const text = await resp.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch(e) {
+                    console.error('Réponse non JSON de Google:', text);
+                    showNotification("❌ Google a renvoyé une erreur (Voir console)", "error");
+                    return;
+                }
+                
+                if (result.status === 'success') {
+                    showNotification("✅ Synchronisé avec succès !", "success");
+                    showGoogleSuccessModal(result.contactUrl, prospect.full_name);
+                } else {
+                    showNotification("⚠️ Erreur Google: " + (result.message || 'Inconnue'), "warning");
+                }
             } catch (e) {
                 console.error("Erreur de synchronisation Google Contacts :", e);
+                showNotification("❌ Impossible de joindre Google Contacts", "error");
+            }
+        }
+
+        async function syncClientToGoogleContacts(client) {
+            const url = localStorage.getItem('google_contacts_sync_url');
+            if (!url) {
+                showNotification("⚙️ Configurez l'URL Google Contacts dans Paramètres > Synchronisation", "error");
+                return;
+            }
+            if (!client) {
+                showNotification("❌ Client introuvable", "error");
+                return;
+            }
+            showNotification("⏳ Synchronisation Google en cours...", "info");
+            try {
+                const cl = client.clients || client;
+                const payload = {
+                    fullName: cl.full_name || client.client_name || '',
+                    phone: cl.phone1 || client.phone || '',
+                    phone2: cl.phone2 || '',
+                    phone3: cl.phone3 || '',
+                    phone4: cl.phone4 || '',
+                    phone5: cl.phone5 || '',
+                    phone6: cl.phone6 || '',
+                    email: cl.email || client.email || '',
+                    address: cl.address || client.address || '',
+                    notes: 'Client ' + (cl.full_name || client.client_name || '')
+                };
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'text/plain' }
+                });
+                const text = await resp.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch(e) {
+                    console.error('Réponse non JSON de Google:', text);
+                    showNotification("❌ Google a renvoyé une erreur (Voir console)", "error");
+                    return;
+                }
+                if (result.status === 'success') {
+                    showNotification("✅ Synchronisé avec succès !", "success");
+                    showGoogleSuccessModal(result.contactUrl, payload.fullName);
+                } else {
+                    showNotification("⚠️ Erreur Google: " + (result.message || 'Inconnue'), "warning");
+                }
+            } catch (e) {
+                console.error("Erreur sync client Google Contacts:", e);
+                showNotification("❌ Impossible de joindre Google Contacts", "error");
             }
         }
 
@@ -6163,6 +6351,7 @@ Suivant
                 const t = _tasksData.find(x => x.id === taskId);
                 if (!t) return;
                 document.getElementById('task-drawer-title').textContent = 'Modifier la tâche';
+                if(document.getElementById('task-drawer-sync-btn')) document.getElementById('task-drawer-sync-btn').style.display = 'flex';
                 document.getElementById('task-title-input').value = t.title || '';
                 document.getElementById('task-entity-search').value = t.entity_name || '';
                 document.getElementById('task-entity-id').value = t.entity_id || '';
@@ -6177,6 +6366,7 @@ Suivant
                 document.getElementById('task-gcal-btn').style.display = 'flex';
             } else {
                 document.getElementById('task-drawer-title').textContent = 'Nouvelle tâche';
+                if(document.getElementById('task-drawer-sync-btn')) document.getElementById('task-drawer-sync-btn').style.display = 'none';
                 document.getElementById('task-title-input').value = '';
                 document.getElementById('task-entity-search').value = '';
                 document.getElementById('task-entity-id').value = '';
@@ -6272,6 +6462,18 @@ Suivant
             }, 50);
         }
 
+        function manualSyncTaskPC() {
+            const title = (document.getElementById('task-title-input').value || '').trim();
+            if (!title) { Swal.fire('Erreur', 'Veuillez saisir un titre pour synchroniser.', 'error'); return; }
+            const payload = {
+                title,
+                due_date: document.getElementById('task-due-date').value || null,
+                due_time: document.getElementById('task-due-time').value || null,
+                notes: (document.getElementById('task-notes').value || '').trim() || null
+            };
+            syncTaskToGooglePC(payload);
+        }
+        
         async function saveTaskPC() {
             const title = (document.getElementById('task-title-input').value || '').trim();
             if (!title) { alert('Veuillez saisir un titre pour la tâche.'); document.getElementById('task-title-input').focus(); return; }
@@ -6295,6 +6497,7 @@ Suivant
                 ({ error } = await _supabase.from('tasks').insert([{ ...payload, created_at: new Date().toISOString() }]));
             }
             if (error) { alert('Erreur : ' + error.message); return; }
+            if(!_editingTaskId) syncTaskToGooglePC(payload);
             closeTaskDrawer();
             await loadTasksPC();
         }
@@ -6304,6 +6507,7 @@ Suivant
             if (!confirm('Supprimer cette tâche définitivement ?')) return;
             const { error } = await _supabase.from('tasks').delete().eq('id', _editingTaskId);
             if (error) { alert('Erreur : ' + error.message); return; }
+            if(!_editingTaskId) syncTaskToGooglePC(payload);
             closeTaskDrawer();
             await loadTasksPC();
         }
@@ -8245,8 +8449,8 @@ Suivant
 
         async function handleUpdateProspect(btn, id) {
             const name = document.getElementById('prospect-name').value;
-            const phone = document.getElementById('prospect-phone').value;
-            const phone2 = document.getElementById('prospect-phone2').value;
+            const phone = getPhoneVal('prospect-phone');
+            const phone2 = getPhoneVal('prospect-phone2');
             const date = document.getElementById('prospect-date').value;
             const address = document.getElementById('prospect-address').value;
             const activity = document.getElementById('prospect-activity').value;
@@ -9696,8 +9900,8 @@ Suivant
         async function handleSaveProspect() {
             const name = document.getElementById('prospect-name').value;
             const email = document.getElementById('prospect-email')?.value || "";
-            const phone = document.getElementById('prospect-phone').value;
-            const phone2 = document.getElementById('prospect-phone2').value;
+            const phone = getPhoneVal('prospect-phone');
+            const phone2 = getPhoneVal('prospect-phone2');
             const date = document.getElementById('prospect-date').value;
             const address = document.getElementById('prospect-address').value;
             const activity = document.getElementById('prospect-activity').value;
@@ -9778,8 +9982,8 @@ Suivant
         async function handleSaveCredit() {
             const name = document.getElementById('credit-name').value.trim();
             const email = document.getElementById('credit-email').value.trim();
-            const phone1 = document.getElementById('credit-phone1').value.trim();
-            const phone2 = document.getElementById('credit-phone2').value.trim();
+            const phone1 = getPhoneVal('credit-phone1');
+            const phone2 = getPhoneVal('credit-phone2');
             const amount = document.getElementById('credit-amount').value;
             const type = document.getElementById('credit-type').value;
             const startDate = document.getElementById('credit-start-date').value;
@@ -10179,8 +10383,8 @@ Suivant
                 // Attendre l'injection du DOM
                 setTimeout(() => {
                     if (document.getElementById('credit-name')) document.getElementById('credit-name').value = pName || '';
-                    if (document.getElementById('credit-phone1')) document.getElementById('credit-phone1').value = pPhone || '';
-                    if (document.getElementById('credit-phone2')) document.getElementById('credit-phone2').value = pPhone2 || '';
+                    if (document.getElementById('credit-phone1')) setPhoneVal('credit-phone1', pPhone || '');
+                    if (document.getElementById('credit-phone2')) setPhoneVal('credit-phone2', pPhone2 || '');
                     if (document.getElementById('credit-activity')) document.getElementById('credit-activity').value = pActivity || '';
                     if (document.getElementById('credit-email')) document.getElementById('credit-email').value = pEmail;
                     if (document.getElementById('credit-address')) document.getElementById('credit-address').value = pAddress;
@@ -10205,8 +10409,8 @@ Suivant
                 if (!nameInp) return;
                 nameInp.value = currentProspect.full_name || '';
                 document.getElementById('prospect-date').value = currentProspect.created_at ? currentProspect.created_at.split('T')[0] : '';
-                document.getElementById('prospect-phone').value = currentProspect.phone || '';
-                document.getElementById('prospect-phone2').value = currentProspect.phone2 || '';
+                setPhoneVal('prospect-phone', currentProspect.phone || '');
+                setPhoneVal('prospect-phone2', currentProspect.phone2 || '');
                 document.getElementById('prospect-activity').value = currentProspect.activity || '';
                 if (document.getElementById('prospect-activity-detail')) document.getElementById('prospect-activity-detail').value = currentProspect.activity_detail || '';
                 document.getElementById('prospect-status').value = currentProspect.status || '';
@@ -10571,8 +10775,8 @@ Suivant
                     const client = snapshot.clients || {};
                     document.getElementById('credit-name').value     = client.full_name || snapshot.client_name || '';
                     document.getElementById('credit-email').value    = client.email     || snapshot.email       || '';
-                    document.getElementById('credit-phone1').value   = client.phone1    || snapshot.phone       || '';
-                    document.getElementById('credit-phone2').value   = client.phone2    || '';
+                    setPhoneVal('credit-phone1', client.phone1    || snapshot.phone       || '');
+                    setPhoneVal('credit-phone2', client.phone2    || '');
                     document.getElementById('credit-activity').value = client.activity  || snapshot.activity    || '';
                     document.getElementById('credit-address').value  = client.address   || snapshot.address     || '';
                     document.getElementById('credit-amount').value     = snapshot.amount     || '';
@@ -11640,6 +11844,152 @@ Suivant
         </div>
     </div>
 </div>
+
+
+    <!-- Custom Country Code Selector Modal -->
+    <div id="country-code-modal" class="fixed inset-0 z-[999999] hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeCountryCodeModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-[24px] p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Choisir l'indicatif pays</h3>
+            
+            <div class="relative mb-4">
+                <input id="country-search-input" type="text" onkeyup="filterCountries()" class="w-full border border-slate-200 dark:border-slate-700 bg-transparent rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none text-slate-900 dark:text-white placeholder:text-slate-400" placeholder="Rechercher un pays ou un code...">
+            </div>
+            
+            <div id="country-list-container" class="flex-1 overflow-y-auto space-y-1 mb-4 pr-1 custom-scrollbar">
+                <!-- Les pays seront injectés ici -->
+            </div>
+            
+            <div class="flex items-center justify-end gap-4 mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
+                <button type="button" onclick="closeCountryCodeModal()" class="font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm px-4 py-2">Annuler</button>
+                <button type="button" onclick="confirmCountryCode()" class="bg-primary hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors shadow-md shadow-primary/20">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COUNTRIES = [
+            { name: "Bénin", code: "+229", flag: "🇧🇯" },
+            { name: "Togo", code: "+228", flag: "🇹🇬" },
+            { name: "Côte d'Ivoire", code: "+225", flag: "🇨🇮" },
+            { name: "Burkina Faso", code: "+226", flag: "🇧🇫" },
+            { name: "Niger", code: "+227", flag: "🇳🇪" },
+            { name: "Mali", code: "+223", flag: "🇲🇱" },
+            { name: "Sénégal", code: "+221", flag: "🇸🇳" },
+            { name: "Guinée", code: "+224", flag: "🇬🇳" },
+            { name: "France", code: "+33", flag: "🇫🇷" },
+            { name: "Cameroun", code: "+237", flag: "🇨🇲" },
+            { name: "Gabon", code: "+241", flag: "🇬🇦" }
+        ];
+
+        let activePhoneTargetId = null;
+        let pendingSelectedCountry = null;
+
+        function openCountryCodeModal(targetId) {
+            activePhoneTargetId = targetId;
+            const btn = document.getElementById(targetId + '-btn');
+            const currentCode = btn ? btn.dataset.code : "+225";
+            pendingSelectedCountry = COUNTRIES.find(c => c.code === currentCode) || COUNTRIES[2];
+            
+            document.getElementById('country-search-input').value = '';
+            renderCountries();
+            
+            const modal = document.getElementById('country-code-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCountryCodeModal() {
+            const modal = document.getElementById('country-code-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activePhoneTargetId = null;
+        }
+
+        function selectCountryListItem(code) {
+            pendingSelectedCountry = COUNTRIES.find(c => c.code === code);
+            renderCountries();
+        }
+
+        function confirmCountryCode() {
+            if (activePhoneTargetId && pendingSelectedCountry) {
+                const btn = document.getElementById(activePhoneTargetId + '-btn');
+                if (btn) {
+                    btn.dataset.code = pendingSelectedCountry.code;
+                    btn.querySelector('.flag').textContent = pendingSelectedCountry.flag;
+                    btn.querySelector('.code').textContent = pendingSelectedCountry.code;
+                }
+            }
+            closeCountryCodeModal();
+        }
+
+        function renderCountries(filter = '') {
+            const container = document.getElementById('country-list-container');
+            const term = filter.toLowerCase();
+            const filtered = COUNTRIES.filter(c => c.name.toLowerCase().includes(term) || c.code.includes(term));
+            
+            container.innerHTML = filtered.map(c => `
+                <div onclick="selectCountryListItem('${c.code}')" class="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${pendingSelectedCountry && pendingSelectedCountry.code === c.code ? 'bg-orange-50 dark:bg-slate-800 border border-primary/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'}">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">${c.flag}</span>
+                        <span class="font-semibold text-sm text-slate-900 dark:text-white">${c.name}</span>
+                    </div>
+                    <span class="font-bold text-sm text-primary">${c.code}</span>
+                </div>
+            `).join('');
+        }
+
+        function filterCountries() {
+            renderCountries(document.getElementById('country-search-input').value);
+        }
+
+        function getPhoneVal(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.value.trim()) return '';
+            const btn = document.getElementById(id + '-btn');
+            const code = btn ? btn.dataset.code : '';
+            let val = el.value.trim();
+            val = val.replace(/\s+/g, '');
+            
+            if (code && !val.startsWith('+')) {
+                val = code + val.replace(/^0/, '');
+            }
+            return val;
+        }
+
+        function setPhoneVal(id, val) {
+            const el = document.getElementById(id);
+            const btn = document.getElementById(id + '-btn');
+            if (!el) return;
+            
+            if (!val) {
+                el.value = '';
+                return;
+            }
+
+            let foundCountry = null;
+            let numberPart = val;
+            
+            if (val.startsWith('+')) {
+                const sorted = [...COUNTRIES].sort((a,b) => b.code.length - a.code.length);
+                foundCountry = sorted.find(c => val.startsWith(c.code));
+                if (foundCountry) {
+                    numberPart = val.substring(foundCountry.code.length);
+                }
+            }
+
+            if (foundCountry && btn) {
+                btn.dataset.code = foundCountry.code;
+                btn.querySelector('.flag').textContent = foundCountry.flag;
+                btn.querySelector('.code').textContent = foundCountry.code;
+            }
+            
+            el.value = numberPart;
+        }
+    </script>
 
 </body>
 </html>
