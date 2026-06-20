@@ -5468,6 +5468,15 @@ function showGoogleTaskSyncReportModal(title, results) {
   const calBadge = `<span style="padding:4px 10px; border-radius:80px; font-size:11px; font-weight:800; ${getBadgeStyle(calStatus)}">${calStatus}</span>`;
   const taskBadge = `<span style="padding:4px 10px; border-radius:80px; font-size:11px; font-weight:800; ${getBadgeStyle(taskStatus)}">${taskStatus}</span>`;
 
+  // Détection Android pour ouverture de l'application native (Deep Linking via intent)
+  const isAndroid = /android/i.test(navigator.userAgent || navigator.vendor || window.opera);
+  const calendarUrl = isAndroid 
+    ? "intent://#Intent;package=com.google.android.calendar;scheme=https;S.browser_fallback_url=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Fr;end;"
+    : "https://calendar.google.com/calendar/r";
+  const tasksUrl = isAndroid 
+    ? "intent://#Intent;package=com.google.android.apps.tasks;scheme=tasks;S.browser_fallback_url=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Fu%2F0%2Fr%2Ftasks;end;"
+    : "https://calendar.google.com/calendar/u/0/r/tasks";
+
   modal.innerHTML = `
     <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
       <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
@@ -5492,10 +5501,10 @@ function showGoogleTaskSyncReportModal(title, results) {
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-          <a href="https://calendar.google.com/calendar/r" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#4285f4; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+          <a href="${calendarUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#4285f4; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
             <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Consulter Google Agenda
           </a>
-          <a href="https://calendar.google.com/calendar/u/0/r/tasks" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#fbbc05; color:#1e293b; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+          <a href="${tasksUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#fbbc05; color:#1e293b; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
             <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Consulter Google Tasks
           </a>
         </div>
