@@ -970,7 +970,7 @@ function credMenu(btn,cid){
     {sep:true},
     {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, c.clients?.phone1, c.clients?.phone2)},
     {sep:true},
-    {icon:'sync',label:'Sync Google',fn:()=>syncClientToGoogleContactsPWA(c)},
+    {icon:'sync',label:'Sync Google',fn:()=>syncClientToGoogleContactsPWA(c, true)},
   ];
   showMenu(btn,items);
 }
@@ -1101,7 +1101,7 @@ function prosMenu(btn,pid){
     {sep:true},
     {icon:'contact_page',label:'Exporter vCard',fn:()=>downloadVCard(name, p.phone, p.phone2)},
     {sep:true},
-    {icon:'sync',label:'Sync Google',fn:()=>syncProspectToGoogleContactsPWA(p)},
+    {icon:'sync',label:'Sync Google',fn:()=>syncProspectToGoogleContactsPWA(p, true)},
   ];
   showMenu(btn,items);
 }
@@ -3753,7 +3753,7 @@ function renderProspectDetail(p) {
           <span class="material-symbols-outlined" style="font-size:20px;color:#10b981">person_add</span>
           <span style="font-size:10px;font-weight:700;color:#10b981">Convertir</span>
         </button>
-        <button onclick="syncProspectToGoogleContactsPWA(_prosCache['${p.id}'])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
+        <button onclick="syncProspectToGoogleContactsPWA(_prosCache['${p.id}'], true)" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#4285f4">sync</span>
           <span style="font-size:10px;font-weight:700;color:#4285f4">Exporter Contact</span>
         </button>
@@ -4364,14 +4364,17 @@ function saveGoogleContactsUrlPWA() {
   closeModal();
 }
 
-async function syncProspectToGoogleContactsPWA(prospect) {
+async function syncProspectToGoogleContactsPWA(prospect, isManual = false) {
   const url = localStorage.getItem('google_contacts_sync_url');
   if(!url) {
-    toast('⚙️ Configurez l\'URL Google Contacts dans Paramètres > Synchronisation', 'err');
+    if (isManual) toast('⚙️ Configurez l\'URL Google Contacts dans Paramètres > Synchronisation', 'err');
     return;
   }
-  if(!prospect) { toast('❌ Prospect introuvable', 'err'); return; }
-  toast('⏳ Synchronisation Google Contacts...', 'info');
+  if(!prospect) {
+    if (isManual) toast('❌ Prospect introuvable', 'err');
+    return;
+  }
+  if (isManual) toast('⏳ Synchronisation Google Contacts...', 'info');
   const name = prospect.full_name || 'Prospect Inconnu';
   try{
     const payload = {
@@ -4393,24 +4396,39 @@ async function syncProspectToGoogleContactsPWA(prospect) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
+      if (isManual) {
+        showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
+      } else {
+        toast('Google Contacts : ' + name + (result.isUpdate ? ' mis à jour ✓' : ' créé ✓'), 'ok');
+      }
     } else {
-      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
+      if (isManual) {
+        showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
+      } else {
+        toast('⚠️ Échec sync Google : ' + name, 'err');
+      }
     }
   }catch(e){
     console.error("Erreur sync Google Contacts:", e);
-    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
+    if (isManual) {
+      showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
+    } else {
+      toast('⚠️ Échec sync Google (connexion) : ' + name, 'err');
+    }
   }
 }
 
-async function syncClientToGoogleContactsPWA(client) {
+async function syncClientToGoogleContactsPWA(client, isManual = false) {
   const url = localStorage.getItem('google_contacts_sync_url');
   if(!url) {
-    toast('⚙️ Configurez l\'URL Google Contacts dans Paramètres > Synchronisation', 'err');
+    if (isManual) toast('⚙️ Configurez l\'URL Google Contacts dans Paramètres > Synchronisation', 'err');
     return;
   }
-  if(!client) { toast('❌ Client introuvable', 'err'); return; }
-  toast('⏳ Synchronisation Google Contacts...', 'info');
+  if(!client) {
+    if (isManual) toast('❌ Client introuvable', 'err');
+    return;
+  }
+  if (isManual) toast('⏳ Synchronisation Google Contacts...', 'info');
   const cl = client.clients || client; // supporte _credCache (credits) et objet clients direct
   const name = cl.full_name || client.client_name || 'Client Inconnu';
   try{
@@ -4433,13 +4451,25 @@ async function syncClientToGoogleContactsPWA(client) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
+      if (isManual) {
+        showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
+      } else {
+        toast('Google Contacts : ' + name + (result.isUpdate ? ' mis à jour ✓' : ' créé ✓'), 'ok');
+      }
     } else {
-      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
+      if (isManual) {
+        showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
+      } else {
+        toast('⚠️ Échec sync Google : ' + name, 'err');
+      }
     }
   }catch(e){
     console.error('Erreur sync client Google Contacts:', e);
-    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
+    if (isManual) {
+      showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
+    } else {
+      toast('⚠️ Échec sync Google (connexion) : ' + name, 'err');
+    }
   }
 }
 
@@ -4529,7 +4559,7 @@ async function manualSyncProspectFromForm() {
     address: document.getElementById('prospect-address')?.value.trim() || null,
     notes: document.getElementById('prospect-observations')?.value.trim() || null
   };
-  await syncProspectToGoogleContactsPWA(tempProspect);
+  await syncProspectToGoogleContactsPWA(tempProspect, true);
 }
 
 async function manualSyncClientFromForm() {
@@ -4550,7 +4580,7 @@ async function manualSyncClientFromForm() {
     phone6: getPhoneValPWA('credit-phone6') || null,
     address: document.getElementById('credit-address')?.value.trim() || null
   };
-  await syncClientToGoogleContactsPWA(tempClient);
+  await syncClientToGoogleContactsPWA(tempClient, true);
 }
 
 // ─── ANTI-DOUBLONS (MOBILE) ──────────────────────────────
@@ -6372,7 +6402,7 @@ function renderCreditDetail(c) {
           <span class="material-symbols-outlined" style="font-size:20px;color:#3b82f6">sms</span>
           <span style="font-size:10px;font-weight:700;color:#3b82f6">SMS</span>
         </button>` : ''}
-        <button onclick="syncClientToGoogleContactsPWA(_credCache[currentCreditId])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
+        <button onclick="syncClientToGoogleContactsPWA(_credCache[currentCreditId], true)" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#4285f4">sync</span>
           <span style="font-size:10px;font-weight:700;color:#4285f4">Exporter Contact</span>
         </button>
