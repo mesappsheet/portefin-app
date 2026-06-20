@@ -4507,13 +4507,13 @@ function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl
   }
 
   modal.innerHTML = `
-    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column;">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative; flex-shrink:0;">
         <span class="material-symbols-outlined" style="font-size:44px; color:#4285f4; margin-bottom:8px;">cloud_done</span>
         <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation</h3>
         <button onclick="closeGoogleContactSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
       </div>
-      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1;">
         <p style="margin:0 0 4px 0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
           Le contact <strong style="color:var(--text)">"${fullName}"</strong> a été traité :
         </p>
@@ -4527,7 +4527,7 @@ function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl
 
         ${actionButtonsHtml}
       </div>
-      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01); flex-shrink:0;">
         <button onclick="closeGoogleContactSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
       </div>
     </div>
@@ -5896,7 +5896,7 @@ function showGlobalTaskSyncReportModal(report) {
   if (totalActions === 0) {
     detailsHtml = `<p style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;margin:20px 0;">Toutes les tâches sont déjà à jour avec Google Tasks & Agenda.</p>`;
   } else {
-    detailsHtml = `<div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 0;text-align:left;">`;
+    detailsHtml = `<div style="display:flex;flex-direction:column;gap:12px;padding:4px 0;text-align:left;">`;
     
     if (report.exported.length > 0) {
       detailsHtml += `
@@ -5952,13 +5952,13 @@ function showGlobalTaskSyncReportModal(report) {
   }
 
   modal.innerHTML = `
-    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column;">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative; flex-shrink:0;">
         <span class="material-symbols-outlined" style="font-size:44px; color:#f27f0d; margin-bottom:8px;">sync_saved_locally</span>
         <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation Globale</h3>
         <button onclick="closeGlobalTaskSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
       </div>
-      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1;">
         <p style="margin:0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
           La synchronisation bidirectionnelle est terminée.<br>
           <strong style="color:var(--text); font-size:14px;">${totalActions} modification(s) effectuée(s)</strong>
@@ -5977,7 +5977,7 @@ function showGlobalTaskSyncReportModal(report) {
           </a>
         </div>
       </div>
-      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01); flex-shrink:0;">
         <button onclick="closeGlobalTaskSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
       </div>
     </div>
@@ -6045,13 +6045,13 @@ function showGoogleTaskSyncReportModal(title, results) {
     : "https://calendar.google.com/calendar/u/0/r/tasks";
 
   modal.innerHTML = `
-    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column;">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative; flex-shrink:0;">
         <span class="material-symbols-outlined" style="font-size:44px; color:#3b82f6; margin-bottom:8px;">cloud_done</span>
         <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation</h3>
         <button onclick="closeGoogleTaskSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
       </div>
-      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1;">
         <p style="margin:0 0 4px 0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
           La tâche <strong style="color:var(--text)">"${title}"</strong> a été traitée :
         </p>
@@ -6076,7 +6076,7 @@ function showGoogleTaskSyncReportModal(title, results) {
           </a>
         </div>
       </div>
-      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01); flex-shrink:0;">
         <button onclick="closeGoogleTaskSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
       </div>
     </div>
