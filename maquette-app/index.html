@@ -3659,9 +3659,9 @@ function renderProspectDetail(p) {
           <span class="material-symbols-outlined" style="font-size:20px;color:#10b981">person_add</span>
           <span style="font-size:10px;font-weight:700;color:#10b981">Convertir</span>
         </button>
-        <button onclick="syncProspectToGoogleContactsPWA(_prosCache[${p.id}]||_prosCache['${p.id}'])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
+        <button onclick="syncProspectToGoogleContactsPWA(_prosCache['${p.id}'])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#4285f4">sync</span>
-          <span style="font-size:10px;font-weight:700;color:#4285f4">Google</span>
+          <span style="font-size:10px;font-weight:700;color:#4285f4">Exporter Contact</span>
         </button>
       </div>
     </div>
@@ -6279,7 +6279,7 @@ function renderCreditDetail(c) {
         </button>` : ''}
         <button onclick="syncClientToGoogleContactsPWA(_credCache[currentCreditId])" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.25);cursor:pointer;min-width:62px">
           <span class="material-symbols-outlined" style="font-size:20px;color:#4285f4">sync</span>
-          <span style="font-size:10px;font-weight:700;color:#4285f4">Google</span>
+          <span style="font-size:10px;font-weight:700;color:#4285f4">Exporter Contact</span>
         </button>
       </div>
     </div>
