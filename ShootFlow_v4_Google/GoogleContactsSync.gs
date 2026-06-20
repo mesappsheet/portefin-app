@@ -23,6 +23,7 @@ function doPost(e) {
       try {
         let taskListId = '@default';
         let taskExists = false;
+        let existingTask = null;
         
         // Vérification des doublons dans Tasks
         const tasksResponse = Tasks.Tasks.list(taskListId);
@@ -31,6 +32,7 @@ function doPost(e) {
             const t = tasksResponse.items[i];
             if (t.title === title && t.status !== 'completed') {
               taskExists = true;
+              existingTask = t;
               break;
             }
           }
@@ -44,7 +46,14 @@ function doPost(e) {
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
         } else {
-          results.tasks = 'Ignorée (doublon existant)';
+          existingTask.notes = notes;
+          if (dueDateStr) {
+            existingTask.due = dueTimeStr ? (dueDateStr + "T" + dueTimeStr + ":00.000Z") : (dueDateStr + "T00:00:00.000Z");
+          } else {
+            existingTask.due = null;
+          }
+          Tasks.Tasks.update(existingTask, taskListId, existingTask.id);
+          results.tasks = 'Mise à jour avec succès';
         }
       } catch (errTasks) {
         results.tasks = 'Erreur: ' + errTasks.toString();
@@ -72,23 +81,25 @@ function doPost(e) {
         // Vérification des doublons dans Calendar (le jour même)
         const events = calendar.getEventsForDay(targetDate);
         let eventExists = false;
+        let existingEvent = null;
         for (let i = 0; i < events.length; i++) {
           if (events[i].getTitle() === title) {
             eventExists = true;
+            existingEvent = events[i];
             break;
           }
         }
 
-        if (!eventExists) {
-          if (isAllDay) {
-            calendar.createAllDayEvent(title, targetDate, { description: notes });
-          } else {
-            calendar.createEvent(title, targetDate, endDate, { description: notes });
-          }
-          results.calendar = 'Créé avec succès';
-        } else {
-          results.calendar = 'Ignoré (doublon existant)';
+        if (eventExists) {
+          existingEvent.deleteEvent();
         }
+
+        if (isAllDay) {
+          calendar.createAllDayEvent(title, targetDate, { description: notes });
+        } else {
+          calendar.createEvent(title, targetDate, endDate, { description: notes });
+        }
+        results.calendar = eventExists ? 'Mise à jour avec succès' : 'Créé avec succès';
       } catch (errCal) {
         results.calendar = 'Erreur: ' + errCal.toString();
         console.warn("Erreur Google Agenda : " + errCal.toString());

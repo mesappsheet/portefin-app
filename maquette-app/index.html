@@ -683,6 +683,7 @@ body.light .cred-item { border-color: rgba(0,0,0,0.06); }
     <button onclick="closeTaskForm()" class="action-btn"><span class="material-symbols-outlined">arrow_back</span></button>
     <h2 id="task-form-title" style="font-size:16px;font-weight:900">Nouvelle tâche</h2>
     <button id="task-form-delete-btn" onclick="deleteTaskMobile()" class="action-btn" style="display:none;color:#ef4444"><span class="material-symbols-outlined">delete</span></button>
+    <button id="task-form-sync-btn" onclick="manualSyncTaskMobile()" class="action-btn" style="display:none;color:#3b82f6"><span class="material-symbols-outlined" title="Synchroniser avec Google">cloud_sync</span></button>
   </div>
   <div id="task-form-content" class="detail-content"></div>
 </div>
@@ -5379,23 +5380,159 @@ function taskCardMobile(t){
   </div>`;
 }
 
+// ─── GOOGLE SYNC TASKS ──────────────────────
+async function syncTaskToGoogleMobile(task) {
+  const url = localStorage.getItem('google_contacts_sync_url');
+  if (!url) {
+    console.warn("URL Google Contacts non configurée pour la synchronisation automatique.");
+    return;
+  }
+
+  const titleStr = task.entity_name ? task.entity_name + ' - ' + task.title : task.title;
+  const payload = {
+    action: 'create_task',
+    title: titleStr,
+    notes: task.notes || '',
+    dueDate: task.due_date || '',
+    dueTime: task.due_time || ''
+  };
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+
+    const text = await resp.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      console.error('Erreur parsing JSON de Google:', text);
+      return;
+    }
+
+    if (result.status === 'success') {
+      showGoogleTaskSyncReportModal(titleStr, result.results);
+    } else {
+      console.warn('Erreur renvoyée par Google Sync:', result.message);
+    }
+  } catch (err) {
+    console.error("Erreur de communication avec Google:", err);
+  }
+}
+
+async function manualSyncTaskMobile() {
+  const title = (document.getElementById('tmob-title')?.value || '').trim();
+  if (!title) {
+    toast('Saisir un titre pour la tâche', 'err');
+    document.getElementById('tmob-title')?.focus();
+    return;
+  }
+
+  const payload = {
+    title,
+    entity_name: (document.getElementById('tmob-entity')?.value || '').trim() || null,
+    due_date: document.getElementById('tmob-date')?.value || null,
+    due_time: document.getElementById('tmob-time')?.value || null,
+    notes: (document.getElementById('tmob-notes')?.value || '').trim() || null
+  };
+
+  toast('⏳ Synchronisation en cours...', 'info');
+  await syncTaskToGoogleMobile(payload);
+}
+
+function showGoogleTaskSyncReportModal(title, results) {
+  let modal = document.getElementById('google-task-sync-report-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'google-task-sync-report-modal';
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:350000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;";
+    document.body.appendChild(modal);
+  }
+
+  const calStatus = results.calendar || 'Non configuré';
+  const taskStatus = results.tasks || 'Non configuré';
+
+  const getBadgeStyle = (status) => {
+    if (status.includes('succès') || status.includes('Créé') || status.includes('Créée')) {
+      return "background:#dcfce7; color:#166534; border:1px solid #bbf7d0;";
+    }
+    if (status.includes('doublon') || status.includes('Mise à jour') || status.includes('Mis à jour') || status.includes('Ignoré') || status.includes('Ignorée')) {
+      return "background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;";
+    }
+    return "background:#fee2e2; color:#991b1b; border:1px solid #fecaca;";
+  };
+
+  const calBadge = `<span style="padding:4px 10px; border-radius:80px; font-size:11px; font-weight:800; ${getBadgeStyle(calStatus)}">${calStatus}</span>`;
+  const taskBadge = `<span style="padding:4px 10px; border-radius:80px; font-size:11px; font-weight:800; ${getBadgeStyle(taskStatus)}">${taskStatus}</span>`;
+
+  modal.innerHTML = `
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+        <span class="material-symbols-outlined" style="font-size:44px; color:#3b82f6; margin-bottom:8px;">cloud_done</span>
+        <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation</h3>
+        <button onclick="closeGoogleTaskSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+        <p style="margin:0 0 4px 0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
+          La tâche <strong style="color:var(--text)">"${title}"</strong> a été traitée :
+        </p>
+        
+        <div style="display:flex; flex-direction:column; gap:10px; background:rgba(0,0,0,0.02); padding:14px; border-radius:14px; border:1px solid var(--sep)">
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+            <span style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text)"><span class="material-symbols-outlined" style="color:#4285f4; font-size:18px">event</span> Agenda</span>
+            ${calBadge}
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-top:1px solid var(--sep); padding-top:8px; margin-top:4px">
+            <span style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text)"><span class="material-symbols-outlined" style="color:#fbbc05; font-size:18px">task_alt</span> Google Tasks</span>
+            ${taskBadge}
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+          <a href="https://calendar.google.com/calendar/r" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#4285f4; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+            <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Consulter Google Agenda
+          </a>
+          <a href="https://calendar.google.com/calendar/u/0/r/tasks" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#fbbc05; color:#1e293b; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+            <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Consulter Google Tasks
+          </a>
+        </div>
+      </div>
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+        <button onclick="closeGoogleTaskSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
+      </div>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+function closeGoogleTaskSyncReportModal() {
+  const modal = document.getElementById('google-task-sync-report-modal');
+  if (modal) modal.style.display = 'none';
+}
+
 function openTaskFormMobile(taskId=null){
   _editingTaskIdMob=taskId;
   _taskSubtasksFormMob=[];
   const view=document.getElementById('task-form-view');
   const titleEl=document.getElementById('task-form-title');
   const delBtn=document.getElementById('task-form-delete-btn');
+  const syncBtn=document.getElementById('task-form-sync-btn');
   let t=null;
   if(taskId){
     t=_tasksMobile.find(x=>x.id===taskId);
     if(!t)return;
     titleEl.textContent='Modifier la tâche';
     delBtn.style.display='flex';
+    if(syncBtn) syncBtn.style.display='flex';
     _taskFormStatusMob=t.status||'todo';
     _taskSubtasksFormMob=Array.isArray(t.subtasks)?JSON.parse(JSON.stringify(t.subtasks)):(t.subtasks?JSON.parse(t.subtasks):[]);
   } else {
     titleEl.textContent='Nouvelle tâche';
     delBtn.style.display='none';
+    if(syncBtn) syncBtn.style.display='none';
     _taskFormStatusMob='todo';
   }
   document.getElementById('task-form-content').innerHTML=renderTaskFormMobile(t);
@@ -5518,6 +5655,7 @@ async function saveTaskMobile(){
   closeTaskForm();
   toast(_editingTaskIdMob?'Tâche modifiée ✓':'Tâche créée ✓','ok');
   viewTasksMobile();
+  syncTaskToGoogleMobile(payload);
 }
 
 async function deleteTaskMobile(){
