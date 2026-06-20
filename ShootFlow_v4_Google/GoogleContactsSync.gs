@@ -46,13 +46,15 @@ function doPost(e) {
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
         } else {
-          existingTask.notes = notes;
+          let updatedTask = {
+            id: existingTask.id,
+            title: title,
+            notes: notes
+          };
           if (dueDateStr) {
-            existingTask.due = dueTimeStr ? (dueDateStr + "T" + dueTimeStr + ":00.000Z") : (dueDateStr + "T00:00:00.000Z");
-          } else {
-            existingTask.due = null;
+            updatedTask.due = dueTimeStr ? (dueDateStr + "T" + dueTimeStr + ":00.000Z") : (dueDateStr + "T00:00:00.000Z");
           }
-          Tasks.Tasks.update(existingTask, taskListId, existingTask.id);
+          Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
           results.tasks = 'Mise à jour avec succès';
         }
       } catch (errTasks) {
