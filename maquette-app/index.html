@@ -5645,6 +5645,8 @@ async function syncTaskToGoogleMobile(task) {
   const titleStr = task.entity_name ? task.entity_name + ' - ' + task.title : task.title;
   const payload = {
     action: 'create_task',
+    id: task.id || '',
+    status: task.status || '',
     title: titleStr,
     notes: task.notes || '',
     dueDate: task.due_date || '',
@@ -5685,6 +5687,7 @@ async function syncTaskStatusToGoogleMobile(task) {
   const statusStr = task.status === 'done' ? 'completed' : 'needsAction';
   const payload = {
     action: 'toggle_task_status',
+    id: task.id || '',
     title: titleStr,
     status: statusStr
   };
@@ -5730,75 +5733,137 @@ async function syncAllTasksMobile() {
     }
 
     const googleTasks = res.tasks || [];
-    let updatedLocalCount = 0;
-    let uploadedCount = 0;
     
-    const gTasksMap = {};
-    googleTasks.forEach(gt => {
-      gTasksMap[gt.title] = gt;
-    });
+    const report = {
+      exported: [],
+      completedLocally: [],
+      completedOnGoogle: [],
+      reactivatedLocally: [],
+      reactivatedOnGoogle: [],
+      linked: 0
+    };
 
     const localUpdates = [];
-    const googleUploads = [];
+    const googleSyncPromises = [];
+
+    // Map Google Tasks by their supabase_id (primary) and by title (fallback)
+    const gTasksById = {};
+    const gTasksByTitle = {};
+    googleTasks.forEach(gt => {
+      if (gt.supabase_id) {
+        gTasksById[gt.supabase_id] = gt;
+      }
+      gTasksByTitle[gt.title] = gt;
+    });
 
     for (const lt of (localTasks || [])) {
       const fullTitle = lt.entity_name ? lt.entity_name + ' - ' + lt.title : lt.title;
-      const gt = gTasksMap[fullTitle];
+      // Essayer de faire correspondre par ID d'abord, puis par titre
+      let gt = gTasksById[lt.id];
+      let matchedByTitle = false;
+      if (!gt) {
+        gt = gTasksByTitle[fullTitle];
+        if (gt) matchedByTitle = true;
+      }
 
       if (gt) {
         const isGoogleDone = gt.status === 'completed';
         const isLocalDone = lt.status === 'done';
 
-        if (isGoogleDone && !isLocalDone) {
-          localUpdates.push(
-            sb.from('tasks').update({ status: 'done', updated_at: new Date().toISOString() }).eq('id', lt.id)
-          );
-          updatedLocalCount++;
-        } else if (!isGoogleDone && isLocalDone) {
-          localUpdates.push(
-            sb.from('tasks').update({ status: 'todo', updated_at: new Date().toISOString() }).eq('id', lt.id)
-          );
-          updatedLocalCount++;
+        if (isGoogleDone !== isLocalDone) {
+          // Comparer les dates de modification pour décider
+          const localTime = new Date(lt.updated_at || lt.created_at || 0).getTime();
+          const googleTime = new Date(gt.updated || 0).getTime();
+
+          if (localTime > googleTime) {
+            // Local a été modifié en dernier -> mettre à jour Google
+            const newStatus = isLocalDone ? 'completed' : 'needsAction';
+            googleSyncPromises.push((async () => {
+              await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({
+                  action: 'toggle_task_status',
+                  id: lt.id,
+                  title: fullTitle,
+                  status: newStatus
+                }),
+                headers: { 'Content-Type': 'text/plain' }
+              });
+            })());
+            if (isLocalDone) {
+              report.completedOnGoogle.push(fullTitle);
+            } else {
+              report.reactivatedOnGoogle.push(fullTitle);
+            }
+          } else {
+            // Google a été modifié en dernier -> mettre à jour Local
+            const newStatus = isGoogleDone ? 'done' : 'todo';
+            localUpdates.push(
+              sb.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', lt.id)
+            );
+            if (isGoogleDone) {
+              report.completedLocally.push(fullTitle);
+            } else {
+              report.reactivatedLocally.push(fullTitle);
+            }
+          }
+        } else {
+          report.linked++;
+          // Si matched par titre mais sans ID dans les notes de Google Tasks, on force une mise à jour pour écrire l'ID !
+          if (matchedByTitle && !gt.supabase_id) {
+            googleSyncPromises.push((async () => {
+              await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({
+                  action: 'create_task',
+                  id: lt.id,
+                  status: lt.status,
+                  title: fullTitle,
+                  notes: lt.notes || '',
+                  dueDate: lt.due_date || '',
+                  dueTime: lt.due_time || ''
+                }),
+                headers: { 'Content-Type': 'text/plain' }
+              });
+            })());
+          }
         }
       } else {
-        googleUploads.push((async () => {
-          const payload = {
-            action: 'create_task',
-            title: fullTitle,
-            notes: lt.notes || '',
-            dueDate: lt.due_date || '',
-            dueTime: lt.due_time || ''
-          };
-          const r = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain' }
-          });
-          const resJson = await r.json();
-          if (resJson.status === 'success' && lt.status === 'done') {
+        // Tâche présente localement mais absente de Google.
+        // N'exporter QUE les tâches non terminées !
+        if (lt.status !== 'done') {
+          googleSyncPromises.push((async () => {
+            const payload = {
+              action: 'create_task',
+              id: lt.id,
+              status: lt.status,
+              title: fullTitle,
+              notes: lt.notes || '',
+              dueDate: lt.due_date || '',
+              dueTime: lt.due_time || ''
+            };
             await fetch(url, {
               method: 'POST',
-              body: JSON.stringify({
-                action: 'toggle_task_status',
-                title: fullTitle,
-                status: 'completed'
-              }),
+              body: JSON.stringify(payload),
               headers: { 'Content-Type': 'text/plain' }
             });
-          }
-        })());
-        uploadedCount++;
+          })());
+          report.exported.push(fullTitle);
+        }
       }
     }
 
     if (localUpdates.length > 0) {
       await Promise.all(localUpdates);
     }
-    if (googleUploads.length > 0) {
-      await Promise.all(googleUploads);
+    if (googleSyncPromises.length > 0) {
+      await Promise.all(googleSyncPromises);
     }
 
-    toast(`✓ Synchronisation réussie : ${updatedLocalCount} locales mises à jour, ${uploadedCount} envoyées à Google`, 'ok');
+    toast('✓ Synchronisation globale terminée', 'ok');
+    
+    // Afficher le rapport global détaillé
+    showGlobalTaskSyncReportModal(report);
     
     // Recharger la vue des tâches
     viewTasksMobile();
@@ -5806,6 +5871,123 @@ async function syncAllTasksMobile() {
     console.error("Erreur de synchronisation globale des tâches:", e);
     toast('⚠️ Erreur synchro : ' + e.message, 'err');
   }
+}
+
+function showGlobalTaskSyncReportModal(report) {
+  let modal = document.getElementById('global-task-sync-report-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'global-task-sync-report-modal';
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:350000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;";
+    document.body.appendChild(modal);
+  }
+
+  const isAndroid = /android/i.test(navigator.userAgent || navigator.vendor || window.opera);
+  const calendarUrl = isAndroid 
+    ? "intent://#Intent;package=com.google.android.calendar;scheme=https;S.browser_fallback_url=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Fr;end;"
+    : "https://calendar.google.com/calendar/r";
+  const tasksUrl = isAndroid 
+    ? "intent://#Intent;package=com.google.android.apps.tasks;scheme=tasks;S.browser_fallback_url=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Fu%2F0%2Fr%2Ftasks;end;"
+    : "https://calendar.google.com/calendar/u/0/r/tasks";
+
+  const totalActions = report.exported.length + report.completedLocally.length + report.completedOnGoogle.length + report.reactivatedLocally.length + report.reactivatedOnGoogle.length;
+
+  let detailsHtml = '';
+  if (totalActions === 0) {
+    detailsHtml = `<p style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;margin:20px 0;">Toutes les tâches sont déjà à jour avec Google Tasks & Agenda.</p>`;
+  } else {
+    detailsHtml = `<div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 0;text-align:left;">`;
+    
+    if (report.exported.length > 0) {
+      detailsHtml += `
+        <div>
+          <h5 style="margin:0 0 4px 0;font-size:11px;font-weight:900;text-transform:uppercase;color:#f27f0d;">Tâches exportées vers Google (${report.exported.length})</h5>
+          <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text);line-height:1.4;">
+            ${report.exported.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>`;
+    }
+    
+    if (report.completedLocally.length > 0) {
+      detailsHtml += `
+        <div>
+          <h5 style="margin:0 0 4px 0;font-size:11px;font-weight:900;text-transform:uppercase;color:#22c55e;">Marquées terminées localement (${report.completedLocally.length})</h5>
+          <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text);line-height:1.4;">
+            ${report.completedLocally.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>`;
+    }
+    
+    if (report.completedOnGoogle.length > 0) {
+      detailsHtml += `
+        <div>
+          <h5 style="margin:0 0 4px 0;font-size:11px;font-weight:900;text-transform:uppercase;color:#3b82f6;">Marquées terminées sur Google (${report.completedOnGoogle.length})</h5>
+          <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text);line-height:1.4;">
+            ${report.completedOnGoogle.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>`;
+    }
+
+    if (report.reactivatedLocally.length > 0) {
+      detailsHtml += `
+        <div>
+          <h5 style="margin:0 0 4px 0;font-size:11px;font-weight:900;text-transform:uppercase;color:#eab308;">Réactivées localement (${report.reactivatedLocally.length})</h5>
+          <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text);line-height:1.4;">
+            ${report.reactivatedLocally.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>`;
+    }
+
+    if (report.reactivatedOnGoogle.length > 0) {
+      detailsHtml += `
+        <div>
+          <h5 style="margin:0 0 4px 0;font-size:11px;font-weight:900;text-transform:uppercase;color:#a855f7;">Réactivées sur Google (${report.reactivatedOnGoogle.length})</h5>
+          <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text);line-height:1.4;">
+            ${report.reactivatedOnGoogle.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>`;
+    }
+
+    detailsHtml += `</div>`;
+  }
+
+  modal.innerHTML = `
+    <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative">
+        <span class="material-symbols-outlined" style="font-size:44px; color:#f27f0d; margin-bottom:8px;">sync_saved_locally</span>
+        <h3 style="margin:0; color:var(--text); font-size:16px; font-weight:900;">Rapport de Synchronisation Globale</h3>
+        <button onclick="closeGlobalTaskSyncReportModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer" class="material-symbols-outlined">close</button>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+        <p style="margin:0; font-size:13px; color:var(--text2); text-align:center; line-height:1.5">
+          La synchronisation bidirectionnelle est terminée.<br>
+          <strong style="color:var(--text); font-size:14px;">${totalActions} modification(s) effectuée(s)</strong>
+        </p>
+        
+        <div style="background:rgba(0,0,0,0.02); padding:14px; border-radius:14px; border:1px solid var(--sep)">
+          ${detailsHtml}
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+          <a href="${tasksUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#fbbc05; color:#1e293b; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+            <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Ouvrir Google Tasks
+          </a>
+          <a href="${calendarUrl}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#4285f4; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; font-size:13px; transition:opacity 0.2s">
+            <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> Ouvrir Google Agenda
+          </a>
+        </div>
+      </div>
+      <div style="padding:16px 20px; border-top:1px solid var(--sep); display:flex; gap:12px; background:rgba(0,0,0,0.01)">
+        <button onclick="closeGlobalTaskSyncReportModal()" class="m-btn secondary" style="width:100%; padding:10px; margin:0">Fermer</button>
+      </div>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+function closeGlobalTaskSyncReportModal() {
+  const modal = document.getElementById('global-task-sync-report-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 async function manualSyncTaskMobile() {

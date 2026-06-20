@@ -16,6 +16,8 @@ function doPost(e) {
       const notes = data.notes || '';
       const dueDateStr = data.dueDate; // format YYYY-MM-DD ou autre
       const dueTimeStr = data.dueTime; // format HH:MM
+      const id = data.id || '';
+      const status = data.status || '';
 
       let results = { calendar: 'Non créé', tasks: 'Non créée' };
 
@@ -123,12 +125,14 @@ function doPost(e) {
         let taskExists = false;
         let existingTask = null;
         
-        // Vérification des doublons dans Tasks
-        const tasksResponse = Tasks.Tasks.list(taskListId);
+        // Vérification des doublons dans Tasks par ID unique d'abord
+        const tasksResponse = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
         if (tasksResponse.items) {
           for (let i = 0; i < tasksResponse.items.length; i++) {
             const t = tasksResponse.items[i];
-            if (t.title === title && t.status !== 'completed') {
+            const hasIdMatch = id && t.notes && t.notes.indexOf('[ID: ' + id + ']') !== -1;
+            const hasTitleMatch = t.title === title && t.status !== 'completed';
+            if (hasIdMatch || (!id && hasTitleMatch)) {
               taskExists = true;
               existingTask = t;
               break;
@@ -136,10 +140,14 @@ function doPost(e) {
           }
         }
 
+        let cleanNotes = notes ? notes.replace(/\s*\[ID:\s*[^\]]+\]/, '') : '';
+        let finalNotes = cleanNotes + (id ? '\n\n[ID: ' + id + ']' : '');
+
         if (!taskExists) {
           let task = { title: title };
-          if (notes && notes.trim()) task.notes = notes;
+          if (finalNotes) task.notes = finalNotes;
           if (formattedTasksDue) task.due = formattedTasksDue;
+          if (status === 'done' || status === 'completed') task.status = 'completed';
           debugTaskPayload = task;
           Tasks.Tasks.insert(task, taskListId);
           results.tasks = 'Créée avec succès';
@@ -148,8 +156,14 @@ function doPost(e) {
             id: existingTask.id,
             title: title
           };
-          if (notes && notes.trim()) updatedTask.notes = notes;
+          if (finalNotes) updatedTask.notes = finalNotes;
           if (formattedTasksDue) updatedTask.due = formattedTasksDue;
+          if (status === 'done' || status === 'completed') {
+            updatedTask.status = 'completed';
+          } else if (status === 'todo' || status === 'in_progress') {
+            updatedTask.status = 'needsAction';
+            updatedTask.completed = null;
+          }
           debugTaskPayload = updatedTask;
           Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
           results.tasks = 'Mise à jour avec succès';
@@ -166,15 +180,31 @@ function doPost(e) {
         let isAllDay = calDetails.isAllDay;
         let endDate = calDetails.endDate;
 
-        // Vérification des doublons dans Calendar (le jour même)
-        const events = calendar.getEventsForDay(targetDate);
         let eventExists = false;
         let existingEvent = null;
-        for (let i = 0; i < events.length; i++) {
-          if (events[i].getTitle() === title) {
+
+        // Rechercher l'événement existant par ID unique
+        if (id) {
+          var startSearch = new Date();
+          startSearch.setDate(startSearch.getDate() - 60);
+          var endSearch = new Date();
+          endSearch.setDate(endSearch.getDate() + 365);
+          const foundEvents = calendar.getEvents(startSearch, endSearch, { search: '[ID: ' + id + ']' });
+          if (foundEvents && foundEvents.length > 0) {
             eventExists = true;
-            existingEvent = events[i];
-            break;
+            existingEvent = foundEvents[0];
+          }
+        }
+
+        // Fallback par titre si non trouvé par ID
+        if (!eventExists && targetDate) {
+          const events = calendar.getEventsForDay(targetDate);
+          for (let i = 0; i < events.length; i++) {
+            if (events[i].getTitle() === title || events[i].getTitle() === '✓ ' + title) {
+              eventExists = true;
+              existingEvent = events[i];
+              break;
+            }
           }
         }
 
@@ -182,10 +212,14 @@ function doPost(e) {
           existingEvent.deleteEvent();
         }
 
+        let cleanNotes = notes ? notes.replace(/\s*\[ID:\s*[^\]]+\]/, '') : '';
+        let calDescription = cleanNotes + (id ? '\n\n[ID: ' + id + ']' : '');
+        let finalTitle = (status === 'done' || status === 'completed') ? '✓ ' + title : title;
+
         if (isAllDay) {
-          calendar.createAllDayEvent(title, targetDate, { description: notes });
+          calendar.createAllDayEvent(finalTitle, targetDate, { description: calDescription });
         } else {
-          calendar.createEvent(title, targetDate, endDate, { description: notes });
+          calendar.createEvent(finalTitle, targetDate, endDate, { description: calDescription });
         }
         var dateInfoStr = targetDate ? (' (Le ' + targetDate.toLocaleDateString('fr-FR') + ')') : '';
         results.calendar = (eventExists ? 'Mise à jour avec succès' : 'Créé avec succès') + dateInfoStr;
@@ -197,8 +231,9 @@ function doPost(e) {
       return jsonResponse({ status: 'success', results: results });
     }
 
-    // ─── ACTION : TOGGLE STATUS DE TACHE (GOOGLE TASKS) ───────
+    // ─── ACTION : TOGGLE STATUS DE TACHE (GOOGLE TASKS & AGENDA) ──
     if (data.action === 'toggle_task_status') {
+      const id = data.id;
       const title = data.title;
       const status = data.status || 'needsAction'; // 'completed' ou 'needsAction'
       const taskListId = '@default';
@@ -210,23 +245,64 @@ function doPost(e) {
         if (tasksResponse.items) {
           for (let i = 0; i < tasksResponse.items.length; i++) {
             const t = tasksResponse.items[i];
-            if (t.title === title) {
+            const hasIdMatch = id && t.notes && t.notes.indexOf('[ID: ' + id + ']') !== -1;
+            const hasTitleMatch = t.title === title;
+            if (hasIdMatch || (!id && hasTitleMatch)) {
               found = true;
               taskId = t.id;
               t.status = status;
               if (status === 'needsAction') {
-                t.completed = null; // efface la date de fin pour la réactiver
+                t.completed = null; // réactive la tâche
               }
               Tasks.Tasks.update(t, taskListId, taskId);
               break;
             }
           }
         }
+
+        // Mettre à jour également Google Agenda !
+        try {
+          const calendar = CalendarApp.getDefaultCalendar();
+          var startSearch = new Date();
+          startSearch.setDate(startSearch.getDate() - 60);
+          var endSearch = new Date();
+          endSearch.setDate(endSearch.getDate() + 365);
+          
+          let foundEvent = null;
+          if (id) {
+            const foundEvents = calendar.getEvents(startSearch, endSearch, { search: '[ID: ' + id + ']' });
+            if (foundEvents && foundEvents.length > 0) {
+              foundEvent = foundEvents[0];
+            }
+          }
+          if (!foundEvent) {
+            const foundEvents = calendar.getEvents(startSearch, endSearch, { search: title });
+            if (foundEvents && foundEvents.length > 0) {
+              foundEvent = foundEvents.find(ev => ev.getTitle() === title || ev.getTitle() === '✓ ' + title);
+            }
+          }
+          
+          if (foundEvent) {
+            let currentTitle = foundEvent.getTitle();
+            const cleanTitle = currentTitle.replace(/^✓\s*/, '');
+            const newTitle = (status === 'completed') ? '✓ ' + cleanTitle : cleanTitle;
+            if (currentTitle !== newTitle) {
+              foundEvent.setTitle(newTitle);
+            }
+          }
+        } catch (calErr) {
+          console.warn("Erreur mise à jour statut Agenda : " + calErr.toString());
+        }
+
         if (found) {
           return jsonResponse({ status: 'success', message: 'Statut de la tâche mis à jour.', taskId: taskId });
         } else {
           if (status === 'completed') {
-            let task = { title: title, status: 'completed' };
+            let task = { 
+              title: title, 
+              status: 'completed',
+              notes: (id ? '\n\n[ID: ' + id + ']' : '')
+            };
             Tasks.Tasks.insert(task, taskListId);
             return jsonResponse({ status: 'success', message: 'Tâche créée et complétée.' });
           }
@@ -243,10 +319,18 @@ function doPost(e) {
       try {
         const tasksResponse = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
         const items = (tasksResponse.items || []).map(t => {
+          let supabaseId = null;
+          if (t.notes) {
+            const m = t.notes.match(/\[ID:\s*([^\]]+)\]/);
+            if (m) {
+              supabaseId = m[1].trim();
+            }
+          }
           return {
             title: t.title,
             status: t.status, // 'completed' ou 'needsAction'
-            updated: t.updated
+            updated: t.updated,
+            supabase_id: supabaseId
           };
         });
         return jsonResponse({ status: 'success', tasks: items });
