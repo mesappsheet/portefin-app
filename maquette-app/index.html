@@ -762,6 +762,17 @@ function navTo(screen){
     n.classList.toggle('active', n.id === 'nav-'+screen);
   });
   hideFab();
+  
+  // Désactiver le mode sélection si on quitte les tâches
+  if(screen!=='tasks'){
+    _taskSelectionMode=false;
+    if(typeof _taskSelectedIds!=='undefined' && _taskSelectedIds)_taskSelectedIds.clear();
+    if(typeof _bulkToolbar!=='undefined' && _bulkToolbar){
+      _bulkToolbar.remove();
+      _bulkToolbar=null;
+    }
+  }
+
   // Réinitialise l'onglet crédits quand on quitte le module
   if(screen!=='credits') credTab='list';
   const views={'dashboard':viewDashboard,'repayments':viewRepayments,'credits':viewCredits,'prospects':viewProspects,'tasks':viewTasksMobile,'recouvrement':viewRecouvrement};
@@ -5017,6 +5028,8 @@ let _taskPriorityMob=null;
 let _editingTaskIdMob=null;
 let _taskFormStatusMob='todo';
 let _taskSubtasksFormMob=[];
+let _taskSelectionMode=false;
+let _taskSelectedIds=new Set();
 
 const TASK_P={urgent:{label:'Urgente',col:'#ef4444',bg:'rgba(239,68,68,.1)'},high:{label:'Haute',col:'#f97316',bg:'rgba(249,115,22,.1)'},normal:{label:'Normale',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},low:{label:'Basse',col:'#94a3b8',bg:'rgba(148,163,184,.1)'}};
 const TASK_S={todo:{label:'À faire',col:'#64748b',bg:'rgba(100,116,139,.1)'},in_progress:{label:'En cours',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},done:{label:'Terminée',col:'#22c55e',bg:'rgba(34,197,94,.1)'}};
@@ -5610,11 +5623,37 @@ function taskCardMobile(t){
   const toggleBg=isDone?'#22c55e':isInP?'#3b82f6':'transparent';
   const toggleBorder=isDone?'#22c55e':isInP?'#3b82f6':p.col;
   const toggleTitle=t.status==='todo'?'→ En cours':t.status==='in_progress'?'→ Terminée':'→ À faire';
-  return`<div onclick="openTaskFormMobile('${t.id}')" style="background:var(--card);border-radius:16px;border:1px solid var(--border);border-left:4px solid ${p.col};padding:14px;cursor:pointer;opacity:${isDone?.7:1}">
+
+  const selectionHtml = _taskSelectionMode ? `
+    <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;">
+      <span class="material-symbols-outlined" style="font-size:24px;color:${_taskSelectedIds.has(t.id) ? '#f27f0d' : 'var(--text2)'}">
+        ${_taskSelectedIds.has(t.id) ? 'check_circle' : 'radio_button_unchecked'}
+      </span>
+    </div>
+  ` : '';
+
+  const statusButtonHtml = !_taskSelectionMode ? `
+    <button onclick="event.stopPropagation();quickToggleTaskMobile('${t.id}')" title="${toggleTitle}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${toggleBorder};background:${toggleBg};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
+      <span class="material-symbols-outlined${isDone||isInP?' filled':''}" style="font-size:14px;color:${isDone||isInP?'white':p.col}">${toggleIcon}</span>
+    </button>
+  ` : '';
+
+  const isSelected = _taskSelectionMode && _taskSelectedIds.has(t.id);
+  const cardBorder = isSelected ? '1px solid #f27f0d' : '1px solid var(--border)';
+  const cardBg = isSelected ? 'rgba(242,127,13,0.04)' : 'var(--card)';
+
+  return`<div onclick="handleTaskCardClickMobile(event, '${t.id}')"
+              ontouchstart="handleTaskCardTouchStartMobile(event, '${t.id}')"
+              ontouchend="handleTaskCardTouchEndMobile(event, '${t.id}')"
+              ontouchmove="handleTaskCardTouchMoveMobile(event)"
+              ontouchcancel="handleTaskCardTouchCancelMobile(event)"
+              onmousedown="handleTaskCardMouseDownMobile(event, '${t.id}')"
+              onmousemove="handleTaskCardMouseMoveMobile(event)"
+              onmouseup="handleTaskCardMouseUpMobile(event)"
+              style="background:${cardBg};border-radius:16px;border:${cardBorder};border-left:4px solid ${p.col};padding:14px;cursor:pointer;opacity:${isDone?.7:1};user-select:none;-webkit-user-select:none;">
     <div style="display:flex;align-items:flex-start;gap:12px">
-      <button onclick="event.stopPropagation();quickToggleTaskMobile('${t.id}')" title="${toggleTitle}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${toggleBorder};background:${toggleBg};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
-        <span class="material-symbols-outlined${isDone||isInP?' filled':''}" style="font-size:14px;color:${isDone||isInP?'white':p.col}">${toggleIcon}</span>
-      </button>
+      ${selectionHtml}
+      ${statusButtonHtml}
       <div style="flex:1;min-width:0">
         ${t.entity_name?`<p style="font-size:10px;font-weight:700;color:var(--text2);margin:0 0 3px;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:12px">person</span>${t.entity_name}</p>`:''}
         <p style="font-size:14px;font-weight:800;margin:0 0 4px;color:var(--text);${isDone?'text-decoration:line-through;color:var(--text2)':''}">${t.title||'—'}</p>
@@ -5627,7 +5666,7 @@ function taskCardMobile(t){
         <div style="display:flex;gap:5px;flex-wrap:wrap">${subs.slice(0,3).map(sub=>`<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:${sub.done?'rgba(34,197,94,.12)':'var(--input-bg)'};color:${sub.done?'#4ade80':'var(--text2)'};font-weight:600">${sub.done?'✓ ':''}${sub.text}</span>`).join('')}${subs.length>3?`<span style="font-size:9px;color:var(--text2);padding:2px 5px">+${subs.length-3}</span>`:''}</div>`:''}
         ${t.notes?`<p style="font-size:11px;color:var(--text2);margin:6px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.notes}</p>`:''}
       </div>
-      <button onclick="event.stopPropagation();exportTaskToGCalMobile('${t.id}')" title="Google Calendar" style="width:32px;height:32px;border-radius:10px;border:1px solid #bfdbfe;background:#eff6ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+      <button onclick="event.stopPropagation();exportTaskToGCalMobile('${t.id}')" title="Google Calendar" style="width:32px;height:32px;border-radius:10px;border:1px solid #bfdbfe;background:#eff6ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;${_taskSelectionMode ? 'display:none;' : ''}">
         <span class="material-symbols-outlined" style="font-size:16px;color:#3b82f6">open_in_new</span>
       </button>
     </div>
@@ -6260,6 +6299,249 @@ async function quickToggleTaskMobile(taskId){
     renderTasksMobile();
     syncTaskStatusToGoogleMobile(t);
   }
+}
+
+// ─── SÉLECTION ET SUPPRESSION GROUPÉE DES TÂCHES (APPUI LONG) ─────────────────
+let _taskTouchTimeout = null;
+let _taskTouchStartX = 0;
+let _taskTouchStartY = 0;
+let _taskLongPressed = false;
+
+function handleTaskCardTouchStartMobile(event, taskId) {
+  if (_taskSelectionMode) return;
+  _taskLongPressed = false;
+  const touch = event.touches[0];
+  _taskTouchStartX = touch.clientX;
+  _taskTouchStartY = touch.clientY;
+  _taskTouchTimeout = setTimeout(() => {
+    _taskLongPressed = true;
+    startTaskSelectionModeMobile(taskId);
+  }, 600);
+}
+
+function handleTaskCardTouchMoveMobile(event) {
+  if (_taskTouchTimeout) {
+    const touch = event.touches[0];
+    const dx = touch.clientX - _taskTouchStartX;
+    const dy = touch.clientY - _taskTouchStartY;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      clearTimeout(_taskTouchTimeout);
+      _taskTouchTimeout = null;
+    }
+  }
+}
+
+function handleTaskCardTouchEndMobile(event, taskId) {
+  if (_taskTouchTimeout) {
+    clearTimeout(_taskTouchTimeout);
+    _taskTouchTimeout = null;
+  }
+}
+
+// Version souris pour test PC / émulateur
+let _taskMouseTimeout = null;
+let _taskMouseStartX = 0;
+let _taskMouseStartY = 0;
+let _taskMouseLongPressed = false;
+
+function handleTaskCardMouseDownMobile(event, taskId) {
+  if (event.button !== 0) return; // clic gauche uniquement
+  if (_taskSelectionMode) return;
+  _taskMouseLongPressed = false;
+  _taskMouseStartX = event.clientX;
+  _taskMouseStartY = event.clientY;
+  _taskMouseTimeout = setTimeout(() => {
+    _taskMouseLongPressed = true;
+    startTaskSelectionModeMobile(taskId);
+  }, 600);
+}
+
+function handleTaskCardMouseMoveMobile(event) {
+  if (_taskMouseTimeout) {
+    const dx = event.clientX - _taskMouseStartX;
+    const dy = event.clientY - _taskMouseStartY;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      clearTimeout(_taskMouseTimeout);
+      _taskMouseTimeout = null;
+    }
+  }
+}
+
+function handleTaskCardMouseUpMobile(event) {
+  if (_taskMouseTimeout) {
+    clearTimeout(_taskMouseTimeout);
+    _taskMouseTimeout = null;
+  }
+}
+
+function handleTaskCardClickMobile(event, taskId) {
+  if (_taskLongPressed || _taskMouseLongPressed) {
+    _taskLongPressed = false;
+    _taskMouseLongPressed = false;
+    event.stopPropagation();
+    event.preventDefault();
+    return;
+  }
+  if (_taskSelectionMode) {
+    event.stopPropagation();
+    toggleTaskSelectionMobile(taskId);
+  } else {
+    openTaskFormMobile(taskId);
+  }
+}
+
+function startTaskSelectionModeMobile(taskId) {
+  _taskSelectionMode = true;
+  _taskSelectedIds.add(taskId);
+  if (navigator.vibrate) {
+    try { navigator.vibrate(50); } catch(e) {}
+  }
+  renderTasksMobile();
+  renderBulkToolbarMobile();
+}
+
+function toggleTaskSelectionMobile(taskId) {
+  if (_taskSelectedIds.has(taskId)) {
+    _taskSelectedIds.delete(taskId);
+  } else {
+    _taskSelectedIds.add(taskId);
+  }
+  renderTasksMobile();
+  renderBulkToolbarMobile();
+}
+
+let _bulkToolbar = null;
+function renderBulkToolbarMobile() {
+  if (_bulkToolbar) {
+    _bulkToolbar.remove();
+    _bulkToolbar = null;
+  }
+  if (!_taskSelectionMode) {
+    showFab(() => openTaskFormMobile());
+    return;
+  }
+  hideFab();
+
+  if (!document.getElementById('selection-mode-styles')) {
+    const style = document.createElement('style');
+    style.id = 'selection-mode-styles';
+    style.innerHTML = `
+      @keyframes slideUpFade {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .bulk-toolbar-anim {
+        animation: slideUpFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  _bulkToolbar = document.createElement('div');
+  _bulkToolbar.className = 'bulk-toolbar-anim';
+  _bulkToolbar.style.position = 'fixed';
+  _bulkToolbar.style.bottom = '80px';
+  _bulkToolbar.style.left = '20px';
+  _bulkToolbar.style.right = '20px';
+  _bulkToolbar.style.height = '60px';
+  _bulkToolbar.style.background = 'var(--card)';
+  _bulkToolbar.style.border = '1px solid var(--border)';
+  _bulkToolbar.style.borderRadius = '16px';
+  _bulkToolbar.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
+  _bulkToolbar.style.display = 'flex';
+  _bulkToolbar.style.alignItems = 'center';
+  _bulkToolbar.style.justifyContent = 'space-between';
+  _bulkToolbar.style.padding = '0 16px';
+  _bulkToolbar.style.zIndex = '1000';
+  _bulkToolbar.style.backdropFilter = 'blur(10px)';
+  _bulkToolbar.style.webkitBackdropFilter = 'blur(10px)';
+
+  const count = _taskSelectedIds.size;
+  const word = count > 1 ? 'sélectionnées' : 'sélectionnée';
+
+  _bulkToolbar.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="cancelTaskSelectionModeMobile()" style="border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px">
+        <span class="material-symbols-outlined" style="font-size:22px">close</span>
+      </button>
+      <span style="font-size:14px;font-weight:800;color:var(--text)">${count} ${word}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="toggleSelectAllTasksMobile()" style="border:1px solid var(--border);background:var(--input-bg);color:var(--text);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+        ${isAllTasksSelectedMobile() ? 'Désélectionner tout' : 'Tout sélectionner'}
+      </button>
+      <button onclick="deleteSelectedTasksMobile()" style="border:none;background:#ef4444;color:white;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(239,68,68,0.2)">
+        <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        Supprimer
+      </button>
+    </div>
+  `;
+  document.body.appendChild(_bulkToolbar);
+}
+
+function cancelTaskSelectionModeMobile() {
+  _taskSelectionMode = false;
+  _taskSelectedIds.clear();
+  renderTasksMobile();
+  renderBulkToolbarMobile();
+}
+
+function getVisibleTaskIdsMobile() {
+  const today = new Date().toISOString().split('T')[0];
+  const applyFilters = arr => {
+    let r = arr;
+    if (_taskPriorityMob) r = r.filter(t => t.priority === _taskPriorityMob);
+    if (_taskSearchMob) {
+      const q = _taskSearchMob.toLowerCase();
+      r = r.filter(t => (t.title || '').toLowerCase().includes(q) || (t.entity_name || '').toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q));
+    }
+    return r;
+  };
+  const allActive = _tasksMobile.filter(t => t.status !== 'done');
+  const allDone = _tasksMobile.filter(t => t.status === 'done');
+  let activeRows = applyFilters(_taskFilterMob === 'done' ? [] : (_taskFilterMob === 'all' ? allActive : allActive.filter(t => t.status === _taskFilterMob)));
+  let doneRows = applyFilters(_taskFilterMob === 'todo' || _taskFilterMob === 'in_progress' ? [] : allDone);
+  return [...activeRows, ...doneRows].map(t => t.id);
+}
+
+function toggleSelectAllTasksMobile() {
+  const visibleIds = getVisibleTaskIdsMobile();
+  if (visibleIds.length === 0) return;
+  const allSelected = visibleIds.every(id => _taskSelectedIds.has(id));
+  if (allSelected) {
+    visibleIds.forEach(id => _taskSelectedIds.delete(id));
+  } else {
+    visibleIds.forEach(id => _taskSelectedIds.add(id));
+  }
+  renderTasksMobile();
+  renderBulkToolbarMobile();
+}
+
+function isAllTasksSelectedMobile() {
+  const visibleIds = getVisibleTaskIdsMobile();
+  if (visibleIds.length === 0) return false;
+  return visibleIds.every(id => _taskSelectedIds.has(id));
+}
+
+async function deleteSelectedTasksMobile() {
+  if (_taskSelectedIds.size === 0) {
+    toast('Aucune tâche sélectionnée', 'err');
+    return;
+  }
+  const count = _taskSelectedIds.size;
+  const word = count > 1 ? 'ces tâches définitivement' : 'cette tâche définitivement';
+  if (!confirm(`Supprimer ${word} (${count}) ?`)) return;
+  
+  const idsToDelete = Array.from(_taskSelectedIds);
+  const { error } = await sb.from('tasks').delete().in('id', idsToDelete);
+  if (error) {
+    toast('Erreur lors de la suppression', 'err');
+    return;
+  }
+  
+  toast(`${count} tâche${count > 1 ? 's' : ''} supprimée${count > 1 ? 's' : ''}`, 'ok');
+  cancelTaskSelectionModeMobile();
+  viewTasksMobile();
 }
 
 function exportTaskToGCalMobile(taskId){
