@@ -3652,6 +3652,10 @@ function setProsFilter(f){
 }
 let statusMapPWA = {};
 let selectedProsPWA = new Set();
+let _prosSelectionMode = false;
+let _prosBulkToolbar = null;
+let _prosTouchTimeout = null;
+let _prosMouseTimeout = null;
 
 
 async function loadProspects(){
@@ -3676,30 +3680,17 @@ async function loadProspects(){
     rows.forEach(p=>_prosCache[p.id]=p);
     _filteredProspectsMobile = rows;
     
-    let bulkHtml = '';
-    if(selectedProsPWA.size > 0) {
-      bulkHtml = `<div style="padding:0 16px 12px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:#f87171;font-weight:700">${selectedProsPWA.size} sélectionné(s)</span>
-        <button class="btn-ghost" style="color:#f87171;font-size:11px;padding:4px 8px" onclick="bulkDeleteProsPWA()">
-          <span class="material-symbols-outlined" style="font-size:16px">delete_sweep</span> Supprimer
-        </button>
-      </div>`;
-    }
-
     list.innerHTML=`
       <div style="padding:0 16px 8px;display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn-ghost" style="font-size:11px;color:#22c55e;display:flex;align-items:center;gap:4px;font-weight:700" onclick="exportProspectsToExcelMobile()">
-            <span class="material-symbols-outlined" style="font-size:15px;color:#22c55e">download</span> Exporter en Excel
-          </button>
-          <button class="btn-ghost" style="font-size:11px" onclick="toggleSelectAllProsPWA(${JSON.stringify(rows.map(r=>r.id)).replace(/"/g,'&quot;')})">Tout sélectionner</button>
-        </div>
+        <button class="btn-ghost" style="font-size:11px;color:#22c55e;display:flex;align-items:center;gap:4px;font-weight:700" onclick="exportProspectsToExcelMobile()">
+          <span class="material-symbols-outlined" style="font-size:15px;color:#22c55e">download</span> Exporter en Excel
+        </button>
       </div>
-      ${bulkHtml}
-      <div class="glass" style="margin:0 16px;overflow:hidden">
+      <div style="margin:0 16px;display:flex;flex-direction:column;gap:0">
         ${rows.map(p=>prosRow(p)).join('')}
       </div>`;
+    renderProsBulkToolbar();
   }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
 }
 
@@ -4056,11 +4047,148 @@ async function loadProspectFullHistory(pid) {
   }
 }
 
-function toggleSelectAllProsPWA(ids){
-  if(selectedProsPWA.size === ids.length) selectedProsPWA.clear();
-  else ids.forEach(id=>selectedProsPWA.add(id));
-  loadProspects();
+// ── Sélection multiple Prospects (appui long) ────────────────────────
+
+function enterProsSelectionMode(id) {
+  _prosSelectionMode = true;
+  selectedProsPWA.clear();
+  selectedProsPWA.add(id);
+  // Vibration haptique
+  if (navigator.vibrate) navigator.vibrate(30);
+  // Mettre à jour visuellement toutes les cartes
+  _updateProsCardsUI();
+  renderProsBulkToolbar();
 }
+
+function cancelProsSelectionMode() {
+  _prosSelectionMode = false;
+  selectedProsPWA.clear();
+  _updateProsCardsUI();
+  renderProsBulkToolbar();
+  showFab(() => openProspectForm());
+}
+
+function toggleProSelPWA(id) {
+  if (!_prosSelectionMode) return;
+  if (selectedProsPWA.has(id)) selectedProsPWA.delete(id);
+  else selectedProsPWA.add(id);
+  _updateProsCardsUI();
+  renderProsBulkToolbar();
+}
+
+function toggleSelectAllProsPWA(ids) {
+  if (selectedProsPWA.size === ids.length) selectedProsPWA.clear();
+  else ids.forEach(id => selectedProsPWA.add(id));
+  _updateProsCardsUI();
+  renderProsBulkToolbar();
+}
+
+function _updateProsCardsUI() {
+  document.querySelectorAll('.pros-item').forEach(el => {
+    const id = el.dataset.prosId;
+    if (!id) return;
+    const sel = selectedProsPWA.has(id);
+    const circle = el.querySelector('.pros-sel-circle');
+    if (_prosSelectionMode) {
+      el.style.borderColor = sel ? 'var(--primary)' : 'var(--border)';
+      el.style.background = sel ? 'rgba(242,127,13,0.08)' : 'var(--card)';
+      if (circle) {
+        circle.style.display = 'flex';
+        circle.style.background = sel ? '#f27f0d' : 'transparent';
+        circle.innerHTML = sel ? '<span class="material-symbols-outlined" style="font-size:14px;color:white">check</span>' : '';
+      }
+    } else {
+      el.style.borderColor = 'var(--border)';
+      el.style.background = 'var(--card)';
+      if (circle) circle.style.display = 'none';
+    }
+  });
+}
+
+function renderProsBulkToolbar() {
+  if (!_prosSelectionMode) {
+    if (_prosBulkToolbar) { _prosBulkToolbar.remove(); _prosBulkToolbar = null; }
+    return;
+  }
+
+  const count = selectedProsPWA.size;
+  const word = count > 1 ? 'sélectionnés' : 'sélectionné';
+  const htmlContent = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="cancelProsSelectionMode()" style="border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px">
+        <span class="material-symbols-outlined" style="font-size:22px">close</span>
+      </button>
+      <span style="font-size:13px;font-weight:700;color:var(--text)">${count} ${word}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="toggleSelectAllProsPWA([...document.querySelectorAll('.pros-item')].map(e=>e.dataset.prosId).filter(Boolean))" style="border:1px solid var(--border);background:var(--glass);color:var(--text);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">
+        ${selectedProsPWA.size > 0 && selectedProsPWA.size === document.querySelectorAll('.pros-item').length ? 'Tout désélectionner' : 'Tout sélectionner'}
+      </button>
+      <button onclick="bulkDeleteProsPWA()" style="border:none;background:rgba(239,68,68,0.15);color:#ef4444;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px">
+        <span class="material-symbols-outlined" style="font-size:18px">delete</span> Supprimer
+      </button>
+    </div>
+  `;
+
+  if (!_prosBulkToolbar) {
+    _prosBulkToolbar = document.createElement('div');
+    _prosBulkToolbar.style.cssText = 'position:fixed;bottom:80px;left:20px;right:20px;height:60px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:1000;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:slideUp 0.25s ease-out';
+    document.body.appendChild(_prosBulkToolbar);
+  }
+  _prosBulkToolbar.innerHTML = htmlContent;
+}
+
+// Handlers long-press prospects (touch)
+function handleProsCardTouchStart(event, prosId) {
+  _prosTouchTimeout = setTimeout(() => {
+    _prosTouchTimeout = null;
+    if (!_prosSelectionMode) enterProsSelectionMode(prosId);
+    else toggleProSelPWA(prosId);
+  }, 600);
+}
+
+function handleProsCardTouchEnd(event, prosId) {
+  if (_prosTouchTimeout) {
+    clearTimeout(_prosTouchTimeout);
+    _prosTouchTimeout = null;
+    // Tap court : ouvrir le détail ou toggler si en mode sélection
+    if (_prosSelectionMode) {
+      event.preventDefault();
+      toggleProSelPWA(prosId);
+    } else {
+      openProspectDetail(prosId);
+    }
+  }
+}
+
+function handleProsCardTouchCancel() {
+  if (_prosTouchTimeout) { clearTimeout(_prosTouchTimeout); _prosTouchTimeout = null; }
+}
+
+// Handlers long-press prospects (souris / test PC)
+function handleProsCardMouseDown(event, prosId) {
+  if (event.button !== 0) return;
+  _prosMouseTimeout = setTimeout(() => {
+    _prosMouseTimeout = null;
+    if (!_prosSelectionMode) enterProsSelectionMode(prosId);
+    else toggleProSelPWA(prosId);
+  }, 600);
+}
+
+function handleProsCardMouseUp(event, prosId) {
+  if (_prosMouseTimeout) {
+    clearTimeout(_prosMouseTimeout);
+    _prosMouseTimeout = null;
+    if (_prosSelectionMode) toggleProSelPWA(prosId);
+    else openProspectDetail(prosId);
+  }
+}
+
+function handleProsCardMouseLeave() {
+  if (_prosMouseTimeout) { clearTimeout(_prosMouseTimeout); _prosMouseTimeout = null; }
+}
+
+// ── Fonctions utilitaires ───────────────────────────────────────────
 
 async function bulkDeleteProsPWA(){
   const ids = [...selectedProsPWA];
@@ -4072,6 +4200,8 @@ async function bulkDeleteProsPWA(){
       if(error) throw error;
       toast(`${ids.length} prospect(s) supprimé(s)`,'ok');
       selectedProsPWA.clear();
+      _prosSelectionMode = false;
+      if (_prosBulkToolbar) { _prosBulkToolbar.remove(); _prosBulkToolbar = null; }
       loadProspects();
     } catch(e) { toast('Erreur lors de la suppression','err'); }
   });
@@ -4089,43 +4219,45 @@ function prosRow(p){
   const address=p.address||'';
   const isSel=selectedProsPWA.has(p.id);
 
-  return `<div class="pros-item ${isSel?'selected':''}" style="margin:14px 16px; padding:18px; border-radius:20px; background:var(--card); border:1.5px solid ${isSel?'var(--primary)':'var(--border)'}; box-shadow:0 6px 24px rgba(0,0,0,0.06); transition:all 0.2s; cursor:pointer" onclick="openProspectDetail('${p.id}')">
+  return `<div class="pros-item" data-pros-id="${p.id}"
+    style="margin:0 0 10px 0; padding:16px; border-radius:20px; background:${isSel&&_prosSelectionMode?'rgba(242,127,13,0.08)':'var(--card)'}; border:1.5px solid ${isSel&&_prosSelectionMode?'var(--primary)':'var(--border)'}; box-shadow:0 4px 16px rgba(0,0,0,0.06); transition:all 0.2s; cursor:pointer; position:relative; user-select:none; -webkit-user-select:none"
+    ontouchstart="handleProsCardTouchStart(event,'${p.id}')"
+    ontouchend="handleProsCardTouchEnd(event,'${p.id}')"
+    ontouchcancel="handleProsCardTouchCancel()"
+    ontouchmove="handleProsCardTouchCancel()"
+    onmousedown="handleProsCardMouseDown(event,'${p.id}')"
+    onmouseup="handleProsCardMouseUp(event,'${p.id}')"
+    onmouseleave="handleProsCardMouseLeave()">
     <div style="display:flex;align-items:flex-start;gap:10px">
+      <div class="pros-sel-circle" style="display:${_prosSelectionMode?'flex':'none'};width:22px;height:22px;border-radius:50%;border:2px solid var(--primary);background:${isSel&&_prosSelectionMode?'#f27f0d':'transparent'};align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all 0.2s">
+        ${isSel&&_prosSelectionMode?'<span class="material-symbols-outlined" style="font-size:14px;color:white">check</span>':''}
+      </div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
-           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0" onclick="event.stopPropagation()">
-             <input type="checkbox" ${isSel?'checked':''} onclick="toggleProSelPWA('${p.id}')" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;margin:0">
-             <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.3;word-break:break-word">${name}</p>
-           </div>
-           <button onclick="event.stopPropagation();prosMenu(this,'${p.id}')" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Actions">
-             <span class="material-symbols-outlined" style="font-size:16px">more_vert</span>
-           </button>
+          <p style="font-size:16px;font-weight:900;color:var(--text);margin:0;letter-spacing:-0.3px;line-height:1.3;word-break:break-word;flex:1;min-width:0">${name}</p>
+          <button ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()" onclick="event.stopPropagation();if(!_prosSelectionMode)prosMenu(this,'${p.id}')" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--ghost-hover);color:var(--text2);display:${_prosSelectionMode?'none':'flex'};align-items:center;justify-content:center;cursor:pointer" title="Actions">
+            <span class="material-symbols-outlined" style="font-size:16px">more_vert</span>
+          </button>
         </div>
 
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-           <span class="badge badge-blue" style="padding:3px 9px;display:flex;align-items:center;gap:4px">
-              <span class="material-symbols-outlined filled" style="font-size:13px">label</span>
-              ${p.status||'NOUVEAU'}
-           </span>
-           ${p.activity?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.3);font-size:11px;font-weight:800;color:var(--primary)"><span class="material-symbols-outlined filled" style="font-size:13px">storefront</span>${p.activity}</span>`:''}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:${(p.activity_detail||phone||address||(p.notes||p.observations))?'8':'0'}px">
+          <span class="badge badge-blue" style="padding:3px 9px;display:flex;align-items:center;gap:4px">
+            <span class="material-symbols-outlined filled" style="font-size:13px">label</span>
+            ${p.status||'NOUVEAU'}
+          </span>
+          ${p.activity?`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(242,127,13,.1);border:1px solid rgba(242,127,13,.3);font-size:11px;font-weight:800;color:var(--primary)"><span class="material-symbols-outlined filled" style="font-size:13px">storefront</span>${p.activity}</span>`:''}
         </div>
 
-        ${p.activity_detail?`<p style="font-size:12px;font-weight:600;color:var(--text2);margin:0 0 8px;line-height:1.4;padding-left:2px">${p.activity_detail}</p>`:''}
+        ${p.activity_detail?`<p style="font-size:12px;font-weight:600;color:var(--text2);margin:0 0 8px;line-height:1.4">${p.activity_detail}</p>`:''}
 
-        <div style="display:flex;flex-direction:column;gap:6px">
-           ${phone?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">call</span><span style="font-size:13px;font-weight:700">${phone}</span></div>`:''}
-           ${address?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">location_on</span><span style="font-size:12px;font-weight:600;word-break:break-word">${address}</span></div>`:''}
-           ${(p.notes||p.observations)?`<div style="display:flex;align-items:flex-start;gap:6px;color:var(--text2);margin-top:2px"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7;margin-top:1px">sticky_note_2</span><span style="font-size:12px;font-weight:600;line-height:1.4;word-break:break-word">${p.notes||p.observations}</span></div>`:''}
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${phone?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">call</span><span style="font-size:13px;font-weight:700">${phone}</span></div>`:''}
+          ${address?`<div style="display:flex;align-items:center;gap:6px;color:var(--text2)"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7">location_on</span><span style="font-size:12px;font-weight:600;word-break:break-word">${address}</span></div>`:''}
+          ${(p.notes||p.observations)?`<div style="display:flex;align-items:flex-start;gap:6px;color:var(--text2);margin-top:2px"><span class="material-symbols-outlined" style="font-size:15px;opacity:0.7;margin-top:1px">sticky_note_2</span><span style="font-size:12px;font-weight:600;line-height:1.4;word-break:break-word">${p.notes||p.observations}</span></div>`:''}
         </div>
       </div>
     </div>
   </div>`;
-}
-
-function toggleProSelPWA(id){
-  if(selectedProsPWA.has(id)) selectedProsPWA.delete(id);
-  else selectedProsPWA.add(id);
-  loadProspects();
 }
 
 
