@@ -317,8 +317,21 @@ function doPost(e) {
     if (data.action === 'list_tasks') {
       const taskListId = '@default';
       try {
-        const tasksResponse = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
-        const items = (tasksResponse.items || []).map(t => {
+        let tasks = [];
+        let nextPageToken = null;
+        do {
+          const options = { showCompleted: true, showHidden: true, maxResults: 100 };
+          if (nextPageToken) {
+            options.pageToken = nextPageToken;
+          }
+          const response = Tasks.Tasks.list(taskListId, options);
+          if (response.items) {
+            tasks = tasks.concat(response.items);
+          }
+          nextPageToken = response.nextPageToken;
+        } while (nextPageToken);
+
+        const items = tasks.map(t => {
           let supabaseId = null;
           if (t.notes) {
             const m = t.notes.match(/\[ID:\s*([^\]]+)\]/);

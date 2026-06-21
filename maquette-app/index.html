@@ -11,6 +11,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 :root {
   --primary: #f27f0d;
@@ -3594,6 +3595,7 @@ let prosFilter='all';
 let prosActFilter='';
 let prosDateFrom='';
 let prosDateTo='';
+let _filteredProspectsMobile=[];
 
 async function viewProspects(){
   document.getElementById('view').innerHTML=`
@@ -3629,6 +3631,11 @@ async function viewProspects(){
         <!-- Bouton Synchro Google Contacts -->
         <button onclick="openGoogleContactsConfigPWA()" style="width:44px; height:44px; border-radius:12px; border:1px solid var(--input-border); background:var(--input-bg); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; padding:0" title="Synchroniser Google Contacts">
           <span class="material-symbols-outlined" style="font-size:22px; color:var(--text3)">contacts</span>
+        </button>
+
+        <!-- Bouton Exporter Excel -->
+        <button onclick="exportProspectsToExcelMobile()" style="width:44px; height:44px; border-radius:12px; border:1px solid var(--input-border); background:var(--input-bg); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; padding:0" title="Exporter en Excel">
+          <span class="material-symbols-outlined" style="font-size:22px; color:#22c55e">download</span>
         </button>
       </div>
     </div>
@@ -3667,6 +3674,7 @@ async function loadProspects(){
     if(prosSearch){const s=prosSearch.toLowerCase();rows=rows.filter(p=>(p.full_name||'').toLowerCase().includes(s)||(p.phone||'').includes(s));}
     if(!rows.length){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">person_search</span><p>Aucun prospect trouvé</p></div>`;return;}
     rows.forEach(p=>_prosCache[p.id]=p);
+    _filteredProspectsMobile = rows;
     
     let bulkHtml = '';
     if(selectedProsPWA.size > 0) {
@@ -3681,13 +3689,190 @@ async function loadProspects(){
     list.innerHTML=`
       <div style="padding:0 16px 8px;display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:rgba(255,255,255,.4)">${rows.length} prospect${rows.length>1?'s':''}</span>
-        <button class="btn-ghost" style="font-size:11px" onclick="toggleSelectAllProsPWA(${JSON.stringify(rows.map(r=>r.id)).replace(/"/g,'&quot;')})">Tout sélectionner</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-ghost" style="font-size:11px;color:#22c55e;display:flex;align-items:center;gap:4px;font-weight:700" onclick="exportProspectsToExcelMobile()">
+            <span class="material-symbols-outlined" style="font-size:15px;color:#22c55e">download</span> Exporter en Excel
+          </button>
+          <button class="btn-ghost" style="font-size:11px" onclick="toggleSelectAllProsPWA(${JSON.stringify(rows.map(r=>r.id)).replace(/"/g,'&quot;')})">Tout sélectionner</button>
+        </div>
       </div>
       ${bulkHtml}
       <div class="glass" style="margin:0 16px;overflow:hidden">
         ${rows.map(p=>prosRow(p)).join('')}
       </div>`;
   }catch(e){list.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;}
+}
+
+async function exportProspectsToExcelMobile() {
+  if (!_filteredProspectsMobile || _filteredProspectsMobile.length === 0) {
+    toast('Aucun prospect à exporter', 'err');
+    return;
+  }
+
+  toast('⏳ Génération du fichier Excel...', 'info');
+
+  try {
+    // 1. Préparer les données pour XLSX
+    const dataRows = _filteredProspectsMobile.map((p, index) => {
+      let dateStr = '—';
+      if (p.created_at) {
+        const dt = new Date(p.created_at);
+        dateStr = dt.toLocaleDateString('fr-FR');
+      }
+      return [
+        index + 1,
+        dateStr,
+        p.full_name || '—',
+        p.phone || '—',
+        p.activity || '—',
+        p.address || '—',
+        p.status || '—',
+        p.notes || p.observations || '—'
+      ];
+    });
+
+    // 2. Initialiser le workbook
+    const wb = XLSX.utils.book_new();
+
+    // 3. Définir la structure du tableau avec styles
+    const headers = [
+      "N°",
+      "Date de création",
+      "Nom & Prénom",
+      "Téléphone",
+      "Activité",
+      "Adresse",
+      "Avis du prospect",
+      "Observations"
+    ];
+
+    const ws_data = [];
+
+    // Ligne 0 : Titre principal fusionné
+    ws_data.push(["LISTE DES PROSPECTS"]);
+    // Ligne 1 : Sous-titre
+    const now = new Date();
+    const dateFormatted = now.toLocaleDateString('fr-FR');
+    const timeFormatted = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    ws_data.push([`Généré le ${dateFormatted} à ${timeFormatted} — PorteFin Mobile`]);
+    // Ligne 2 : Espacement vide
+    ws_data.push([]);
+    // Ligne 3 : En-têtes de colonnes
+    ws_data.push(headers);
+
+    // Lignes 4+ : Données
+    dataRows.forEach(row => {
+      ws_data.push(row);
+    });
+
+    // Créer la feuille
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // 4. Styles premium avec xlsx-js-style
+    // Style du Titre principal (Ligne 0)
+    const titleStyle = {
+      font: { name: "Calibri", sz: 16, bold: true, color: { rgb: "1E293B" } },
+      alignment: { horizontal: "center", vertical: "center" }
+    };
+    if (ws["A1"]) ws["A1"].s = titleStyle;
+
+    // Fusionner la ligne de titre A1:H1 et A2:H2
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }
+    ];
+
+    // Style du Sous-titre (Ligne 1)
+    const subtitleStyle = {
+      font: { name: "Calibri", sz: 10, italic: true, color: { rgb: "64748B" } },
+      alignment: { horizontal: "center", vertical: "center" }
+    };
+    if (ws["A2"]) ws["A2"].s = subtitleStyle;
+
+    // Style des En-têtes (Ligne 3)
+    const headerStyle = {
+      font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "F27F0D" } }, // Orange thématique
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "B45309" } },
+        bottom: { style: "medium", color: { rgb: "B45309" } },
+        left: { style: "thin", color: { rgb: "B45309" } },
+        right: { style: "thin", color: { rgb: "B45309" } }
+      }
+    };
+
+    for (let c = 0; c < 8; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 3, c });
+      if (ws[cellRef]) ws[cellRef].s = headerStyle;
+    }
+
+    // Style des Données
+    const borderStyle = { style: "thin", color: { rgb: "E2E8F0" } };
+    const dataAlignments = [
+      { horizontal: "center", vertical: "center" }, // N°
+      { horizontal: "center", vertical: "center" }, // Date
+      { horizontal: "left", vertical: "center" },   // Nom
+      { horizontal: "center", vertical: "center" }, // Téléphone
+      { horizontal: "left", vertical: "center" },   // Activité
+      { horizontal: "left", vertical: "center" },   // Adresse
+      { horizontal: "center", vertical: "center" }, // Statut
+      { horizontal: "left", vertical: "center" }    // Obs
+    ];
+
+    for (let r = 4; r < ws_data.length; r++) {
+      const isOdd = r % 2 === 1;
+      const rowFill = { fgColor: { rgb: isOdd ? "F8FAFC" : "FFFFFF" } };
+
+      for (let c = 0; c < 8; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r, c });
+        if (ws[cellRef]) {
+          ws[cellRef].s = {
+            font: { name: "Calibri", sz: 10, color: { rgb: "334155" } },
+            fill: rowFill,
+            alignment: dataAlignments[c],
+            border: {
+              top: borderStyle,
+              bottom: borderStyle,
+              left: borderStyle,
+              right: borderStyle
+            }
+          };
+        }
+      }
+    }
+
+    // Hauteurs
+    ws["!rows"] = [
+      { hpt: 35 },
+      { hpt: 20 },
+      { hpt: 10 },
+      { hpt: 25 }
+    ];
+    for (let r = 4; r < ws_data.length; r++) {
+      ws["!rows"].push({ hpt: 22 });
+    }
+
+    // Largeurs
+    ws["!cols"] = [
+      { wch: 6 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 45 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Prospects");
+    const dateStr = now.toISOString().split('T')[0];
+    XLSX.writeFile(wb, `liste_prospects_${dateStr}.xlsx`);
+    toast('✓ Fichier Excel téléchargé', 'ok');
+  } catch (err) {
+    console.error("Erreur lors de l'export Excel:", err);
+    toast("⚠️ Échec de la génération Excel", "err");
+  }
 }
 
 // ─── PROSPECT DETAIL (MOBILE) ───────────────────
@@ -5030,6 +5215,7 @@ let _taskFormStatusMob='todo';
 let _taskSubtasksFormMob=[];
 let _taskSelectionMode=false;
 let _taskSelectedIds=new Set();
+let _tasksDoneExpanded=false;
 
 const TASK_P={urgent:{label:'Urgente',col:'#ef4444',bg:'rgba(239,68,68,.1)'},high:{label:'Haute',col:'#f97316',bg:'rgba(249,115,22,.1)'},normal:{label:'Normale',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},low:{label:'Basse',col:'#94a3b8',bg:'rgba(148,163,184,.1)'}};
 const TASK_S={todo:{label:'À faire',col:'#64748b',bg:'rgba(100,116,139,.1)'},in_progress:{label:'En cours',col:'#3b82f6',bg:'rgba(59,130,246,.1)'},done:{label:'Terminée',col:'#22c55e',bg:'rgba(34,197,94,.1)'}};
@@ -5530,29 +5716,36 @@ async function saveOpMob(creditId){
 async function viewTasksMobile(){
   const view=document.getElementById('view');
   view.innerHTML=`<div class="loader"><div class="spin"></div></div>`;
-  showFab(()=>openTaskFormMobile());
+  if (!_taskSelectionMode) {
+    showFab(()=>openTaskFormMobile());
+  } else {
+    hideFab();
+  }
   const{data,error}=await sb.from('tasks').select('*').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
   if(error){view.innerHTML=`<div class="empty"><span class="material-symbols-outlined">wifi_off</span><p>Erreur</p></div>`;return;}
   _tasksMobile=data||[];
   renderTasksMobile();
+  if (_taskSelectionMode) {
+    renderBulkToolbarMobile();
+  }
 }
 
 function renderTasksMobile(){
   const view=document.getElementById('view');
   const today=new Date().toISOString().split('T')[0];
-  const todo=_tasksMobile.filter(t=>t.status==='todo').length;
-  const inP=_tasksMobile.filter(t=>t.status==='in_progress').length;
-  const done=_tasksMobile.filter(t=>t.status==='done').length;
-  const overdue=_tasksMobile.filter(t=>t.due_date&&t.due_date<today&&t.status!=='done').length;
+  const todo=_tasksMobile.filter(t=>t&&t.status==='todo').length;
+  const inP=_tasksMobile.filter(t=>t&&t.status==='in_progress').length;
+  const done=_tasksMobile.filter(t=>t&&t.status==='done').length;
+  const overdue=_tasksMobile.filter(t=>t&&t.due_date&&t.due_date<today&&t.status!=='done').length;
   // Appliquer filtres (sauf statut done — il va dans section séparée)
   const applyFilters=arr=>{
     let r=arr;
-    if(_taskPriorityMob)r=r.filter(t=>t.priority===_taskPriorityMob);
-    if(_taskSearchMob){const q=_taskSearchMob.toLowerCase();r=r.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.entity_name||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q));}
+    if(_taskPriorityMob)r=r.filter(t=>t&&t.priority===_taskPriorityMob);
+    if(_taskSearchMob){const q=_taskSearchMob.toLowerCase();r=r.filter(t=>t&&((t.title||'').toLowerCase().includes(q)||(t.entity_name||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q)));}
     return r;
   };
-  const allActive=_tasksMobile.filter(t=>t.status!=='done');
-  const allDone=_tasksMobile.filter(t=>t.status==='done');
+  const allActive=_tasksMobile.filter(t=>t&&t.status!=='done');
+  const allDone=_tasksMobile.filter(t=>t&&t.status==='done');
   let activeRows=applyFilters(_taskFilterMob==='done'?[]:(_taskFilterMob==='all'?allActive:allActive.filter(t=>t.status===_taskFilterMob)));
   let doneRows=applyFilters(_taskFilterMob==='todo'||_taskFilterMob==='in_progress'?[]:allDone);
   view.innerHTML=`
@@ -5589,14 +5782,14 @@ function renderTasksMobile(){
     </div>
     ${doneRows.length?`
     <div style="padding:0 16px 100px">
-      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';this.querySelector('.expand-ic').textContent=this.nextElementSibling.style.display==='none'?'expand_more':'expand_less'" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:8px">
+      <button onclick="_tasksDoneExpanded=!_tasksDoneExpanded; this.nextElementSibling.style.display=_tasksDoneExpanded?'flex':'none'; this.querySelector('.expand-ic').textContent=_tasksDoneExpanded?'expand_less':'expand_more'" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px">
           <span class="material-symbols-outlined filled" style="font-size:18px;color:#22c55e">check_circle</span>
           <span style="font-size:12px;font-weight:800;color:#16a34a">Terminées (${doneRows.length})</span>
         </div>
-        <span class="material-symbols-outlined expand-ic" style="font-size:20px;color:#94a3b8">expand_more</span>
+        <span class="material-symbols-outlined expand-ic" style="font-size:20px;color:#94a3b8">${_tasksDoneExpanded ? 'expand_less' : 'expand_more'}</span>
       </button>
-      <div style="display:none;flex-direction:column;gap:8px">
+      <div style="display:${_tasksDoneExpanded?'flex':'none'};flex-direction:column;gap:8px">
         ${doneRows.map(t=>taskCardMobile(t)).join('')}
       </div>
     </div>`:`<div style="height:100px"></div>`}`;
@@ -5808,8 +6001,25 @@ async function syncAllTasksMobile() {
 
         if (isGoogleDone !== isLocalDone) {
           // Comparer les dates de modification pour décider
-          const localTime = new Date(lt.updated_at || lt.created_at || 0).getTime();
-          const googleTime = new Date(gt.updated || 0).getTime();
+          const parseDate = dStr => {
+            if (!dStr) return 0;
+            const normalized = String(dStr).trim().replace(' ', 'T');
+            const d = new Date(normalized);
+            return isNaN(d.getTime()) ? 0 : d.getTime();
+          };
+
+          const localTime = parseDate(lt.updated_at || lt.created_at);
+          const googleTime = parseDate(gt.updated || gt.completed);
+
+          console.log(`[Task Sync Debug] "${fullTitle}":`, {
+            localTimeStr: lt.updated_at || lt.created_at || 'N/A',
+            googleTimeStr: gt.updated || gt.completed || 'N/A',
+            localTimeVal: localTime,
+            googleTimeVal: googleTime,
+            isLocalDone,
+            isGoogleDone,
+            decision: localTime > googleTime ? 'Local Gagne -> Update Google' : 'Google Gagne -> Update Local'
+          });
 
           if (localTime > googleTime) {
             // Local a été modifié en dernier -> mettre à jour Google
@@ -6395,6 +6605,13 @@ function handleTaskCardTouchEndMobile(event, taskId) {
   }
 }
 
+function handleTaskCardTouchCancelMobile(event) {
+  if (_taskTouchTimeout) {
+    clearTimeout(_taskTouchTimeout);
+    _taskTouchTimeout = null;
+  }
+}
+
 // Version souris pour test PC / émulateur
 let _taskMouseTimeout = null;
 let _taskMouseStartX = 0;
@@ -6469,11 +6686,11 @@ function toggleTaskSelectionMobile(taskId) {
 
 let _bulkToolbar = null;
 function renderBulkToolbarMobile() {
-  if (_bulkToolbar) {
-    _bulkToolbar.remove();
-    _bulkToolbar = null;
-  }
   if (!_taskSelectionMode) {
+    if (_bulkToolbar) {
+      _bulkToolbar.remove();
+      _bulkToolbar = null;
+    }
     showFab(() => openTaskFormMobile());
     return;
   }
@@ -6494,29 +6711,9 @@ function renderBulkToolbarMobile() {
     document.head.appendChild(style);
   }
 
-  _bulkToolbar = document.createElement('div');
-  _bulkToolbar.className = 'bulk-toolbar-anim';
-  _bulkToolbar.style.position = 'fixed';
-  _bulkToolbar.style.bottom = '80px';
-  _bulkToolbar.style.left = '20px';
-  _bulkToolbar.style.right = '20px';
-  _bulkToolbar.style.height = '60px';
-  _bulkToolbar.style.background = 'var(--card)';
-  _bulkToolbar.style.border = '1px solid var(--border)';
-  _bulkToolbar.style.borderRadius = '16px';
-  _bulkToolbar.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
-  _bulkToolbar.style.display = 'flex';
-  _bulkToolbar.style.alignItems = 'center';
-  _bulkToolbar.style.justifyContent = 'space-between';
-  _bulkToolbar.style.padding = '0 16px';
-  _bulkToolbar.style.zIndex = '1000';
-  _bulkToolbar.style.backdropFilter = 'blur(10px)';
-  _bulkToolbar.style.webkitBackdropFilter = 'blur(10px)';
-
   const count = _taskSelectedIds.size;
   const word = count > 1 ? 'sélectionnées' : 'sélectionnée';
-
-  _bulkToolbar.innerHTML = `
+  const htmlContent = `
     <div style="display:flex;align-items:center;gap:8px">
       <button onclick="cancelTaskSelectionModeMobile()" style="border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px">
         <span class="material-symbols-outlined" style="font-size:22px">close</span>
@@ -6533,7 +6730,30 @@ function renderBulkToolbarMobile() {
       </button>
     </div>
   `;
-  document.body.appendChild(_bulkToolbar);
+
+  if (!_bulkToolbar) {
+    _bulkToolbar = document.createElement('div');
+    _bulkToolbar.className = 'bulk-toolbar-anim';
+    _bulkToolbar.style.position = 'fixed';
+    _bulkToolbar.style.bottom = '80px';
+    _bulkToolbar.style.left = '20px';
+    _bulkToolbar.style.right = '20px';
+    _bulkToolbar.style.height = '60px';
+    _bulkToolbar.style.background = 'var(--card)';
+    _bulkToolbar.style.border = '1px solid var(--border)';
+    _bulkToolbar.style.borderRadius = '16px';
+    _bulkToolbar.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
+    _bulkToolbar.style.display = 'flex';
+    _bulkToolbar.style.alignItems = 'center';
+    _bulkToolbar.style.justifyContent = 'space-between';
+    _bulkToolbar.style.padding = '0 16px';
+    _bulkToolbar.style.zIndex = '1000';
+    _bulkToolbar.style.backdropFilter = 'blur(10px)';
+    _bulkToolbar.style.webkitBackdropFilter = 'blur(10px)';
+    document.body.appendChild(_bulkToolbar);
+  }
+
+  _bulkToolbar.innerHTML = htmlContent;
 }
 
 function cancelTaskSelectionModeMobile() {
@@ -6547,18 +6767,18 @@ function getVisibleTaskIdsMobile() {
   const today = new Date().toISOString().split('T')[0];
   const applyFilters = arr => {
     let r = arr;
-    if (_taskPriorityMob) r = r.filter(t => t.priority === _taskPriorityMob);
+    if (_taskPriorityMob) r = r.filter(t => t && t.priority === _taskPriorityMob);
     if (_taskSearchMob) {
       const q = _taskSearchMob.toLowerCase();
-      r = r.filter(t => (t.title || '').toLowerCase().includes(q) || (t.entity_name || '').toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q));
+      r = r.filter(t => t && ((t.title || '').toLowerCase().includes(q) || (t.entity_name || '').toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q)));
     }
     return r;
   };
-  const allActive = _tasksMobile.filter(t => t.status !== 'done');
-  const allDone = _tasksMobile.filter(t => t.status === 'done');
-  let activeRows = applyFilters(_taskFilterMob === 'done' ? [] : (_taskFilterMob === 'all' ? allActive : allActive.filter(t => t.status === _taskFilterMob)));
+  const allActive = _tasksMobile.filter(t => t && t.status !== 'done');
+  const allDone = _tasksMobile.filter(t => t && t.status === 'done');
+  let activeRows = applyFilters(_taskFilterMob === 'done' ? [] : (_taskFilterMob === 'all' ? allActive : allActive.filter(t => t && t.status === _taskFilterMob)));
   let doneRows = applyFilters(_taskFilterMob === 'todo' || _taskFilterMob === 'in_progress' ? [] : allDone);
-  return [...activeRows, ...doneRows].map(t => t.id);
+  return [...activeRows, ...doneRows].map(t => t && t.id).filter(Boolean);
 }
 
 function toggleSelectAllTasksMobile() {
