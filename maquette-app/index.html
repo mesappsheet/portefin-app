@@ -2960,6 +2960,10 @@ async function _mobEditOption2(cid) {
     email: cl.email || c.email || '',
     phone1: cl.phone1 || c.phone || '',
     phone2: cl.phone2 || '',
+    phone3: cl.phone3 || '',
+    phone4: cl.phone4 || '',
+    phone5: cl.phone5 || '',
+    phone6: cl.phone6 || '',
     activity: cl.activity || c.activity || '',
     address: cl.address || c.address || '',
     amount: c.amount,
@@ -3543,7 +3547,7 @@ async function saveCredit(){
     if(vErr || !verif) throw new Error('Impossible de vérifier l\'enregistrement en base.');
 
     // Vider le formulaire
-    ['credit-name','credit-email','credit-phone1','credit-phone2','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
+    ['credit-name','credit-email','credit-phone1','credit-phone2','credit-phone3','credit-phone4','credit-phone5','credit-phone6','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.value='';
     });
 
