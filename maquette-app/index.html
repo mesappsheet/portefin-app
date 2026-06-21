@@ -5619,26 +5619,23 @@ function taskCardMobile(t){
     else{dl=new Date(t.due_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
   }
   const isInP=t.status==='in_progress';
-  const toggleIcon=isDone?'check':isInP?'sync':'radio_button_unchecked';
-  const toggleBg=isDone?'#22c55e':isInP?'#3b82f6':'transparent';
-  const toggleBorder=isDone?'#22c55e':isInP?'#3b82f6':p.col;
-  const toggleTitle=t.status==='todo'?'→ En cours':t.status==='in_progress'?'→ Terminée':'→ À faire';
+  const toggleBg=isDone?'#22c55e':'transparent';
+  const toggleBorder=isDone?'#22c55e':(isInP?'#ef4444':p.col);
+  const toggleTitle=isDone?'Marquer comme à faire':(isInP?'En cours - Choisir statut':'À faire - Choisir statut');
 
+  const isSelected = _taskSelectionMode && _taskSelectedIds.has(t.id);
   const selectionHtml = _taskSelectionMode ? `
-    <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;">
-      <span class="material-symbols-outlined" style="font-size:24px;color:${_taskSelectedIds.has(t.id) ? '#f27f0d' : 'var(--text2)'}">
-        ${_taskSelectedIds.has(t.id) ? 'check_circle' : 'radio_button_unchecked'}
-      </span>
+    <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${isSelected ? '#f27f0d' : 'var(--text2)'};background:${isSelected ? '#f27f0d' : 'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
+      ${isSelected ? '<span class="material-symbols-outlined filled" style="font-size:14px;color:white">check</span>' : ''}
     </div>
   ` : '';
 
   const statusButtonHtml = !_taskSelectionMode ? `
-    <button onclick="event.stopPropagation();quickToggleTaskMobile('${t.id}')" title="${toggleTitle}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${toggleBorder};background:${toggleBg};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
-      <span class="material-symbols-outlined${isDone||isInP?' filled':''}" style="font-size:14px;color:${isDone||isInP?'white':p.col}">${toggleIcon}</span>
+    <button onclick="event.stopPropagation();showTaskStatusMenuMobile(event,'${t.id}')" title="${toggleTitle}" style="width:28px;height:28px;border-radius:50%;border:2px solid ${toggleBorder};background:${toggleBg};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s">
+      ${isDone ? '<span class="material-symbols-outlined filled" style="font-size:14px;color:white">check</span>' : ''}
     </button>
   ` : '';
 
-  const isSelected = _taskSelectionMode && _taskSelectedIds.has(t.id);
   const cardBorder = isSelected ? '1px solid #f27f0d' : '1px solid var(--border)';
   const cardBg = isSelected ? 'rgba(242,127,13,0.04)' : 'var(--card)';
 
@@ -6288,16 +6285,76 @@ function closeTaskForm(){
   document.body.style.overflow='';
 }
 
-async function quickToggleTaskMobile(taskId){
-  const t=_tasksMobile.find(x=>x.id===taskId);
-  if(!t)return;
-  const cycle={todo:'in_progress',in_progress:'done',done:'todo'};
-  const ns=cycle[t.status]||'in_progress';
-  const{error}=await sb.from('tasks').update({status:ns,updated_at:new Date().toISOString()}).eq('id',taskId);
-  if(!error){
-    t.status=ns;
+function showTaskStatusMenuMobile(event, taskId) {
+  event.stopPropagation();
+  event.preventDefault();
+  closeTaskStatusMenuMobile();
+  const t = _tasksMobile.find(x => x.id === taskId);
+  if (!t) return;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.id = 'task-status-menu-mob';
+  menu.style.position = 'fixed';
+  menu.style.left = `${rect.left}px`;
+  menu.style.top = `${rect.bottom + window.scrollY + 6}px`;
+  menu.style.background = 'var(--card)';
+  menu.style.border = '1px solid var(--border)';
+  menu.style.borderRadius = '12px';
+  menu.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+  menu.style.zIndex = '500000';
+  menu.style.padding = '4px';
+  menu.style.display = 'flex';
+  menu.style.flexDirection = 'column';
+  menu.style.gap = '2px';
+  menu.style.minWidth = '140px';
+
+  const options = [
+    { value: 'todo', label: 'À faire', color: '#64748b', dot: '⚪' },
+    { value: 'in_progress', label: 'En cours', color: '#ef4444', dot: '🔴' },
+    { value: 'done', label: 'Terminée', color: '#22c55e', dot: '🟢' }
+  ];
+
+  menu.innerHTML = options.map(opt => `
+    <button onclick="event.stopPropagation(); selectTaskStatusMobile('${taskId}', '${opt.value}')" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:${t.status === opt.value ? 'var(--input-bg)' : 'transparent'};border:none;border-radius:8px;font-size:13px;font-weight:${t.status === opt.value ? '800' : '600'};color:var(--text);cursor:pointer;font-family:inherit;text-align:left;transition:all .15s">
+      <span style="font-size:12px">${opt.dot}</span>
+      <span style="color:${opt.color}">${opt.label}</span>
+    </button>
+  `).join('');
+
+  document.body.appendChild(menu);
+
+  const menuRect = menu.getBoundingClientRect();
+  if (menuRect.right > window.innerWidth) {
+    menu.style.left = `${window.innerWidth - menuRect.width - 16}px`;
+  }
+  if (menuRect.bottom > window.innerHeight) {
+    menu.style.top = `${rect.top + window.scrollY - menuRect.height - 6}px`;
+  }
+
+  setTimeout(() => {
+    document.addEventListener('click', closeTaskStatusMenuMobile);
+  }, 10);
+}
+
+function closeTaskStatusMenuMobile() {
+  const menu = document.getElementById('task-status-menu-mob');
+  if (menu) menu.remove();
+  document.removeEventListener('click', closeTaskStatusMenuMobile);
+}
+
+async function selectTaskStatusMobile(taskId, statusValue) {
+  closeTaskStatusMenuMobile();
+  const t = _tasksMobile.find(x => x.id === taskId);
+  if (!t) return;
+  if (t.status === statusValue) return;
+
+  const { error } = await sb.from('tasks').update({ status: statusValue, updated_at: new Date().toISOString() }).eq('id', taskId);
+  if (!error) {
+    t.status = statusValue;
     renderTasksMobile();
     syncTaskStatusToGoogleMobile(t);
+  } else {
+    toast('Erreur de mise à jour', 'err');
   }
 }
 
