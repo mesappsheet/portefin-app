@@ -4704,6 +4704,9 @@ async function syncProspectToGoogleContactsPWA(prospect, isManual = false) {
   }
   if (isManual) toast('⏳ Synchronisation Google Contacts...', 'info');
   const name = prospect.full_name || 'Prospect Inconnu';
+  const activePhones = [
+    prospect.phone, prospect.phone2, prospect.phone3, prospect.phone4, prospect.phone5, prospect.phone6
+  ].filter(Boolean);
   try{
     const payload = {
       fullName: name,
@@ -4724,25 +4727,13 @@ async function syncProspectToGoogleContactsPWA(prospect, isManual = false) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      if (isManual) {
-        showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
-      } else {
-        toast('Google Contacts : ' + name + (result.isUpdate ? ' mis à jour ✓' : ' créé ✓'), 'ok');
-      }
+      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl, activePhones);
     } else {
-      if (isManual) {
-        showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
-      } else {
-        toast('⚠️ Échec sync Google : ' + name, 'err');
-      }
+      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null, activePhones);
     }
   }catch(e){
     console.error("Erreur sync Google Contacts:", e);
-    if (isManual) {
-      showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
-    } else {
-      toast('⚠️ Échec sync Google (connexion) : ' + name, 'err');
-    }
+    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null, activePhones);
   }
 }
 
@@ -4759,6 +4750,9 @@ async function syncClientToGoogleContactsPWA(client, isManual = false) {
   if (isManual) toast('⏳ Synchronisation Google Contacts...', 'info');
   const cl = client.clients || client; // supporte _credCache (credits) et objet clients direct
   const name = cl.full_name || client.client_name || 'Client Inconnu';
+  const activePhones = [
+    cl.phone1 || client.phone, cl.phone2, cl.phone3, cl.phone4, cl.phone5, cl.phone6
+  ].filter(Boolean);
   try{
     const payload = {
       fullName: name,
@@ -4779,29 +4773,17 @@ async function syncClientToGoogleContactsPWA(client, isManual = false) {
     });
     const result = await resp.json();
     if (result.status === 'success') {
-      if (isManual) {
-        showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl);
-      } else {
-        toast('Google Contacts : ' + name + (result.isUpdate ? ' mis à jour ✓' : ' créé ✓'), 'ok');
-      }
+      showGoogleContactSyncReportModal(name, 'success', result.isUpdate, result.contactUrl, activePhones);
     } else {
-      if (isManual) {
-        showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null);
-      } else {
-        toast('⚠️ Échec sync Google : ' + name, 'err');
-      }
+      showGoogleContactSyncReportModal(name, result.message || 'Erreur', false, null, activePhones);
     }
   }catch(e){
     console.error('Erreur sync client Google Contacts:', e);
-    if (isManual) {
-      showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null);
-    } else {
-      toast('⚠️ Échec sync Google (connexion) : ' + name, 'err');
-    }
+    showGoogleContactSyncReportModal(name, 'Impossible de joindre Google Contacts', false, null, activePhones);
   }
 }
 
-function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl) {
+function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl, phones = []) {
   let modal = document.getElementById('google-contact-sync-report-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -4834,6 +4816,23 @@ function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl
     `;
   }
 
+  let phonesHtml = '';
+  if (phones && phones.length > 0) {
+    phonesHtml = `
+      <div style="margin-top: 4px; display:flex; flex-direction:column; gap:8px;">
+        <span style="font-size:10px; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em">Numéros enregistrés :</span>
+        <div style="display:flex; flex-direction:column; gap:6px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:12px; border:1px solid var(--sep)">
+          ${phones.map(p => `
+            <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); font-weight:600">
+              <span class="material-symbols-outlined" style="font-size:16px; color:#10b981">phone</span>
+              <span>${p}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   modal.innerHTML = `
     <div style="background:var(--card); border:1px solid var(--sep); width:100%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column;">
       <div style="background:var(--card); padding:24px 20px; text-align:center; border-bottom:1px solid var(--sep); position:relative; flex-shrink:0;">
@@ -4852,6 +4851,8 @@ function showGoogleContactSyncReportModal(fullName, status, isUpdate, contactUrl
             ${statusBadge}
           </div>
         </div>
+
+        ${phonesHtml}
 
         ${actionButtonsHtml}
       </div>
