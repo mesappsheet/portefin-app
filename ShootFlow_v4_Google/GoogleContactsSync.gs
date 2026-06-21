@@ -392,69 +392,64 @@ function doPost(e) {
     contact.addresses   = address ? [{ formattedValue: address, type: 'home' }] : [];
     contact.biographies = notes   ? [{ value: notes, contentType: 'TEXT_PLAIN' }] : [];
 
-    // ── Détection doublon par numéro ───────────────────────
+    // ── Détection doublon par nom ou par numéro ────────────
     let existingResourceName = null;
-    let existingEtag         = null;
-    let existingPhones       = [];
     const phonesToCheck = [phone, phone2, phone3, phone4, phone5, phone6].filter(p => p && p.trim() !== '');
 
-    if (phonesToCheck.length > 0) {
-      try {
-        let pageToken  = null;
-        let foundPerson = null;
-        do {
-          const response   = People.People.Connections.list('people/me', {
-            personFields: 'names,phoneNumbers',
-            pageSize: 1000,
-            pageToken: pageToken
+    try {
+      let pageToken  = null;
+      let foundPerson = null;
+      do {
+        const response   = People.People.Connections.list('people/me', {
+          personFields: 'names,phoneNumbers',
+          pageSize: 1000,
+          pageToken: pageToken
+        });
+        const connections = response.connections || [];
+        foundPerson = connections.find(person => {
+          // 1. Vérification par nom
+          const names = person.names || [];
+          const hasNameMatch = names.some(n => {
+            const display = (n.displayName || '').toLowerCase().trim();
+            const given = (n.givenName || '').toLowerCase().trim();
+            const family = (n.familyName || '').toLowerCase().trim();
+            const targetFull = fullName.toLowerCase().trim();
+            return display === targetFull || (given && family && (given + ' ' + family) === targetFull);
           });
-          const connections = response.connections || [];
-          foundPerson = connections.find(person => {
-            const numbers = person.phoneNumbers || [];
-            return numbers.some(n => phonesToCheck.some(p => {
-              const normN = normalizePhoneForCompare(n.value);
-              const normP = normalizePhoneForCompare(p);
-              return normN && normN === normP;
-            }));
-          });
-          if (foundPerson) {
-            existingResourceName = foundPerson.resourceName;
-            existingEtag         = foundPerson.etag;
-            existingPhones       = foundPerson.phoneNumbers || [];
-            break;
-          }
-          pageToken = response.nextPageToken;
-        } while (pageToken);
-      } catch (err) {
-        console.warn('Recherche de doublon impossible : ' + err.toString());
-      }
+          if (hasNameMatch) return true;
+
+          // 2. Vérification par numéro de téléphone
+          const numbers = person.phoneNumbers || [];
+          return numbers.some(n => phonesToCheck.some(p => {
+            const normN = normalizePhoneForCompare(n.value);
+            const normP = normalizePhoneForCompare(p);
+            return normN && normN === normP;
+          }));
+        });
+        if (foundPerson) {
+          existingResourceName = foundPerson.resourceName;
+          break;
+        }
+        pageToken = response.nextPageToken;
+      } while (pageToken);
+    } catch (err) {
+      console.warn('Recherche de doublon impossible : ' + err.toString());
     }
 
-    // ── Créer ou mettre à jour ─────────────────────────────
+    // ── Créer ou remplacer ─────────────────────────────────
     let resultContact;
     let isUpdate = false;
 
     if (existingResourceName) {
-      contact.etag = existingEtag;
-      
-      // Fusionner les numéros pour ne pas écraser les ajouts manuels
-      const mergedPhones = existingPhones.slice();
-      (contact.phoneNumbers || []).forEach(newPhone => {
-        const normNew = normalizePhoneForCompare(newPhone.value);
-        if (normNew) {
-          const exists = mergedPhones.some(ep => normalizePhoneForCompare(ep.value) === normNew);
-          if (!exists) mergedPhones.push(newPhone);
-        }
-      });
-      contact.phoneNumbers = mergedPhones;
-
-      resultContact = People.People.updateContact(contact, existingResourceName, {
-        updatePersonFields: 'names,emailAddresses,phoneNumbers,addresses,biographies'
-      });
+      try {
+        People.People.deleteContact(existingResourceName);
+      } catch (delErr) {
+        console.warn("Erreur lors de la suppression de l'ancien contact : " + delErr.toString());
+      }
       isUpdate = true;
-    } else {
-      resultContact = People.People.createContact(contact);
     }
+
+    resultContact = People.People.createContact(contact);
 
     const resourceName = resultContact.resourceName;
     const contactId    = resourceName.split('/')[1];
