@@ -479,11 +479,24 @@ function doGet(e) {
     const action = e && e.parameter && e.parameter.action;
     if (action === 'search') {
       const query = ((e.parameter.query || '').toLowerCase().trim());
-      const response    = People.People.Connections.list('people/me', {
-        personFields: 'names,phoneNumbers,emailAddresses,addresses',
-        pageSize: 1000
-      });
-      const connections = response.connections || [];
+      
+      let connections = [];
+      let pageToken = null;
+      
+      do {
+        const response = People.People.Connections.list('people/me', {
+          personFields: 'names,phoneNumbers,emailAddresses,addresses',
+          pageSize: 1000,
+          sortOrder: 'LAST_MODIFIED_DESCENDING',
+          pageToken: pageToken
+        });
+        
+        if (response.connections) {
+          connections = connections.concat(response.connections);
+        }
+        pageToken = response.nextPageToken;
+      } while (pageToken);
+
       const results = connections.map(person => {
         const nameObj  = (person.names || [])[0] || {};
         const fullName = nameObj.displayName || '';

@@ -645,12 +645,12 @@ body.light .cred-item { border-color: rgba(0,0,0,0.06); }
   </div>
 </div>
 
-<div id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
+<div id="confirm-overlay" onclick="if(event.target===this)closeConfirm(true)">
   <div class="glass-card" style="width:90%;max-width:340px;padding:30px;margin-bottom:20px;animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1)">
     <h3 id="confirm-msg" style="margin:0 0 8px;font-size:18px;font-weight:900"></h3>
     <p id="confirm-sub" style="margin:0 0 24px;color:var(--text-dim);font-size:13px;line-height:1.5"></p>
     <div style="display:flex;gap:12px">
-      <button class="action-btn" style="flex:1" onclick="closeConfirm()">Non</button>
+      <button class="action-btn" style="flex:1" onclick="closeConfirm(true)">Non</button>
       <button id="confirm-ok" class="btn-main" style="flex:2;padding:12px">Oui, valider</button>
     </div>
   </div>
@@ -1137,17 +1137,24 @@ document.getElementById('modal-overlay').addEventListener('click',function(e){
 
 // ─── CONFIRM ──────────────────────────────────
 let _confirmCb=null;
-function openConfirm(msg,sub,cb,okLabel,okColor){
+let _confirmCancelCb=null;
+function openConfirm(msg,sub,cb,okLabel,okColor,cancelCb=null){
   document.getElementById('confirm-msg').textContent=msg;
   document.getElementById('confirm-sub').textContent=sub||'';
   _confirmCb=cb;
+  _confirmCancelCb=cancelCb;
   const okBtn=document.getElementById('confirm-ok');
   okBtn.textContent=okLabel||'Confirmer';
   okBtn.style.background=okColor||'rgba(239,68,68,.85)';
   okBtn.style.borderColor=okColor?okColor.replace('.85','.4'):'rgba(239,68,68,.4)';
   document.getElementById('confirm-overlay').classList.add('open');
 }
-function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('open');_confirmCb=null;}
+function closeConfirm(isCancel=false){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if(isCancel && _confirmCancelCb) _confirmCancelCb();
+  _confirmCb=null;
+  _confirmCancelCb=null;
+}
 document.getElementById('confirm-ok').onclick=()=>{if(_confirmCb)_confirmCb();closeConfirm();};
 
 // ─── FAB ──────────────────────────────────────
@@ -2028,7 +2035,7 @@ async function loadEndTermCredits(){
     }
 
     let q=sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
+      .select('id,client_id,civilite,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,civilite,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .not('status','in','("Soldé","SOLDÉ","soldé")')
       .order('end_date',{ascending:true});
 
@@ -2110,7 +2117,7 @@ async function loadCredits(){
   if(!list)return;
   try{
     let q=sb.from('credits')
-      .select('id,client_id,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
+      .select('id,client_id,civilite,amount,status,type,client_name,phone,email,activity,address,health,start_date,end_date,clients(id,civilite,full_name,phone1,phone2,phone3,phone4,phone5,phone6,email,activity,address)')
       .order('status',{ascending:true})
       .order('health',{ascending:false})
       .order('created_at',{ascending:false});
@@ -2614,6 +2621,7 @@ function openCreditForm(prefill=null){
   const todayStr=today?today():new Date().toISOString().split('T')[0];
   const types=['CONSOMMATION','ÉQUIPEMENT','IMMOBILIER','SCOLAIRE','AUTRE'];
   const currentType = prefill?.type || '';
+  const currentCivilite = prefill?.civilite || 'Monsieur';
   const typeOptions=types.map(t=>`<option value="${t}" ${t===currentType?'selected':''}>${t}</option>`).join('');
 
   openModal(`
@@ -2634,6 +2642,15 @@ function openCreditForm(prefill=null){
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep)">
           <span class="material-symbols-outlined" style="color:var(--text3);font-size:16px">info</span>
           <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Section 1 : Informations Générales</span>
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Civilité <span style="color:#f27f0d">*</span></label>
+          <select id="credit-civilite" class="m-input" style="width:100%;cursor:pointer">
+            <option value="Monsieur" ${currentCivilite==='Monsieur'?'selected':''}>Monsieur</option>
+            <option value="Madame" ${currentCivilite==='Madame'?'selected':''}>Madame</option>
+            <option value="Chers membres du" ${currentCivilite==='Chers membres du'?'selected':''}>Chers membres du</option>
+          </select>
         </div>
 
         <div>
@@ -2875,6 +2892,7 @@ function _mobEditOption1(cid) {
 
   // Snapshot des données avant suppression pour pré-remplir le formulaire
   const snapshot = {
+    civilite: c.civilite || cl.civilite || 'Monsieur',
     name: getName(c),
     email: cl.email || c.email || '',
     phone1: cl.phone1 || c.phone || '',
@@ -2919,6 +2937,7 @@ function _mobEditOption1(cid) {
           '✅ Anciennes données supprimées !',
           'Le formulaire est maintenant disponible pour la nouvelle saisie. Les informations ont été pré-remplies pour vous faciliter la tâche.',
           () => {
+            window._isResettingCreditTask = true;
             // Ouvrir formulaire pré-rempli avec les anciennes données
             openCreditForm(snapshot);
             setTimeout(()=>{
@@ -2956,6 +2975,7 @@ async function _mobEditOption2(cid) {
   };
 
   const prefill = {
+    civilite: c.civilite || cl.civilite || 'Monsieur',
     name: getName(c),
     email: cl.email || c.email || '',
     phone1: cl.phone1 || c.phone || '',
@@ -3059,6 +3079,7 @@ function _mobProspectEditOption1(pid) {
 
   // Snapshot des données avant suppression pour pré-remplir le formulaire
   const snapshot = {
+    civilite: p.civilite || 'Monsieur',
     full_name: p.full_name || '',
     email: p.email || '',
     created_at: p.created_at || '',
@@ -3323,6 +3344,7 @@ function setPhoneValPWA(id, val) {
 }
 
 async function saveCredit(){
+  const civilite=(document.getElementById('credit-civilite')?.value||'Monsieur');
   const name=(document.getElementById('credit-name').value||'').trim();
   const startVal=document.getElementById('credit-start-date').value;
   const endVal=document.getElementById('credit-end-date').value;
@@ -3371,7 +3393,7 @@ async function saveCredit(){
       // 1. Mettre à jour le client
       if(clientId){
         const {error:cErr} = await sb.from('clients').update({
-          full_name:name, email, phone1, phone2, phone3, phone4, phone5, phone6, activity, address,
+          civilite, full_name:name, email, phone1, phone2, phone3, phone4, phone5, phone6, activity, address,
           total_portefeuille:amount, exclude_automation:excludeAuto
         }).eq('id', clientId);
         if(cErr) throw new Error('Client : ' + cErr.message);
@@ -3379,7 +3401,7 @@ async function saveCredit(){
 
       // 2. Mettre à jour le crédit
       const {error:crErr} = await sb.from('credits').update({
-        client_name:name, phone:phone1, email, activity, address,
+        civilite, client_name:name, phone:phone1, email, activity, address,
         amount, type, start_date:startVal, end_date:endVal,
         exclude_automation:excludeAuto
       }).eq('id', creditId);
@@ -3447,6 +3469,7 @@ async function saveCredit(){
        'credit-start-date','credit-end-date'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.value='';
       });
+      const civElEdit=document.getElementById('credit-civilite'); if(civElEdit) civElEdit.value='Monsieur';
 
       // Sync Google Contacts après modification
       if (clientId) {
@@ -3457,11 +3480,23 @@ async function saveCredit(){
       closeModal();
       await loadCredits();
       const msg = datesChanged
-        ? `Dossier "${verif.client_name}" mis à jour. ${nbNew} nouvelle(s) échéance(s) générée(s). Paiements existants conservés.`
-        : `Dossier "${verif.client_name}" mis à jour. Échéancier conservé intégralement.`;
+        ? `Dossier "${verif.client_name}" mis à jour. ${nbNew} nouvelle(s) échéance(s) générée(s). Souhaitez-vous créer une tâche pour ce client ?`
+        : `Dossier "${verif.client_name}" mis à jour. Souhaitez-vous créer une tâche pour ce client ?`;
+        
+      const onSuccess = () => { delete _credCache[creditId]; openCreditDetail(creditId); };
+
       openConfirm('✅ Modification enregistrée', msg,
-        ()=>{ delete _credCache[creditId]; openCreditDetail(creditId); },
-        'Voir le dossier', '#2563eb'
+        () => {
+          openTaskFormMobile(null, {
+            title: verif.client_name,
+            entity_name: verif.client_name,
+            entity_id: clientId,
+            entity_type: 'client'
+          });
+          onSuccess();
+        },
+        'Créer une tâche', '#8b5cf6',
+        onSuccess
       );
       return;
     }
@@ -3476,7 +3511,7 @@ async function saveCredit(){
     let clientId = existingClient?.id;
     if(!clientId){
       const {data: newClient, error:cErr} = await sb.from('clients').insert([{
-        full_name:name,email,phone1,phone2,phone3,phone4,phone5,phone6,activity,address,
+        civilite, full_name:name,email,phone1,phone2,phone3,phone4,phone5,phone6,activity,address,
         total_portefeuille:amount,health:'Sain',is_active:true,
         exclude_automation:excludeAuto
       }]).select('id').single();
@@ -3484,14 +3519,14 @@ async function saveCredit(){
       clientId = newClient.id;
     }else{
       await sb.from('clients').update({
-        email,phone2,phone3,phone4,phone5,phone6,activity,address,total_portefeuille:amount,exclude_automation:excludeAuto
+        civilite, email,phone2,phone3,phone4,phone5,phone6,activity,address,total_portefeuille:amount,exclude_automation:excludeAuto
       }).eq('id',clientId);
     }
 
     // 2. Créer le crédit
     const {data: credit, error:crErr} = await sb.from('credits').insert([{
       client_id:clientId,
-      client_name:name,phone:phone1,email,activity,address,amount,type,
+      civilite, client_name:name,phone:phone1,email,activity,address,amount,type,
       status:'EN COURS',health:'SAIN',start_date:startVal,end_date:endVal,
       manager_id:(currentUser?.id && currentUser.id!=='admin')?currentUser.id:null,
       exclude_automation:excludeAuto
@@ -3550,6 +3585,7 @@ async function saveCredit(){
     ['credit-name','credit-email','credit-phone1','credit-phone2','credit-phone3','credit-phone4','credit-phone5','credit-phone6','credit-activity','credit-address','credit-amount','credit-start-date','credit-end-date'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.value='';
     });
+    const civElCreate=document.getElementById('credit-civilite'); if(civElCreate) civElCreate.value='Monsieur';
 
     // Sync Google Contacts après création
     const { data: newClient } = await sb.from('clients').select('*').eq('id', clientId).single();
@@ -3560,12 +3596,42 @@ async function saveCredit(){
     await loadCredits();
 
     // Messagebox de confirmation → clic OK ouvre le dossier
-    openConfirm(
-      `✅ Dossier enregistré`,
-      `"${verif.client_name}" ajouté avec succès. ${repayments.length} échéances générées.`,
-      ()=>{ delete _credCache[verif.id]; openCreditDetail(verif.id); },
-      'Voir le dossier', '#22c55e'
-    );
+    if (window._isResettingCreditTask) {
+      window._isResettingCreditTask = false;
+      const onSuccess = () => { delete _credCache[verif.id]; openCreditDetail(verif.id); };
+      openConfirm(
+        `✅ Dossier enregistré`,
+        `"${verif.client_name}" ajouté avec succès. Souhaitez-vous créer une tâche pour ce client ?`,
+        () => {
+          openTaskFormMobile(null, {
+            title: verif.client_name,
+            entity_name: verif.client_name,
+            entity_id: verif.client_id || clientId,
+            entity_type: 'client'
+          });
+          onSuccess();
+        },
+        'Créer une tâche', '#8b5cf6',
+        onSuccess
+      );
+    } else {
+      const onSuccess = () => { delete _credCache[verif.id]; openCreditDetail(verif.id); };
+      openConfirm(
+        `✅ Dossier enregistré`,
+        `"${verif.client_name}" ajouté avec succès. ${repayments.length} échéances générées. Souhaitez-vous créer une tâche pour ce client ?`,
+        () => {
+          openTaskFormMobile(null, {
+            title: verif.client_name,
+            entity_name: verif.client_name,
+            entity_id: verif.client_id || clientId,
+            entity_type: 'client'
+          });
+          onSuccess();
+        },
+        'Créer une tâche', '#8b5cf6',
+        onSuccess
+      );
+    }
 
   }catch(e){
     // Afficher l'erreur complète dans un modal pour faciliter le débogage
@@ -4397,6 +4463,7 @@ async function openProspectForm(p=null){
     if (statRes.data && statRes.data.length > 0) stats = statRes.data;
   } catch(e) {}
 
+  const currentCivilite = p?.civilite || 'Monsieur';
   const actOptions='<option value="">Sélectionner une activité</option>'+acts.map(a=>`<option value="${a}" ${p?.activity===a?'selected':''}>${a}</option>`).join('');
   const statOptions=stats.map(s=>{const l=typeof s==='string'?s:s.label;return`<option value="${l}" ${(p?.status||'Nouveau')===l?'selected':''}>${l}</option>`;}).join('');
   openModal(`
@@ -4416,6 +4483,15 @@ async function openProspectForm(p=null){
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--sep)">
           <span style="font-size:10px;color:#f27f0d;font-weight:700;text-transform:uppercase;letter-spacing:.12em">Étape 1</span>
           <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em">Informations Générales</span>
+        </div>
+
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Civilité <span style="color:#ef4444">*</span></label>
+          <select id="prospect-civilite" class="m-input" style="width:100%;cursor:pointer">
+            <option value="Monsieur" ${currentCivilite==='Monsieur'?'selected':''}>Monsieur</option>
+            <option value="Madame" ${currentCivilite==='Madame'?'selected':''}>Madame</option>
+            <option value="Chers membres du" ${currentCivilite==='Chers membres du'?'selected':''}>Chers membres du</option>
+          </select>
         </div>
 
         <div>
@@ -4589,6 +4665,7 @@ async function openProspectForm(p=null){
 }
 
 async function saveProspect(id=null){
+  const civilite=(document.getElementById('prospect-civilite')?.value||'Monsieur');
   const name=(document.getElementById('prospect-name').value||'').trim();
   if(!name){toast('Nom et Prénoms requis','err');document.getElementById('prospect-name').focus();return;}
   const phones = [
@@ -4608,6 +4685,7 @@ async function saveProspect(id=null){
   }
 
   const payload={
+    civilite:civilite,
     full_name:name,
     email:document.getElementById('prospect-email').value.trim()||null,
     phone:phones[0]||null,
@@ -4636,7 +4714,6 @@ async function saveProspect(id=null){
       savedData = res.data;
     }
     if(error)throw error;
-    toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
     
     // Synchro Google Contacts (création ET modification)
     if(savedData){
@@ -4645,6 +4722,24 @@ async function saveProspect(id=null){
     
     closeModal();
     loadProspects();
+
+    if (!id && savedData) {
+      openConfirm(
+        '✅ Prospect ajouté',
+        `"${name}" a été ajouté avec succès. Souhaitez-vous créer une tâche pour ce prospect ?`,
+        () => {
+          openTaskFormMobile(null, {
+            title: name,
+            entity_name: name,
+            entity_id: savedData.id,
+            entity_type: 'prospect'
+          });
+        },
+        'Créer une tâche', '#8b5cf6'
+      );
+    } else {
+      toast(id?'Prospect mis à jour ✓':'Prospect ajouté ✓','ok');
+    }
   }catch(e){toast('Erreur : '+e.message,'err');}
 }
 
@@ -5459,6 +5554,15 @@ async function openNouveauDossierMob(){
     <p style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Informations Client</p>
 
     <div style="margin-bottom:14px">
+      <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Civilité *</p>
+      <select id="nd-civilite" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none">
+        <option value="Monsieur">Monsieur</option>
+        <option value="Madame">Madame</option>
+        <option value="Chers membres du">Chers membres du</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:14px">
       <p style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px">Nom complet *</p>
       <input type="text" id="nd-nom" placeholder="Ex : DUPONT Jean" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"/>
     </div>
@@ -5510,6 +5614,7 @@ async function openNouveauDossierMob(){
 }
 
 async function saveNouveauClientSouffrance(){
+  const civilite = document.getElementById('nd-civilite')?.value||'Monsieur';
   const nom      = document.getElementById('nd-nom')?.value?.trim();
   const phone    = document.getElementById('nd-phone')?.value?.trim();
   const activity = document.getElementById('nd-activity')?.value?.trim()||'';
@@ -5528,13 +5633,13 @@ async function saveNouveauClientSouffrance(){
   openConfirm(`Créer le dossier — ${nom} ?`,`${parseInt(amount).toLocaleString('fr-FR')} FCFA initial`,async()=>{
     // 1. Créer le client
     const{data:client,error:e1}=await sb.from('clients').insert({
-      full_name:nom, phone1:phone, activity:activity||null, health:'Souffrance', is_active:true
+      civilite, full_name:nom, phone1:phone, activity:activity||null, health:'Souffrance', is_active:true
     }).select('id').single();
     if(e1||!client){toast('Erreur création client','err');console.error(e1);return;}
 
     // 2. Créer le crédit
     const{data:credit,error:e2}=await sb.from('credits').insert({
-      client_id:client.id, client_name:nom, phone, activity:activity||null,
+      client_id:client.id, civilite, client_name:nom, phone, activity:activity||null,
       amount, start_date:date, end_date:date,
       health:'Souffrance', status:'Souffrance', type:ctype
     }).select('id').single();
@@ -6468,7 +6573,7 @@ function closeGoogleTaskSyncReportModal() {
   if (modal) modal.style.display = 'none';
 }
 
-function openTaskFormMobile(taskId=null){
+function openTaskFormMobile(taskId=null, prefill=null){
   _editingTaskIdMob=taskId;
   _taskSubtasksFormMob=[];
   const view=document.getElementById('task-form-view');
@@ -6489,6 +6594,9 @@ function openTaskFormMobile(taskId=null){
     delBtn.style.display='none';
     if(syncBtn) syncBtn.style.display='none';
     _taskFormStatusMob='todo';
+    if(prefill){
+      t={title:prefill.title,entity_name:prefill.entity_name,entity_id:prefill.entity_id,entity_type:prefill.entity_type};
+    }
   }
   document.getElementById('task-form-content').innerHTML=renderTaskFormMobile(t);
   renderSubtasksMob();

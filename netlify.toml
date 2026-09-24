@@ -22,6 +22,11 @@
   to = "/maquette-app/login.html"
   status = 200
 
+[[redirects]]
+  from = "/mobile/*"
+  to = "/maquette-app/:splat"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
