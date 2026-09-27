@@ -11,8 +11,6 @@ const server = http.createServer((req, res) => {
     // 1. Raccourcis pratiques
     if (decodedUrl === '/' || decodedUrl === '/login') {
         decodedUrl = '/login.html';
-    } else if (decodedUrl === '/app') {
-        decodedUrl = '/MAQUETTE_COMPLETE.html';
     } else if (decodedUrl === '/mobile') {
         decodedUrl = '/maquette-app/index.html';
     }
@@ -46,8 +44,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-    console.log(`\x1b[32m%s\x1b[0m`, `--- SERVEUR PORTEFIN ACTIF ---`);
-    console.log(`PC :     http://localhost:${port}/app`);
+    console.log(`\x1b[32m%s\x1b[0m`, `--- SERVEUR PORTEFIN MOBILE ACTIF ---`);
     console.log(`MOBILE : http://localhost:${port}/mobile`);
-    console.log(`------------------------------`);
+    console.log(`-------------------------------------`);
 });

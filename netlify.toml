@@ -6,11 +6,6 @@
   to = "/maquette-app/login.html"
   status = 302
 
-[[redirects]]
-  from = "/app"
-  to = "/MAQUETTE_COMPLETE.html"
-  status = 200
-
 # PWA Mobile
 [[redirects]]
   from = "/mobile"
