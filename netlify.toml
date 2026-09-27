@@ -22,6 +22,16 @@
   to = "/maquette-app/:splat"
   status = 200
 
+[[redirects]]
+  from = "/manifest.json"
+  to = "/maquette-app/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/sw.js"
+  to = "/maquette-app/sw.js"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -31,11 +41,22 @@
 
 # Service Worker - no cache to ensure updates
 [[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
   for = "/maquette-app/sw.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 # Manifest
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=3600"
+
 [[headers]]
   for = "/maquette-app/manifest.json"
   [headers.values]

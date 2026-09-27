@@ -589,10 +589,32 @@ body.light .cred-item { border-color: rgba(0,0,0,0.06); }
         <p id="top-date" style="font-size:10px;color:var(--text-dim);margin:0;font-weight:800;text-transform:uppercase;letter-spacing:1px"></p>
       </div>
     </div>
-    <button onclick="confirmLogout()" class="action-btn" style="border-radius:50%;color:#ef4444;background:rgba(239,68,68,0.1)">
-      <span class="material-symbols-outlined">logout</span>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="btn-install-pwa" onclick="installPWA()" class="action-btn" style="display:none;border-radius:20px;padding:6px 12px;gap:5px;color:#fff;background:linear-gradient(135deg,#f27f0d,#fb923c);font-size:11px;font-weight:800;border:none;box-shadow:0 2px 8px rgba(242,127,13,0.3);align-items:center">
+        <span class="material-symbols-outlined" style="font-size:16px">download</span> Installer
+      </button>
+      <button onclick="confirmLogout()" class="action-btn" style="border-radius:50%;color:#ef4444;background:rgba(239,68,68,0.1)">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
   </header>
+
+  <!-- Bannière d'installation PWA -->
+  <div id="install-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,#0c1425,#172554);color:#fff;padding:10px 14px;border-radius:14px;border:1px solid rgba(242,127,13,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.15);align-items:center;justify-content:space-between;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <div style="width:34px;height:34px;border-radius:10px;background:#f27f0d;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="color:white;font-size:19px">install_mobile</span>
+      </div>
+      <div style="min-width:0">
+        <div style="font-size:12px;font-weight:900;color:#fff;line-height:1.2">Installer PorteFin</div>
+        <div style="font-size:10px;color:#94a3b8;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Accès direct et hors-ligne</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button onclick="installPWA()" style="background:#f27f0d;color:#fff;border:none;padding:5px 10px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer">Installer</button>
+      <button onclick="dismissInstallBanner()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>
+    </div>
+  </div>
 
   <!-- Main View -->
   <main id="view"></main>
@@ -7962,7 +7984,54 @@ function selectGoogleContactPWA(index) {
 // Initialisation
 if(document.getElementById('view')) initPullToRefresh();
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// Gestion Installation PWA
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone) {
+    const btn = document.getElementById('btn-install-pwa');
+    if (btn) btn.style.display = 'inline-flex';
+    if (!sessionStorage.getItem('pwa_banner_dismissed')) {
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'flex';
+    }
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const btn = document.getElementById('btn-install-pwa');
+  if (btn) btn.style.display = 'none';
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  toast('Application PorteFin installée !', 'ok');
+});
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('pwa_banner_dismissed', '1');
+}
+
+async function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      const btn = document.getElementById('btn-install-pwa');
+      if (btn) btn.style.display = 'none';
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'none';
+    }
+    deferredPrompt = null;
+  } else {
+    toast("Pour installer : appuyez sur le menu (⋮) de Chrome puis 'Installer l'application'", 'info');
+  }
+}
 </script>
 </body>
 </html>
