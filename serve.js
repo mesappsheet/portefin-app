@@ -8,9 +8,9 @@ const root = __dirname;
 const server = http.createServer((req, res) => {
     let decodedUrl = decodeURIComponent(req.url);
     
-    // 1. Raccourcis pratiques
-    if (decodedUrl === '/' || decodedUrl === '/login') {
-        decodedUrl = '/login.html';
+    // 1. Raccourcis pratiques (100% Mobile PWA)
+    if (decodedUrl === '/' || decodedUrl === '/login' || decodedUrl === '/login.html') {
+        decodedUrl = '/maquette-app/login.html';
     } else if (decodedUrl === '/mobile') {
         decodedUrl = '/maquette-app/index.html';
     }
