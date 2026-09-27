@@ -1,0 +1,12 @@
+.git
+.agents
+.gemini
+skills
+superpowers
+scratch
+graphify-out
+*.js
+!serve.js
+node_modules
+*.md
+!README.md
